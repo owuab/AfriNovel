@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Reviews | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-760 { max-width: 760px; margin: 0 auto; }
+
+  .back-link {
+    color: var(--color-success);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: var(--spacing-3);
+  }
+
+  .back-link:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .button {
+    display: inline-block;
+    background: var(--color-success);
+    color: white;
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--border-radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-3) 0;
+    transition: all var(--transition-base);
+  }
+
+  .button:hover { opacity: 0.9; }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    margin: var(--spacing-2) 0;
+    transition: all var(--transition-base);
+  }
+
+  .card:hover { box-shadow: var(--shadow-sm); }
+
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: var(--spacing-2);
+  }
+
+  .head a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .head strong { color: var(--color-text-primary); font-weight: 700; }
+
+  .head p { margin: 0; }
+
+  .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .card p {
+    color: var(--color-text-primary);
+    line-height: var(--line-height-relaxed);
+    margin: var(--spacing-2) 0;
+  }
+
+  .book-link {
+    display: inline-block;
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: var(--spacing-2);
+  }
+
+  .book-link:hover { text-decoration: underline; }
+
+  .empty-message {
+    text-align: center;
+    color: var(--color-text-secondary);
+    padding: var(--spacing-8);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container max-width-760">
+  <a class="back-link" href="{% url 'social_feed' %}">← Community</a>
+  <h1>Reviews</h1>
+  <a class="button" href="{% url 'discover' %}">Find a book to review</a>
+
+  {% for review in reviews %}
+    <article class="card">
+      <div class="head">
+        <div>
+          <a href="{% url 'social_profile' review.user.username %}">
+            <strong>{{ review.user.get_full_name|default:review.user.username }}</strong>
+          </a>
+          <p class="meta">@{{ review.user.username }}</p>
+        </div>
+        <span class="meta">{{ review.created_at|timesince }} ago</span>
+      </div>
+      <p>{{ review.content }}</p>
+      <a href="{% url 'book_detail' review.book.slug %}" class="book-link">
+        <strong>{{ review.book.title }}</strong>
+      </a>
+      <div class="meta">💬 {{ review.comment_count }} comments</div>
+    </article>
+  {% empty %}
+    <div class="empty-message">
+      <p>No reviews yet.</p>
+    </div>
+  {% endfor %}
+</main>
+{% endblock %}

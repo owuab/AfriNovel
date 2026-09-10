@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ book.title }} | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Book detail page specific styles */
+
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-6);
+  }
+
+  .cover {
+    height: 420px;
+    border-radius: var(--border-radius-md);
+    background: {{ book.cover_color }};
+    box-shadow: var(--shadow-lg);
+  }
+
+  .panel {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-5);
+  }
+
+  .meta {
+    color: var(--color-text-secondary);
+    margin: var(--spacing-2) 0;
+    font-size: var(--font-size-sm);
+  }
+
+  .tag-row {
+    display: flex;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+    margin-top: var(--spacing-2);
+  }
+
+  .tag {
+    background: rgba(122, 76, 61, 0.1);
+    color: var(--color-accent);
+    border-radius: 999px;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+  }
+
+  .button-row {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-5);
+    flex-wrap: wrap;
+  }
+
+  .button-row .primary,
+  .button-row .secondary {
+    min-height: 36px;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  .button-row .primary,
+  .button-row .primary:visited {
+    color: white;
+  }
+
+  .button-row .secondary {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+  }
+
+  .button-row > .secondary {
+    min-height: 25px;
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+
+  .button-row .secondary:hover {
+    background: var(--color-bg-primary);
+  }
+
+  h1 {
+    margin-bottom: var(--spacing-2);
+    font-size: var(--font-size-4xl);
+    letter-spacing: -0.05em;
+    color: var(--color-text-primary);
+  }
+
+  .summary {
+    width: 100%;
+    max-width: 68ch;
+    margin-inline: auto;
+    padding-inline: var(--spacing-2);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    font-size: var(--font-size-base);
+  }
+
+  .summary p {
+    margin: 0 0 var(--spacing-4);
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
+  }
+
+  .summary p:last-child {
+    margin-bottom: 0;
+  }
+
+  .review-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    margin-top: var(--spacing-3);
+  }
+
+  .review-head {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #d6b2a0, #7b4d3c);
+  }
+
+  section {
+    margin-top: var(--spacing-7);
+  }
+
+  section h2 {
+    font-size: var(--font-size-2xl);
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-4);
+  }
+
+  @media (max-width: 768px) {
+    .detail-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container">
+  <div class="detail-layout">
+    <aside>
+      <div class="cover" aria-label="{{ book.title }} cover"></div>
+    </aside>
+
+    <section class="panel">
+      <div class="meta">{{ book.author.name }} • {{ book.genres.all|join:", " }}</div>
+      <h1>{{ book.title }}</h1>
+      <div class="meta">{% if book.rating %}Rating: {{ book.rating }} ★{% endif %} · {{ book.view_count }} views</div>
+
+      <div class="tag-row">
+        {% for genre in book.genres.all %}
+          <span class="tag">{{ genre.name }}</span>
+        {% endfor %}
+      </div>
+
+      <div class="button-row">
+        {% if has_uploaded_reader %}
+          <a class="button primary" href="{% url 'uploaded_book_reader' book.slug %}">Read now</a>
+        {% endif %}
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'add_to_bookshelf' book.slug %}" style="flex: 1; display: flex; gap: var(--spacing-2);">
+            {% csrf_token %}
+            <select name="status" style="padding: var(--spacing-3) var(--spacing-4); border-radius: 999px; border: none; flex: 1; cursor: pointer; font-weight: 700;">
+              <option value="want_to_read">Add to Want to Read</option>
+              <option value="currently_reading">Add - Currently Reading</option>
+              <option value="read">Mark as Read</option>
+            </select>
+            <button type="submit" class="primary">Add</button>
+          </form>
+          <button class="secondary" onclick="location.href='{% url 'review_create' book.slug %}'">Write a review</button>
+        {% else %}
+          <button class="primary" onclick="location.href='{% url 'login' %}'">Sign in to save</button>
+        {% endif %}
+      </div>
+
+      <h3 style="margin-top: var(--spacing-7); color: var(--color-text-primary);">Summary</h3>
+      <div class="summary">{{ book.summary|linebreaks }}</div>
+    </section>
+  </div>
+
+  <section>
+    <h2>Reader Reviews</h2>
+    {% for review in reviews %}
+      <div class="review-card">
+        <div class="review-head">
+          <div class="avatar"></div>
+          <div>
+            <strong style="color: var(--color-text-primary);">{{ review.user.username }}</strong><br />
+            <small style="color: var(--color-text-secondary);">{{ review.created_at|date:"M d, Y" }}</small>
+          </div>
+        </div>
+        <div style="color: var(--color-text-primary);">{{ review.content }}</div>
+      </div>
+    {% empty %}
+      <div class="review-card">No reviews yet. Be the first to share your thoughts.</div>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

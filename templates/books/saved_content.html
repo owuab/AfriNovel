@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Saved | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-link {
+    color: var(--color-success);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: var(--spacing-6);
+    display: inline-block;
+  }
+
+  .back-link:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    margin: var(--spacing-2) 0;
+    transition: all var(--transition-base);
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .card a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .card strong {
+    color: var(--color-text-primary);
+    font-weight: 700;
+  }
+
+  .card p {
+    color: var(--color-text-secondary);
+    margin: var(--spacing-2) 0;
+  }
+
+  .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .empty-message {
+    text-align: center;
+    padding: var(--spacing-8);
+    color: var(--color-text-secondary);
+  }
+
+  .max-width-760 {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container max-width-760">
+  <a class="back-link" href="{% url 'social_feed' %}">← Community</a>
+  <h1>Saved</h1>
+  {% for saved in posts %}
+    <article class="card">
+      <a href="{% url 'post_detail' saved.post.pk %}">
+        <strong>@{{ saved.post.author.username }}</strong>
+        <p>{{ saved.post.content|default:'Shared a book' }}</p>
+      </a>
+      <div class="meta">Saved {{ saved.created_at|timesince }} ago</div>
+    </article>
+  {% empty %}
+    <div class="empty-message">
+      <p>You have not saved any posts yet.</p>
+    </div>
+  {% endfor %}
+</main>
+{% endblock %}

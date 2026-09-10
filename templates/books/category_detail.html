@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ genre.name }} | AfriNovel{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="category-hero">
+    <div class="hero-content">
+      <h1>{{ genre.name }}</h1>
+      <p class="hero-description">Explore {{ genre.book_count }} book{{ genre.book_count|pluralize }} in this category</p>
+    </div>
+  </div>
+  
+  <div class="section-tabs">
+    <a href="?sort=popular" class="tab {% if sort == 'popular' or not sort %}active{% endif %}">Popular</a>
+    <a href="?sort=new" class="tab {% if sort == 'new' %}active{% endif %}">New</a>
+    <a href="?sort=trending" class="tab {% if sort == 'trending' %}active{% endif %}">Trending</a>
+  </div>
+  
+  <div class="book-grid">
+    {% for book in books %}
+      {% include "components/book_card.html" with book=book show_genres=True show_rating=True show_action=True action_text="Read" %}
+    {% empty %}
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <h3>No books found</h3>
+        <p>No books available in this category yet. Check back soon!</p>
+        <a href="{% url 'categories' %}" class="action-button">Browse All Categories</a>
+      </div>
+    {% endfor %}
+  </div>
+  
+  {% if books.has_other_pages %}
+    <div class="pagination">
+      {% if books.has_previous %}
+        <a href="?page=1&sort={{ sort }}">« First</a>
+        <a href="?page={{ books.previous_page_number }}&sort={{ sort }}">Previous</a>
+      {% endif %}
+      
+      <span class="page-info">
+        Page {{ books.number }} of {{ books.paginator.num_pages }}
+      </span>
+      
+      {% if books.has_next %}
+        <a href="?page={{ books.next_page_number }}&sort={{ sort }}">Next</a>
+        <a href="?page={{ books.paginator.num_pages }}&sort={{ sort }}">Last »</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .category-hero {
+    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-8);
+    margin-bottom: var(--spacing-6);
+  }
+  
+  .hero-content h1 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .hero-description {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+  }
+  
+  .section-tabs {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-6);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-2);
+  }
+  
+  .tab {
+    padding: var(--spacing-3) var(--spacing-6);
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-base);
+  }
+  
+  .tab:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+  }
+  
+  .tab.active {
+    background: var(--color-accent);
+    color: white;
+  }
+  
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-5);
+  }
+  
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--spacing-12);
+    color: var(--color-text-secondary);
+  }
+  
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .empty-state h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .action-button {
+    display: inline-block;
+    padding: var(--spacing-3) var(--spacing-6);
+    background: var(--color-accent);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-base);
+    margin-top: var(--spacing-4);
+  }
+  
+  .action-button:hover {
+    opacity: 0.9;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-8);
+    padding: var(--spacing-4);
+  }
+  
+  .pagination a {
+    padding: var(--spacing-2) var(--spacing-4);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    transition: all var(--transition-base);
+  }
+  
+  .pagination a:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+  
+  .page-info {
+    padding: var(--spacing-2) var(--spacing-4);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  @media (max-width: 768px) {
+    .category-hero {
+      padding: var(--spacing-6);
+    }
+    
+    .hero-content h1 {
+      font-size: var(--font-size-2xl);
+    }
+    
+    .section-tabs {
+      flex-wrap: wrap;
+    }
+    
+    .book-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: var(--spacing-4);
+    }
+    
+    .pagination {
+      flex-wrap: wrap;
+    }
+  }
+</style>
+{% endblock %}

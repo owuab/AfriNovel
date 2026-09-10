@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Search | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .search-panel {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .search-form {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-5);
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    padding: var(--spacing-3) var(--spacing-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    background: var(--color-bg-secondary);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(122, 76, 61, 0.1);
+  }
+
+  .search-input::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  .search-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-5);
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+  }
+
+  .filter-group label {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+  }
+
+  .search-button {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3) var(--spacing-5);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .search-button:hover {
+    opacity: 0.9;
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-5);
+  }
+
+  .results-header h2 {
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+  }
+
+  .results-count {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--spacing-5);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-12);
+    color: var(--color-text-secondary);
+  }
+
+  .empty-state h3 {
+    margin: 0 0 var(--spacing-2);
+    color: var(--color-text-primary);
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-8);
+  }
+
+  .pagination a,
+  .pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: var(--spacing-2) var(--spacing-3);
+    border: var(--border-width-default) solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-fast);
+  }
+
+  .pagination a:hover {
+    background-color: var(--color-accent);
+    color: var(--color-text-inverse);
+    border-color: var(--color-accent);
+  }
+
+  .pagination .active span {
+    background-color: var(--color-accent);
+    color: var(--color-text-inverse);
+    border-color: var(--color-accent);
+  }
+
+  @media (max-width: 768px) {
+    .search-form {
+      flex-direction: column;
+    }
+
+    .search-filters {
+      grid-template-columns: 1fr;
+    }
+
+    .book-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="search-panel">
+    <form method="get" action="{% url 'search_books' %}" class="search-form">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search books, authors, genres..." class="search-input">
+      <button type="submit" class="search-button">Search</button>
+    </form>
+
+    <div class="search-filters">
+      <div class="filter-group">
+        <label>Genre</label>
+        <select name="genre">
+          <option value="">All Genres</option>
+          {% for genre in genres %}
+            <option value="{{ genre.slug }}" {% if genre_filter == genre.slug %}selected{% endif %}>{{ genre.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Author</label>
+        <input type="text" name="author" value="{{ author_filter }}" placeholder="Author name">
+      </div>
+
+      <div class="filter-group">
+        <label>Min Rating</label>
+        <select name="rating">
+          <option value="">Any Rating</option>
+          <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4+ Stars</option>
+          <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3+ Stars</option>
+          <option value="2" {% if rating_filter == '2' %}selected{% endif %}>2+ Stars</option>
+          <option value="1" {% if rating_filter == '1' %}selected{% endif %}>1+ Stars</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Sort By</label>
+        <select name="sort">
+          <option value="relevance" {% if sort_by == 'relevance' %}selected{% endif %}>Relevance</option>
+          <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Highest Rated</option>
+          <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+          <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="results-header">
+    <h2>Search results{% if query %} for "{{ query }}"{% endif %}</h2>
+    <div class="results-count">{{ books.paginator.count }} result{{ books.paginator.count|pluralize }}</div>
+  </div>
+
+  <div class="book-grid">
+    {% for book in books %}
+      {% include "components/book_card.html" with book=book show_rating=True show_genres=True %}
+    {% empty %}
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <h3>No books found</h3>
+        <p>Try adjusting your search terms or filters</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if books.has_other_pages %}
+    <div class="pagination">
+      {% if books.has_previous %}
+        <a href="?page=1{% if query %}&q={{ query }}{% endif %}{% if genre_filter %}&genre={{ genre_filter }}{% endif %}{% if author_filter %}&author={{ author_filter }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">« First</a>
+        <a href="?page={{ books.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if genre_filter %}&genre={{ genre_filter }}{% endif %}{% if author_filter %}&author={{ author_filter }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">Previous</a>
+      {% endif %}
+      
+      <span class="active">
+        Page {{ books.number }} of {{ books.paginator.num_pages }}
+      </span>
+      
+      {% if books.has_next %}
+        <a href="?page={{ books.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if genre_filter %}&genre={{ genre_filter }}{% endif %}{% if author_filter %}&author={{ author_filter }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">Next</a>
+        <a href="?page={{ books.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if genre_filter %}&genre={{ genre_filter }}{% endif %}{% if author_filter %}&author={{ author_filter }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">Last »</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

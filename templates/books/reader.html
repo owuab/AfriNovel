@@ -1,0 +1,674 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ book.title }} | Reader{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Reader page specific styles - using design system tokens */
+  
+  :root {
+    --reader-bg: var(--color-bg-primary);
+    --reader-paper: var(--color-bg-tertiary);
+    --reader-ink: var(--color-text-primary);
+    --reader-muted: var(--color-text-secondary);
+    --reader-line: var(--color-border);
+    --reader-accent: var(--color-success);
+    --reader-mark: #f8df70;
+    --reading-width: 46rem;
+    --reading-size: 1.16rem;
+    --reading-leading: 1.85;
+    --reading-spacing: 0;
+  }
+
+  * { box-sizing: border-box; }
+  
+  body {
+    margin: 0;
+    background: var(--reader-bg);
+    color: var(--reader-ink);
+    font-family: Georgia, serif;
+    transition: background var(--transition-base), color var(--transition-base);
+  }
+
+  .theme-sepia {
+    --reader-bg: #ede2c9;
+    --reader-paper: #f8efd9;
+    --reader-ink: #453524;
+    --reader-line: #cfbd99;
+  }
+
+  .theme-dark {
+    --reader-bg: #17211f;
+    --reader-paper: #1d2a27;
+    --reader-ink: #e6ebe4;
+    --reader-muted: #bac4be;
+    --reader-line: #40504a;
+  }
+
+  .theme-black {
+    --reader-bg: #000;
+    --reader-paper: #080808;
+    --reader-ink: #f1f1ed;
+    --reader-muted: #c3c3bd;
+    --reader-line: #333;
+  }
+
+  .theme-forest {
+    --reader-bg: #dfe9e1;
+    --reader-paper: #f2f7f1;
+    --reader-ink: #20352b;
+    --reader-muted: #557064;
+    --reader-line: #b8cdbd;
+    --reader-accent: #2f7054;
+  }
+
+  .theme-rose {
+    --reader-bg: #f2e5e5;
+    --reader-paper: #fff8f6;
+    --reader-ink: #432c32;
+    --reader-muted: #795d66;
+    --reader-line: #dcc4ca;
+    --reader-accent: #a34f68;
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    min-height: 64px;
+    border-bottom: 1px solid var(--reader-line);
+    background: color-mix(in srgb, var(--reader-bg) 92%, transparent);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-5);
+    font-family: Arial, sans-serif;
+  }
+
+  .icon {
+    height: 38px;
+    min-width: 38px;
+    border: 1px solid var(--reader-line);
+    border-radius: var(--border-radius-sm);
+    background: var(--reader-paper);
+    color: var(--reader-ink);
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .icon:hover {
+    border-color: var(--reader-accent);
+    color: var(--reader-accent);
+  }
+
+  .book-name {
+    min-width: 0;
+    flex: 1;
+    font: 600 0.94rem Georgia, serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .progress-label {
+    font-size: var(--font-size-xs);
+    color: var(--reader-muted);
+    white-space: nowrap;
+  }
+
+  .progress-track {
+    position: fixed;
+    top: 63px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: transparent;
+    z-index: 6;
+  }
+
+  .progress-track span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--reader-accent);
+    transition: width 150ms;
+  }
+
+  .drawer {
+    position: fixed;
+    top: 64px;
+    bottom: 0;
+    width: min(330px, 88vw);
+    z-index: 8;
+    background: var(--reader-paper);
+    padding: var(--spacing-5);
+    overflow: auto;
+    box-shadow: 10px 0 28px #0002;
+    transform: translateX(-105%);
+    transition: transform 200ms;
+  }
+
+  .drawer.open { transform: none; }
+
+  .drawer h2 {
+    font: 700 0.85rem Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 var(--spacing-4);
+    color: var(--reader-ink);
+  }
+
+  .drawer p { color: var(--reader-muted); font-size: var(--font-size-sm); }
+
+  .toc {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-2) 0;
+    border: none;
+    background: none;
+    color: var(--reader-accent);
+    text-align: left;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    transition: opacity var(--transition-base);
+  }
+
+  .toc:hover { opacity: 0.8; }
+
+  .control { margin-bottom: var(--spacing-4); }
+  .control label { display: block; font-weight: 600; font-size: var(--font-size-sm); margin-bottom: var(--spacing-2); }
+  .control select, .control input { width: 100%; padding: var(--spacing-2); border: 1px solid var(--reader-line); border-radius: var(--border-radius-sm); font-family: inherit; }
+  .control select:focus, .control input:focus { outline: none; border-color: var(--reader-accent); }
+
+  #google_translate_element {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .modes, .themes {
+    display: flex;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+  }
+
+  .modes button, .themes button {
+    flex: 1;
+    padding: var(--spacing-2);
+    border: 1px solid var(--reader-line);
+    border-radius: var(--border-radius-sm);
+    background: var(--reader-bg);
+    color: var(--reader-ink);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-size: var(--font-size-xs);
+  }
+
+  .modes button.selected, .themes button.selected {
+    background: var(--reader-accent);
+    color: white;
+    border-color: var(--reader-accent);
+  }
+
+  .theme {
+    display: grid;
+    place-items: end center;
+    width: 52px;
+    height: 44px;
+    padding: 0 2px 4px;
+    border-radius: var(--border-radius-sm);
+    border: 2px solid transparent;
+    color: #35423c;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .theme.light { background: #f5f1e8; }
+  .theme.sepia { background: #ede2c9; }
+  .theme.dark { background: #1d2a27; }
+  .theme.black { background: #000; }
+  .theme.forest { background: #dfe9e1; }
+  .theme.rose { background: #f2e5e5; }
+  .theme.black { color: #fff; }
+  .theme.selected { border-color: var(--reader-accent); box-shadow: 0 0 0 2px var(--reader-paper), 0 0 0 4px var(--reader-accent); }
+  .theme:focus-visible { outline: 3px solid var(--reader-accent); outline-offset: 2px; }
+
+  .selection-actions {
+    position: fixed;
+    display: none;
+    gap: var(--spacing-2);
+    z-index: 10;
+    background: var(--reader-paper);
+    padding: var(--spacing-2);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-md);
+  }
+
+  .selection-actions button {
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--reader-bg);
+    border: 1px solid var(--reader-line);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all var(--transition-base);
+  }
+
+  .selection-actions button:hover {
+    background: var(--reader-accent);
+    color: white;
+    border-color: var(--reader-accent);
+  }
+
+  .reader-area {
+    max-width: var(--reading-width);
+    margin: var(--spacing-6) auto;
+    padding: 0 clamp(var(--spacing-5), 6vw, var(--spacing-8));
+  }
+
+  .reader-area.pages {
+    display: flex;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+  }
+
+  @media (max-width: 600px) {
+    .reader-area {
+      padding-inline: var(--spacing-6);
+    }
+  }
+
+  .reader-text {
+    font-size: var(--reading-size);
+    line-height: var(--reading-leading);
+    color: var(--reader-ink);
+  }
+
+  .reader-text section {
+    margin-bottom: var(--spacing-8);
+  }
+
+  .chapter-next {
+    display: block;
+    margin: var(--spacing-6) 0 0 auto;
+    padding: var(--spacing-2) var(--spacing-4);
+    border: 1px solid var(--reader-line);
+    border-radius: var(--border-radius-sm);
+    background: var(--reader-paper);
+    color: var(--reader-ink);
+    font: 600 var(--font-size-sm) Arial, sans-serif;
+    cursor: pointer;
+  }
+
+  .chapter-next:hover:not(:disabled) {
+    border-color: var(--reader-accent);
+    color: var(--reader-accent);
+  }
+
+  .chapter-next:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  .reader-text h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: var(--spacing-6) 0 var(--spacing-4);
+    letter-spacing: -0.03em;
+  }
+
+  .reader-text p {
+    margin: 0 0 var(--reading-spacing);
+    text-align: left;
+  }
+
+  .reader-text p.justify {
+    text-align: justify;
+  }
+
+  .empty-reader {
+    max-width: 600px;
+    margin: var(--spacing-8) auto;
+    padding: var(--spacing-6);
+    text-align: center;
+  }
+
+  .empty-reader h1 {
+    font-size: var(--font-size-3xl);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .empty-reader a {
+    color: var(--reader-accent);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .empty-reader a:hover {
+    text-decoration: underline;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: var(--spacing-4);
+    right: var(--spacing-4);
+    background: var(--reader-accent);
+    color: white;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--border-radius-sm);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    z-index: 11;
+    max-width: 300px;
+  }
+
+  .toast.show { opacity: 1; }
+
+  .reader-hidden .toolbar,
+  .reader-hidden .drawer,
+  .reader-hidden .selection-actions {
+    display: none !important;
+  }
+
+  @media (max-width: 768px) {
+    .toolbar { flex-wrap: wrap; padding: var(--spacing-2) var(--spacing-3); }
+    .book-name { font-size: var(--font-size-sm); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="toolbar" aria-label="Reading toolbar">
+  <button class="icon" id="back" aria-label="Back to book details">&larr;</button>
+  <button class="icon" id="contentsToggle" aria-label="Open table of contents">&#9776;</button>
+  <div class="book-name">{{ book.title }}</div>
+  <nav aria-label="Reader community navigation" style="display: flex; gap: var(--spacing-2); white-space: nowrap; font-size: var(--font-size-xs);">
+    <a href="{% url 'reading_now' %}" style="color: var(--reader-muted); text-decoration: none;">Reading Now</a>
+    <a href="{% url 'social_reviews' %}" style="color: var(--reader-muted); text-decoration: none;">Reviews</a>
+    <a href="{% url 'book_recommendations' %}" style="color: var(--reader-muted); text-decoration: none;">Recommendations</a>
+  </nav>
+  <span class="progress-label" id="progressLabel">{{ progress.percent|floatformat:0 }}% read</span>
+  <button class="icon" id="bookmark" aria-label="Add bookmark">&#9734;</button>
+  <button class="icon" id="settingsToggle" aria-label="Reading settings">Aa</button>
+  <button class="icon" id="fullscreen" aria-label="Enter reading mode">&#x26F6;</button>
+</header>
+
+<div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
+
+<aside class="drawer" id="contents" aria-label="Table of contents">
+  <h2>Contents</h2>
+  {% for section in sections %}
+    <button class="toc" data-target="section-{{ forloop.counter0 }}">{{ section.title }}</button>
+  {% empty %}
+    <p>Contents are unavailable for this source.</p>
+  {% endfor %}
+</aside>
+
+<aside class="drawer settings" id="settings" aria-label="Reading settings">
+  <h2>Reading settings</h2>
+  <div class="control">
+    <label for="fontSelect">Font <span id="fontValue">Georgia</span></label>
+    <select id="fontSelect">
+      <option value="Georgia, serif">Georgia</option>
+      <option value="Merriweather, Georgia, serif">Merriweather</option>
+      <option value="Literata, Georgia, serif">Literata</option>
+      <option value="Inter, Arial, sans-serif">Inter</option>
+      <option value="system-ui, sans-serif">System Sans</option>
+    </select>
+  </div>
+  <div class="control">
+    <label for="readerLanguage">Reading language</label>
+    <select id="readerLanguage">
+      <option value="">Original (Chinese)</option>
+      <option value="en">English</option>
+      <option value="fr">French</option>
+      <option value="zh-CN">Simplified Chinese</option>
+      <option value="zh-TW">Traditional Chinese</option>
+      <option value="es">Spanish</option>
+      <option value="de">German</option>
+      <option value="it">Italian</option>
+      <option value="pt">Portuguese</option>
+      <option value="ja">Japanese</option>
+      <option value="ko">Korean</option>
+      <option value="ar">Arabic</option>
+      <option value="hi">Hindi</option>
+      <option value="ru">Russian</option>
+    </select>
+    <div id="google_translate_element" aria-hidden="true"></div>
+  </div>
+  <div class="control">
+    <label for="fontSize">Text size <span id="sizeValue"></span></label>
+    <input id="fontSize" type="range" min="15" max="28" value="19">
+  </div>
+  <div class="control">
+    <label for="lineHeight">Line height <span id="lineValue"></span></label>
+    <input id="lineHeight" type="range" min="1.4" max="2.3" step="0.1" value="1.85">
+  </div>
+  <div class="control">
+    <label for="pageWidth">Reading width</label>
+    <input id="pageWidth" type="range" min="32" max="60" value="46">
+  </div>
+  <div class="control">
+    <label>Alignment</label>
+    <div class="modes">
+      <button data-align="left" class="selected">Left</button>
+      <button data-align="justify">Justify</button>
+    </div>
+  </div>
+  <div class="control">
+    <label>Theme</label>
+    <div class="themes">
+      <button class="theme light" data-theme="light" aria-label="Light theme" aria-pressed="true">Light</button>
+      <button class="theme sepia" data-theme="sepia" aria-label="Sepia theme" aria-pressed="false">Sepia</button>
+      <button class="theme dark" data-theme="dark" aria-label="Dark theme" aria-pressed="false">Dark</button>
+      <button class="theme black" data-theme="black" aria-label="Black theme" aria-pressed="false">Black</button>
+      <button class="theme forest" data-theme="forest" aria-label="Forest theme" aria-pressed="false">Forest</button>
+      <button class="theme rose" data-theme="rose" aria-label="Rose theme" aria-pressed="false">Rose</button>
+    </div>
+    <span id="themeValue" class="progress-label" aria-live="polite">Light</span>
+  </div>
+  <div class="control">
+    <label>Reading mode</label>
+    <div class="modes">
+      <button data-mode="scroll" class="selected">Scroll</button>
+      <button data-mode="pages">Pages</button>
+    </div>
+  </div>
+  <div class="control">
+    <button class="icon" style="width: 100%; font-size: var(--font-size-xs);" id="addNote">Add note at current location</button>
+  </div>
+</aside>
+
+<div class="selection-actions" id="selectionActions" aria-label="Highlight selected text">
+  <button data-color="yellow" aria-label="Yellow highlight">Y</button>
+  <button data-color="green" aria-label="Green highlight">G</button>
+  <button data-color="blue" aria-label="Blue highlight">B</button>
+  <button data-color="pink" aria-label="Pink highlight">P</button>
+</div>
+
+{% if reader_error %}
+  <main class="empty-reader">
+    <h1>Reading source temporarily unavailable</h1>
+    <p>{{ reader_error }}</p>
+    <p><a rel="noopener" target="_blank" href="{{ book.source_url }}">Visit the authorized source</a></p>
+  </main>
+{% else %}
+  <main class="reader-area" id="readerArea">
+    <article class="reader-text" id="readerText" aria-label="Book text">
+      {% for section in sections %}
+        <section id="section-{{ forloop.counter0 }}">
+          <h2>{{ section.title }}</h2>
+          {% for paragraph in section.paragraphs %}
+            <p tabindex="-1" data-paragraph="{{ forloop.counter0 }}">{% if paragraph.html %}{{ paragraph.html|safe }}{% else %}{{ paragraph }}{% endif %}</p>
+          {% endfor %}
+          <button class="chapter-next" type="button" data-next-section="section-{{ forloop.counter|add:'0' }}" {% if forloop.last %}disabled aria-label="End of book"{% else %}aria-label="Next chapter"{% endif %}>
+            {% if forloop.last %}End of book{% else %}Next chapter &rarr;{% endif %}
+          </button>
+        </section>
+      {% endfor %}
+    </article>
+  </main>
+{% endif %}
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+window.googleTranslateElementInit = () => {
+  new google.translate.TranslateElement({
+    pageLanguage: 'zh-CN',
+    includedLanguages: 'ar,de,en,es,fr,hi,it,ja,ko,pt,ru,zh-CN,zh-TW',
+    autoDisplay: false,
+  }, 'google_translate_element');
+  window.dispatchEvent(new Event('google-translate-ready'));
+};
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script>
+(() => {
+  const bookId = {{ book.pk }}, canSaveProgress = {{ user.is_authenticated|yesno:"true,false" }}, csrf = () => document.cookie.split('; ').find(v => v.startsWith('csrftoken='))?.split('=')[1] || '', 
+    api = (path, data) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() }, body: JSON.stringify(data) }), 
+    $ = id => document.getElementById(id), area = $('readerArea'), text = $('readerText'), toast = $('toast');
+  
+  let currentParagraph = {{ progress.paragraph|default:0 }}, currentChapter = '{{ progress.chapter|escapejs }}', selectedText = '';
+  const prefKey = 'afrinovel-reader-settings';
+  const saved = JSON.parse(localStorage.getItem(prefKey) || '{}');
+  const languageSelect = $('readerLanguage');
+  const languageKey = 'afrinovel-reader-language';
+
+  const say = m => { toast.textContent = m; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 1900) };
+  const setStyle = (key, value) => { document.documentElement.style.setProperty(key, value) };
+  const closeDrawers = () => document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+  const persist = () => localStorage.setItem(prefKey, JSON.stringify(saved));
+
+  function setTranslatedLanguage(language) {
+    const translator = document.querySelector('.goog-te-combo');
+    if (!translator) {
+      if (language) setTimeout(() => setTranslatedLanguage(language), 250);
+      return;
+    }
+    translator.value = language;
+    translator.dispatchEvent(new Event('change'));
+  }
+
+  function apply() {
+    const s = saved;
+    document.body.classList.remove('theme-sepia', 'theme-dark', 'theme-black', 'theme-forest', 'theme-rose');
+    if (s.theme && s.theme !== 'light') document.body.classList.add('theme-' + s.theme);
+    setStyle('--reading-size', (s.size || 19) + 'px');
+    setStyle('--reading-leading', s.line || 1.85);
+    setStyle('--reading-width', (s.width || 46) + 'rem');
+    text?.classList.toggle('justify', s.align === 'justify');
+    if (text && s.font) text.style.fontFamily = s.font;
+    $('fontSelect').value = s.font || 'Georgia, serif';
+    $('fontSize').value = s.size || 19;
+    $('lineHeight').value = s.line || 1.85;
+    $('pageWidth').value = s.width || 46;
+    $('sizeValue').textContent = (s.size || 19) + 'px';
+    $('lineValue').textContent = s.line || 1.85;
+    document.querySelectorAll('[data-theme]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === (s.theme || 'light'))));
+    const activeTheme = document.querySelector('[data-theme="' + (s.theme || 'light') + '"]');
+    $('themeValue').textContent = activeTheme?.textContent || 'Light';
+    document.querySelectorAll('[data-align]').forEach(b => b.classList.toggle('selected', b.dataset.align === (s.align || 'left')));
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('selected', b.dataset.mode === (s.mode || 'scroll')));
+    area?.classList.toggle('pages', s.mode === 'pages');
+  }
+  
+  apply();
+  languageSelect.value = localStorage.getItem(languageKey) || '';
+  languageSelect.onchange = event => {
+    const language = event.target.value;
+    localStorage.setItem(languageKey, language);
+    setTranslatedLanguage(language);
+  };
+  window.addEventListener('google-translate-ready', () => {
+    setTranslatedLanguage(languageSelect.value);
+  });
+
+  $('back').onclick = () => location.href = '{% url "catalogue_detail" book.pk %}';
+  $('contentsToggle').onclick = () => { $('contents').classList.toggle('open'); $('settings').classList.remove('open') };
+  $('settingsToggle').onclick = () => { $('settings').classList.toggle('open'); $('contents').classList.remove('open') };
+  document.querySelectorAll('.toc').forEach(b => b.onclick = () => { const el = $(b.dataset.target); area?.classList.contains('pages') ? el?.scrollIntoView({ behavior: 'smooth', inline: 'start' }) : el?.scrollIntoView({ behavior: 'smooth' }); closeDrawers() });
+  document.querySelectorAll('.chapter-next:not(:disabled)').forEach(b => b.onclick = () => {
+    const target = $(b.dataset.nextSection);
+    area?.classList.contains('pages') ? target?.scrollIntoView({ behavior: 'smooth', inline: 'start' }) : target?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  $('fontSelect').onchange = e => { saved.font = e.target.value; $('fontValue').textContent = e.target.options[e.target.selectedIndex].text; persist(); apply() };
+  [['fontSize', 'size'], ['lineHeight', 'line'], ['pageWidth', 'width']].forEach(([id, key]) => $(id).oninput = e => { saved[key] = e.target.value; persist(); apply() });
+  document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => { saved.theme = b.dataset.theme; persist(); apply() });
+  document.querySelectorAll('[data-align]').forEach(b => b.onclick = () => { saved.align = b.dataset.align; persist(); apply() });
+  document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { saved.mode = b.dataset.mode; persist(); apply() });
+
+  function locationData() {
+    const paragraphs = [...document.querySelectorAll('[data-paragraph]')];
+    const active = paragraphs.reduce((last, p) => p.getBoundingClientRect().top < innerHeight * 0.4 ? p : last, paragraphs[0]);
+    currentParagraph = Number(active?.dataset.paragraph || 0);
+    currentChapter = active?.closest('section')?.querySelector('h2')?.textContent || '';
+    const max = Math.max(document.documentElement.scrollHeight - innerHeight, 1);
+    const percent = area?.classList.contains('pages') ? Math.round((area.scrollLeft / Math.max(area.scrollWidth - area.clientWidth, 1)) * 100) : Math.round((scrollY / max) * 100);
+    return { paragraph: currentParagraph, chapter: currentChapter, percent: percent, character_offset: 0 };
+  }
+
+  let pending = false;
+  function saveProgress() {
+    if (pending || !text || !canSaveProgress) return;
+    pending = true;
+    const d = locationData();
+    $('progressBar').style.width = d.percent + '%';
+    $('progressLabel').textContent = d.percent + '% read';
+    api('/api/books/' + bookId + '/progress/', d).finally(() => pending = false);
+  }
+
+  window.addEventListener('scroll', () => requestAnimationFrame(saveProgress), { passive: true });
+  area?.addEventListener('scroll', () => requestAnimationFrame(saveProgress), { passive: true });
+  setTimeout(() => { const target = document.querySelector('[data-paragraph="' + currentParagraph + '"]'); target?.scrollIntoView({ block: 'center' }) }, 200);
+
+  $('bookmark').onclick = () => { if (!canSaveProgress) return say('Sign in to save bookmarks'); const d = locationData(); const p = document.querySelector('[data-paragraph="' + d.paragraph + '"]'); api('/api/books/' + bookId + '/bookmarks/', { ...d, excerpt: p?.textContent.slice(0, 300) || '' }).then(r => r.ok ? say('Bookmark saved') : say('Could not save bookmark')) };
+
+  document.addEventListener('selectionchange', () => {
+    const sel = getSelection();
+    selectedText = sel?.toString().trim() || '';
+    if (selectedText && selectedText.length < 2000) {
+      const r = sel.getRangeAt(0).getBoundingClientRect(), box = $('selectionActions');
+      box.style.display = 'flex';
+      box.style.left = Math.max(8, r.left + r.width / 2 - 70) + 'px';
+      box.style.top = Math.max(70, r.top - 46) + 'px';
+    } else $('selectionActions').style.display = 'none';
+  });
+
+  document.querySelectorAll('#selectionActions button').forEach(b => b.onclick = () => {
+    const d = locationData();
+    api('/api/books/' + bookId + '/highlight/', { ...d, selected_text: selectedText, color: b.dataset.color }).then(r => r.ok ? say('Highlight saved') : say('Could not save highlight'));
+    getSelection().removeAllRanges();
+    $('selectionActions').style.display = 'none';
+  });
+
+  $('addNote').onclick = () => { const content = prompt('Add a private note at this location:'); if (content?.trim()) api('/api/books/' + bookId + '/notes/', { ...locationData(), content }).then(r => r.ok ? say('Note saved') : say('Could not save note')) };
+
+  $('fullscreen').onclick = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.() };
+  document.addEventListener('fullscreenchange', () => document.body.classList.toggle('reader-hidden', !!document.fullscreenElement));
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') { e.preventDefault(); $('contents').classList.add('open') }
+    if (e.key.toLowerCase() === 'b') $('bookmark').click();
+    if (e.key === 'Escape') closeDrawers();
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const delta = e.key === 'ArrowRight' ? 1 : -1;
+      if (area?.classList.contains('pages')) area.scrollBy({ left: delta * area.clientWidth, behavior: 'smooth' });
+      else scrollBy({ top: delta * innerHeight * 0.75, behavior: 'smooth' });
+    }
+  });
+})();
+</script>
+{% endblock %}

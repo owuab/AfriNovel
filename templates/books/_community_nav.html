@@ -1,0 +1,13 @@
+<nav class="community-nav" aria-label="Community navigation" style="display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px; padding:10px; border:1px solid #ddd5c6; border-radius:6px; background:#fffdf8; font:700 12px Arial,sans-serif;">
+  <a href="{% url 'social_feed' %}" style="color:#155e55; text-decoration:none; padding:5px 7px;">Community</a>
+  <a href="{% url 'reading_now' %}" style="color:#155e55; text-decoration:none; padding:5px 7px;">Reading Now</a>
+  <a href="{% url 'social_reviews' %}" style="color:#155e55; text-decoration:none; padding:5px 7px;">Reviews</a>
+  <a href="{% url 'book_recommendations' %}" style="color:#155e55; text-decoration:none; padding:5px 7px;">Recommendations</a>
+  <a href="{% url 'notifications_page' %}" style="color:#155e55; text-decoration:none; padding:5px 7px;">Notifications</a>
+  <a href="{% url 'saved_content' %}" style="color:#155e55; text-decoration:none; padding:5px 7px;">Saved</a>
+  {% if user.is_authenticated %}
+    <a href="{% url 'social_profile' user.username %}" style="color:#155e55; text-decoration:none; padding:5px 7px;">Profile</a>
+  {% else %}
+    <a href="{% url 'login' %}" style="color:#155e55; text-decoration:none; padding:5px 7px;">Sign in</a>
+  {% endif %}
+</nav>

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Discussion | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-720 { max-width: 720px; margin: 0 auto; }
+
+  .back-link {
+    color: var(--color-success);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: var(--spacing-3);
+  }
+
+  .back-link:hover { text-decoration: underline; }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    margin: var(--spacing-3) 0;
+  }
+
+  .head {
+    display: flex;
+    gap: var(--spacing-2);
+    font-family: Arial, sans-serif;
+    margin-bottom: var(--spacing-2);
+  }
+
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #bdd4c8;
+    font-weight: bold;
+    color: #154c45;
+    flex-shrink: 0;
+  }
+
+  .head strong { color: var(--color-text-primary); font-weight: 700; }
+
+  .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .text {
+    line-height: 1.6;
+    white-space: pre-wrap;
+    margin: var(--spacing-3) 0;
+    color: var(--color-text-primary);
+  }
+
+  .attached {
+    display: block;
+    padding: var(--spacing-2);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    color: var(--color-accent);
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+  }
+
+  .attached:hover { text-decoration: underline; }
+
+  .comment {
+    border-top: 1px solid var(--color-border);
+    padding: var(--spacing-3) 0;
+  }
+
+  .reply {
+    margin: var(--spacing-3) 0 0 var(--spacing-4);
+    padding-left: var(--spacing-2);
+    border-left: 2px solid var(--color-success);
+  }
+
+  .composer {
+    margin-top: var(--spacing-4);
+  }
+
+  .composer textarea, .composer input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-2);
+    font: inherit;
+    font-family: Arial, sans-serif;
+    transition: all var(--transition-base);
+  }
+
+  .composer textarea:focus, .composer input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(122, 76, 61, 0.1);
+  }
+
+  .composer textarea { min-height: 70px; }
+
+  .button {
+    border: none;
+    background: var(--color-success);
+    color: white;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-2) var(--spacing-3);
+    margin-top: var(--spacing-2);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .button:hover { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container max-width-720">
+  <a class="back-link" href="{% url 'social_feed' %}">← Back to community</a>
+  
+  <article class="card">
+    <div class="head">
+      <div class="avatar">{{ post.author.username|slice:':1'|upper }}</div>
+      <div>
+        <strong>{{ post.author.get_full_name|default:post.author.username }}</strong>
+        <div class="meta">@{{ post.author.username }} · {{ post.created_at|timesince }} ago</div>
+      </div>
+    </div>
+    <div class="text">{{ post.content }}</div>
+    {% if post.book %}
+      <a class="attached" href="{% url 'book_detail' post.book.slug %}">{{ post.book.title }} by {{ post.book.author.name }}</a>
+    {% elif post.catalog_book %}
+      <a class="attached" href="{% url 'catalogue_detail' post.catalog_book.pk %}">{{ post.catalog_book.title }}</a>
+    {% endif %}
+    <div class="meta">♡ {{ post.like_count }} · {{ comment_count }} replies</div>
+  </article>
+
+  {% if user.is_authenticated %}
+    <div class="card composer">
+      <form method="post">
+        {% csrf_token %}
+        <textarea name="content" placeholder="Share your thoughts..."></textarea>
+        <button type="submit" class="button">Reply</button>
+      </form>
+    </div>
+  {% endif %}
+
+  {% for comment in comments %}
+    <article class="card{% if comment.is_reply %} reply{% endif %}">
+      <div class="head">
+        <div class="avatar">{{ comment.author.username|slice:':1'|upper }}</div>
+        <div>
+          <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+          <div class="meta">@{{ comment.author.username }} · {{ comment.created_at|timesince }} ago</div>
+        </div>
+      </div>
+      <div class="text">{{ comment.content }}</div>
+    </article>
+  {% empty %}
+    <div style="text-align: center; color: var(--color-text-secondary); padding: var(--spacing-6);">
+      <p>No replies yet. Start the conversation!</p>
+    </div>
+  {% endfor %}
+</main>
+{% endblock %}

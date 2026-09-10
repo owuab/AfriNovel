@@ -1,0 +1,8 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Assign Admin Role | AfriNovel Admin{% endblock %}
+
+{% block content %}
+<div class="page-header"><div><p class="eyebrow">Administration</p><h1>Assign admin role</h1><p class="page-intro">Grant a staff member access to operational tools.</p></div><a class="secondary-button" href="{% url 'admin_panel:admin-roles' %}">Cancel</a></div>
+<form method="post" class="panel role-form">{% csrf_token %}{% if form.non_field_errors %}<div class="errorlist">{{ form.non_field_errors }}</div>{% endif %}{% for field in form %}<div class="form-group"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span aria-hidden="true">*</span>{% endif %}</label>{{ field }}{% if field.help_text %}<small class="helptext">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="error-text">{{ error }}</span>{% endfor %}</div>{% endfor %}<div class="role-form-actions"><button class="primary-button" type="submit">Assign role</button><a class="secondary-button" href="{% url 'admin_panel:admin-roles' %}">Cancel</a></div></form>
+{% endblock %}

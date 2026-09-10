@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ user.username }} | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Profile page specific styles using design system tokens */
+
+  .hero-panel {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-7);
+    margin-top: var(--spacing-7);
+  }
+
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: var(--spacing-6);
+    align-items: start;
+  }
+
+  .avatar {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #d6b2a0, #7b4d3c);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .hero-info h1 {
+    margin: 0 0 var(--spacing-2);
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    letter-spacing: -0.06em;
+    color: var(--color-text-primary);
+  }
+
+  .hero-info p {
+    margin: 0 0 var(--spacing-4);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+  }
+
+  .admin-control-link {
+    display: inline-block;
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--border-radius-sm);
+    color: var(--color-accent);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .admin-control-link:hover {
+    background: var(--color-accent);
+    color: white;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-3);
+  }
+
+  .stat-box {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3) var(--spacing-4);
+    transition: all var(--transition-base);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  a.stat-box:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .stat-label {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-top: var(--spacing-2);
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+  }
+
+  .content-section {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-6);
+    margin-top: var(--spacing-6);
+  }
+
+  .section-title {
+    margin: 0 0 var(--spacing-4);
+    font-size: var(--font-size-2xl);
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  .book-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3);
+  }
+
+  .cover {
+    height: 160px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-2);
+    background: linear-gradient(135deg, #dcae7b, #8a563f);
+  }
+
+  .book-title {
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+  }
+
+  .review-item {
+    padding: var(--spacing-3) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .review-item:last-child {
+    border-bottom: none;
+  }
+
+  .review-text {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    font-size: var(--font-size-sm);
+  }
+
+  @media (max-width: 860px) {
+    .hero-inner, .book-grid, .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="hero-panel">
+    <div class="hero-inner">
+      <div class="avatar"></div>
+      <div class="hero-info">
+        <h1>{{ user.username }}</h1>
+        <p>Reader and writer exploring global literature and emerging voices.</p>
+        {% if user.is_staff or user.is_superuser %}
+          <p><a class="admin-control-link" href="{% url 'admin_panel:dashboard' %}">Open admin control panel</a></p>
+        {% endif %}
+        <div class="stats-grid">
+          <a class="stat-box" href="{% url 'social_profile_tab' user.username 'books' %}">
+            <div class="stat-label">Books read</div>
+            <div class="stat-value">{{ books_read_count }}</div>
+          </a>
+          <a class="stat-box" href="{% url 'social_profile_tab' user.username 'posts' %}">
+            <div class="stat-label">Views</div>
+            <div class="stat-value">{{ profile_view_count }}</div>
+          </a>
+          <a class="stat-box" href="{% url 'followers_page' user.username %}">
+            <div class="stat-label">Followers</div>
+            <div class="stat-value">{{ followers_count }}</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <h2 class="section-title">My Books</h2>
+    {% if authored_books %}
+      <div class="book-grid">
+        {% for book in authored_books %}
+          <div class="book-card">
+            <div class="cover" style="background: {{ book.cover_color }};"></div>
+            <div class="book-title">{{ book.title }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color:var(--color-text-secondary);">No books published yet. <a href="{% url 'publish_book' %}" style="color:var(--color-accent); font-weight:700;">Publish your first work</a></p>
+    {% endif %}
+  </div>
+
+  <div class="content-section">
+    <h2 class="section-title">Recent Reviews</h2>
+    {% if reviews %}
+      {% for review in reviews %}
+        <div class="review-item">
+          <div class="review-text">{{ review.content }}</div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--color-text-secondary);">No reviews yet. <a href="{% url 'search_books' %}" style="color:var(--color-accent); font-weight:700;">Find books to review</a></p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

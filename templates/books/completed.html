@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Completed Books | AfriNovel{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>✅ Completed Books</h1>
+    <p class="page-subtitle">
+      {% if is_authenticated %}
+        Your reading journey - books you've finished
+      {% else %}
+        Sign in to see the books you have completed
+      {% endif %}
+    </p>
+  </div>
+  
+  <div class="filters">
+    <form method="get" class="filter-form">
+      <div class="filter-group">
+        <label for="genre">Genre</label>
+        <select name="genre" id="genre">
+          <option value="">All Genres</option>
+          {% for genre in genres %}
+            <option value="{{ genre.slug }}" {% if genre_filter == genre.slug %}selected{% endif %}>{{ genre.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="author">Author</label>
+        <select name="author" id="author">
+          <option value="">All Authors</option>
+          {% for author in authors %}
+            <option value="{{ author.name }}" {% if author_filter == author.name %}selected{% endif %}>{{ author.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="rating">Rating</label>
+        <select name="rating" id="rating">
+          <option value="">All Ratings</option>
+          <option value="5" {% if rating_filter == '5' %}selected{% endif %}>5 Stars</option>
+          <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4+ Stars</option>
+          <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3+ Stars</option>
+          <option value="2" {% if rating_filter == '2' %}selected{% endif %}>2+ Stars</option>
+          <option value="1" {% if rating_filter == '1' %}selected{% endif %}>1+ Stars</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="sort">Sort By</label>
+        <select name="sort" id="sort">
+          <option value="recent" {% if sort == 'recent' %}selected{% endif %}>Recently Completed</option>
+          <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+          <option value="title" {% if sort == 'title' %}selected{% endif %}>Title A-Z</option>
+        </select>
+      </div>
+      
+      <button type="submit" class="filter-button">Apply Filters</button>
+      <a href="{% url 'completed' %}" class="clear-filters">Clear</a>
+    </form>
+  </div>
+  
+  <div class="book-grid">
+    {% if is_authenticated %}
+      {% for entry in books %}
+        {% include "components/book_card.html" with book=entry.book show_genres=True show_rating=True show_status=True status_text="Completed" status_class="status-completed" %}
+      {% empty %}
+        <div class="empty-state">
+          <div class="empty-icon">📚</div>
+          <h3>No completed books found</h3>
+          <p>You haven't completed any books yet. Start reading and mark books as complete when you finish them!</p>
+          <a href="{% url 'discover' %}" class="action-button">Discover Books</a>
+        </div>
+      {% endfor %}
+    {% else %}
+      {% for book in books %}
+        {% include "components/book_card.html" with book=book show_genres=True show_rating=True show_status=True status_text="Completed" status_class="status-completed" %}
+      {% empty %}
+        <div class="empty-state">
+          <div class="empty-icon">📚</div>
+          <h3>No completed books found</h3>
+          <p>Completed books are private to each reader. Sign in to track your reading.</p>
+          <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="action-button">Sign in</a>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+  
+  {% if books.has_other_pages %}
+    <div class="pagination">
+      {% if books.has_previous %}
+        <a href="?page=1&genre={{ genre_filter }}&author={{ author_filter }}&rating={{ rating_filter }}&sort={{ sort }}">« First</a>
+        <a href="?page={{ books.previous_page_number }}&genre={{ genre_filter }}&author={{ author_filter }}&rating={{ rating_filter }}&sort={{ sort }}">Previous</a>
+      {% endif %}
+      
+      <span class="page-info">
+        Page {{ books.number }} of {{ books.paginator.num_pages }}
+      </span>
+      
+      {% if books.has_next %}
+        <a href="?page={{ books.next_page_number }}&genre={{ genre_filter }}&author={{ author_filter }}&rating={{ rating_filter }}&sort={{ sort }}">Next</a>
+        <a href="?page={{ books.paginator.num_pages }}&genre={{ genre_filter }}&author={{ author_filter }}&rating={{ rating_filter }}&sort={{ sort }}">Last »</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header {
+    margin-bottom: var(--spacing-6);
+  }
+  
+  .page-header h1 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .page-subtitle {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+  }
+  
+  .filters {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-5);
+    margin-bottom: var(--spacing-6);
+  }
+  
+  .filter-form {
+    display: flex;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    min-width: 150px;
+  }
+  
+  .filter-group label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+  }
+  
+  .filter-group select {
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+  }
+  
+  .filter-button {
+    padding: var(--spacing-2) var(--spacing-5);
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+  
+  .filter-button:hover {
+    opacity: 0.9;
+  }
+  
+  .clear-filters {
+    padding: var(--spacing-2) var(--spacing-4);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .clear-filters:hover {
+    color: var(--color-accent);
+  }
+  
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-5);
+  }
+  
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--spacing-12);
+    color: var(--color-text-secondary);
+  }
+  
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .empty-state h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .action-button {
+    display: inline-block;
+    padding: var(--spacing-3) var(--spacing-6);
+    background: var(--color-accent);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-base);
+    margin-top: var(--spacing-4);
+  }
+  
+  .action-button:hover {
+    opacity: 0.9;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-8);
+    padding: var(--spacing-4);
+  }
+  
+  .pagination a {
+    padding: var(--spacing-2) var(--spacing-4);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    transition: all var(--transition-base);
+  }
+  
+  .pagination a:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+  
+  .page-info {
+    padding: var(--spacing-2) var(--spacing-4);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .status-completed {
+    background: var(--color-success-light);
+    color: var(--color-success);
+  }
+  
+  @media (max-width: 768px) {
+    .filter-form {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .filter-group {
+      min-width: 100%;
+    }
+    
+    .book-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: var(--spacing-4);
+    }
+    
+    .pagination {
+      flex-wrap: wrap;
+    }
+  }
+</style>
+{% endblock %}

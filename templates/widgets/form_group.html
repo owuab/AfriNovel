@@ -1,0 +1,16 @@
+{% load widget_tweaks %}
+
+<div class="form-group">
+    {% if widget.label %}
+        <label for="{{ widget.attrs.id }}"{% if widget.required %} class="required"{% endif %}>
+            {{ widget.label }}
+            {% if widget.required %}<span class="required">*</span>{% endif %}
+        </label>
+    {% endif %}
+
+    {% include widget.template_name with widget=widget %}
+
+    {% if widget.help_text %}
+        <div class="form-help">{{ widget.help_text|safe }}</div>
+    {% endif %}
+</div>

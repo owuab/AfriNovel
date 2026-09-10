@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ relationship|title }} | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-750 { max-width: 750px; margin: 0 auto; }
+
+  .back-link {
+    color: var(--color-success);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: var(--spacing-3);
+  }
+
+  .back-link:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .tabs {
+    display: flex;
+    margin: var(--spacing-3) 0;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-2);
+    gap: var(--spacing-4);
+  }
+
+  .tabs a {
+    color: var(--color-success);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-base);
+  }
+
+  .tabs a:hover { text-decoration: underline; }
+
+  .search-box {
+    width: 100%;
+    padding: var(--spacing-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    margin: var(--spacing-3) 0;
+    font-family: Arial, sans-serif;
+  }
+
+  .person {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3);
+    margin: var(--spacing-2) 0;
+    transition: all var(--transition-base);
+  }
+
+  .person:hover { box-shadow: var(--shadow-sm); }
+
+  .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #bdd4c8;
+    display: grid;
+    place-items: center;
+    font-weight: bold;
+    color: #154c45;
+    flex-shrink: 0;
+  }
+
+  .info { flex: 1; }
+
+  .info strong {
+    color: var(--color-text-primary);
+    font-weight: 700;
+  }
+
+  .info a { text-decoration: none; color: inherit; }
+
+  .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-1);
+  }
+
+  .button {
+    border: 1px solid var(--color-success);
+    background: var(--color-success);
+    color: white;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-1) var(--spacing-2);
+    font: bold var(--font-size-xs) Arial, sans-serif;
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .button:hover { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container max-width-750">
+  <a class="back-link" href="{% url 'social_profile' profile_user.username %}">← @{{ profile_user.username }}</a>
+  <h1>{{ relationship|title }}</h1>
+  <nav class="tabs">
+    <a href="{% url 'followers_page' profile_user.username 'followers' %}">Followers</a>
+    <a href="{% url 'followers_page' profile_user.username 'following' %}">Following</a>
+  </nav>
+  
+  <form>
+    <input class="search-box" name="q" value="{{ query }}" placeholder="Search {{ relationship }}">
+  </form>
+
+  {% for person in people %}
+    <article class="person">
+      <div class="avatar">{{ person.username|slice:':1'|upper }}</div>
+      <div class="info">
+        <a href="{% url 'social_profile' person.username %}">
+          <strong>{{ person.get_full_name|default:person.username }}</strong>
+        </a>
+        <div class="meta">@{{ person.username }}</div>
+      </div>
+      {% if user.is_authenticated and person != user %}
+        <form method="post" action="{% url 'toggle_user_follow' person.username %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button class="button">
+            {% if person.pk in followed_users %}Unfollow{% else %}Follow{% endif %}
+          </button>
+        </form>
+      {% endif %}
+    </article>
+  {% empty %}
+    <p style="text-align: center; color: var(--color-text-secondary); padding: var(--spacing-8);">
+      No {{ relationship }} found.
+    </p>
+  {% endfor %}
+</main>
+{% endblock %}

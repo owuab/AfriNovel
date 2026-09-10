@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Publish a Book | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-860 { max-width: 860px; margin: 0 auto; }
+
+  .panel {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-6);
+  }
+
+  h1 {
+    margin-top: 0;
+    font-size: var(--font-size-3xl);
+    letter-spacing: -0.05em;
+    color: var(--color-text-primary);
+  }
+
+  form {
+    display: grid;
+    gap: var(--spacing-4);
+  }
+
+  input, textarea, select {
+    width: 100%;
+    padding: var(--spacing-2);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--color-border);
+    font-size: var(--font-size-base);
+    font-family: Arial, sans-serif;
+    transition: all var(--transition-base);
+  }
+
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(122, 76, 61, 0.1);
+  }
+
+  textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  label {
+    font-weight: 700;
+    color: var(--color-text-primary);
+    display: block;
+    margin-bottom: var(--spacing-1);
+  }
+
+  .btn {
+    border: none;
+    border-radius: var(--border-radius-md);
+    background: var(--color-accent);
+    color: white;
+    padding: var(--spacing-3);
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .btn:hover { opacity: 0.9; }
+
+  .error {
+    color: #9c2d2d;
+    background: #fbe7e7;
+    border: 1px solid #f0c3c3;
+    padding: var(--spacing-3);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-4);
+  }
+
+  .form-group {
+    display: grid;
+    gap: var(--spacing-1);
+  }
+
+  .upload-section { display: grid; gap: var(--spacing-3); padding-top: var(--spacing-2); border-top: 1px solid var(--color-border); }
+  .upload-section h2 { margin: 0; color: var(--color-text-primary); font-size: var(--font-size-xl); }
+  .upload-section > p { margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+  .upload-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-3); }
+  .upload-card { display: grid; gap: var(--spacing-2); padding: var(--spacing-4); border: 1px solid var(--color-border); border-radius: var(--border-radius-md); background: var(--color-bg-secondary); }
+  .drop-zone { display: grid; place-items: center; min-height: 120px; padding: var(--spacing-4); border: 1.5px dashed var(--color-border-strong); border-radius: var(--border-radius-md); background: var(--color-bg-primary); text-align: center; cursor: pointer; }
+  .drop-zone:hover, .drop-zone:focus-within, .drop-zone.is-dragging { border-color: var(--color-accent); background: var(--color-bg-tertiary); }
+  .drop-zone strong { color: var(--color-text-primary); }
+  .drop-zone span { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+  .drop-zone input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .file-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .file-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: var(--border-radius-sm); background: var(--color-bg-tertiary); color: var(--color-text-primary); font-size: var(--font-size-sm); }
+  .file-item small { color: var(--color-text-secondary); white-space: nowrap; }
+  .cover-preview { display: none; width: 72px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); }
+  .upload-status { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+  .upload-status.error { color: #9c2d2d; }
+  .progress-wrap { display: none; gap: 6px; }
+  progress { width: 100%; height: 8px; accent-color: var(--color-accent); }
+  @media (max-width: 700px) { .upload-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container max-width-860">
+  <div class="panel">
+    <h1>Publish your work</h1>
+    {% if error or errors %}
+      <div class="error" role="alert">
+        {% if error %}<div>{{ error }}</div>{% endif %}
+        {% for upload_error in errors %}<div>{{ upload_error }}</div>{% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" data-upload-form>
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input id="title" name="title" type="text" required />
+      </div>
+
+      <div class="form-group">
+        <label for="slug">Slug</label>
+        <input id="slug" name="slug" type="text" required />
+      </div>
+
+      <div class="form-group">
+        <label for="summary">Summary</label>
+        <textarea id="summary" name="summary" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="cover_color">Cover gradient</label>
+        <input id="cover_color" name="cover_color" type="text" value="linear-gradient(135deg, #dcae7b, #8a563f)" />
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+      </div>
+
+      <section class="upload-section" aria-labelledby="upload-heading">
+        <div>
+          <h2 id="upload-heading">Book files</h2>
+          <p>Manuscripts: EPUB, PDF, DOCX, or MOBI. Covers: JPG, PNG, or WEBP. Maximum 50 MB per file.</p>
+        </div>
+        <div class="upload-grid">
+          <div class="upload-card">
+            <label for="manuscript">Manuscript <span aria-hidden="true">*</span></label>
+            <label class="drop-zone" for="manuscript">
+              <span><strong>Drop manuscript here</strong><br>or choose a file</span>
+              <input id="manuscript" name="manuscript" type="file" accept=".epub,.pdf,.docx,.mobi" required data-file-input="manuscript" />
+            </label>
+            <ul class="file-list" data-file-list="manuscript" aria-live="polite"></ul>
+          </div>
+          <div class="upload-card">
+            <label for="cover">Cover image <span>(optional)</span></label>
+            <label class="drop-zone" for="cover">
+              <span><strong>Drop cover here</strong><br>JPG, PNG, or WEBP</span>
+              <input id="cover" name="cover" type="file" accept=".jpg,.jpeg,.png,.webp" data-file-input="cover" />
+            </label>
+            <img class="cover-preview" data-cover-preview alt="Selected cover preview" />
+            <ul class="file-list" data-file-list="cover" aria-live="polite"></ul>
+          </div>
+        </div>
+        <div class="upload-card">
+          <label for="assets">Supporting assets <span>(optional)</span></label>
+          <label class="drop-zone" for="assets">
+            <span><strong>Drop multiple assets here</strong><br>ZIP, images, or PDF</span>
+            <input id="assets" name="assets" type="file" accept=".zip,.jpg,.jpeg,.png,.webp,.pdf" multiple data-file-input="assets" />
+          </label>
+          <ul class="file-list" data-file-list="assets" aria-live="polite"></ul>
+        </div>
+        <div class="progress-wrap" data-progress-wrap>
+          <progress value="0" max="100" data-progress aria-label="Upload progress"></progress>
+          <span class="upload-status" data-upload-status aria-live="polite"></span>
+        </div>
+      </section>
+
+      <button class="btn" type="submit">Publish</button>
+    </form>
+  </div>
+</div>
+<script>
+  (() => {
+    const maxSize = {{ max_upload_size|default:52428800 }};
+    const allowed = {
+      manuscript: ['epub', 'pdf', 'docx', 'mobi'],
+      cover: ['jpg', 'jpeg', 'png', 'webp'],
+      assets: ['zip', 'jpg', 'jpeg', 'png', 'webp', 'pdf']
+    };
+    const form = document.querySelector('[data-upload-form]');
+    const status = document.querySelector('[data-upload-status]');
+    const formatBytes = (bytes) => `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    const renderFiles = (input) => {
+      const kind = input.dataset.fileInput;
+      const list = document.querySelector(`[data-file-list="${kind}"]`);
+      const errors = [];
+      list.innerHTML = '';
+      Array.from(input.files).forEach((file) => {
+        const extension = file.name.split('.').pop().toLowerCase();
+        if (!allowed[kind].includes(extension)) errors.push(`${file.name}: unsupported file type.`);
+        if (file.size > maxSize) errors.push(`${file.name}: exceeds the 50 MB limit.`);
+        const item = document.createElement('li');
+        item.className = 'file-item';
+        item.innerHTML = `<span>${file.name}</span><small>${formatBytes(file.size)}</small>`;
+        list.appendChild(item);
+      });
+      if (kind === 'cover' && input.files[0]) {
+        const preview = document.querySelector('[data-cover-preview]');
+        preview.src = URL.createObjectURL(input.files[0]);
+        preview.style.display = 'block';
+      }
+      status.textContent = errors.join(' ');
+      status.classList.toggle('error', errors.length > 0);
+      input.setCustomValidity(errors.join(' '));
+    };
+    document.querySelectorAll('[data-file-input]').forEach((input) => {
+      input.addEventListener('change', () => renderFiles(input));
+      const zone = input.closest('.drop-zone');
+      ['dragenter', 'dragover'].forEach((eventName) => zone.addEventListener(eventName, (event) => { event.preventDefault(); zone.classList.add('is-dragging'); }));
+      ['dragleave', 'drop'].forEach((eventName) => zone.addEventListener(eventName, (event) => { event.preventDefault(); zone.classList.remove('is-dragging'); }));
+      zone.addEventListener('drop', (event) => { input.files = event.dataTransfer.files; renderFiles(input); });
+    });
+    form.addEventListener('submit', () => {
+      const progressWrap = document.querySelector('[data-progress-wrap]');
+      progressWrap.style.display = 'grid';
+      status.textContent = 'Uploading files...';
+    });
+  })();
+</script>
+{% endblock %}

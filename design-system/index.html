@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BookClub Design System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./storybook.css" />
+  </head>
+  <body>
+    <div class="design-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">B</div>
+          <div>
+            <div class="brand-name">BookClub</div>
+            <div class="brand-subtitle">Design system</div>
+          </div>
+        </div>
+
+        <div class="side-section">
+          <div class="side-label">Overview</div>
+          <a class="nav-link is-active" href="./index.html">Storybook home</a>
+          <a class="nav-link" href="./pages/overview.html">Overview</a>
+          <a class="nav-link" href="./pages/users.html">Users</a>
+          <a class="nav-link" href="./pages/settings.html">Settings</a>
+          <a class="nav-link" href="./pages/logs.html">Logs</a>
+          <a class="nav-link" href="./pages/crud-editor.html">CRUD editor</a>
+          <a class="nav-link" href="./pages/reports.html">Reports</a>
+          <a class="nav-link" href="./pages/roles.html">Roles & access</a>
+        </div>
+
+        <div class="side-section">
+          <div class="side-label">Tokens</div>
+          <a class="nav-link" href="#components">Components</a>
+          <a class="nav-link" href="#colors">Color system</a>
+          <a class="nav-link" href="#typography">Typography</a>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="search">
+            <span>⌕</span>
+            <input type="search" placeholder="Search patterns, tokens, pages..." />
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-theme-toggle type="button">☾</button>
+            <button class="secondary-btn" type="button">Export</button>
+            <div class="user-pill">
+              <div class="avatar">A</div>
+              <div>
+                <strong>Admin</strong><br />
+                <small>Design ops</small>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="page">
+          <div class="page-header">
+            <div>
+              <div class="kicker">Admin system</div>
+              <h1>BookClub pattern library</h1>
+            </div>
+            <button class="primary-btn" type="button">Publish update</button>
+          </div>
+
+          <section class="metrics-grid">
+            <article class="metric-card primary">
+              <div class="metric-label">Components</div>
+              <div class="metric-value">32</div>
+              <div class="metric-meta">System patterns shipped</div>
+            </article>
+            <article class="metric-card success">
+              <div class="metric-label">Pages</div>
+              <div class="metric-value">05</div>
+              <div class="metric-meta">Multi-page admin flows</div>
+            </article>
+            <article class="metric-card info">
+              <div class="metric-label">Tokens</div>
+              <div class="metric-value">120</div>
+              <div class="metric-meta">Design variables</div>
+            </article>
+            <article class="metric-card warning">
+              <div class="metric-label">Accessibility</div>
+              <div class="metric-value">AA</div>
+              <div class="metric-meta">Contrast & keyboard support</div>
+            </article>
+          </section>
+
+          <section class="content-grid">
+            <article class="panel">
+              <div class="panel-header">
+                <h2>Overview timeline</h2>
+                <button class="ghost-btn" type="button">This quarter</button>
+              </div>
+              <div class="bar-chart" aria-label="Overview chart">
+                <span style="height: 42%"></span>
+                <span style="height: 58%"></span>
+                <span style="height: 64%"></span>
+                <span style="height: 72%"></span>
+                <span style="height: 56%"></span>
+                <span style="height: 81%"></span>
+                <span style="height: 74%"></span>
+              </div>
+              <div class="legend">
+                <span><i class="dot primary"></i> Volume</span>
+                <span><i class="dot success"></i> Engagement</span>
+                <span><i class="dot info"></i> Conversion</span>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <h2>Recent activity</h2>
+              </div>
+              <div class="timeline">
+                <div class="timeline-item">
+                  <span class="timeline-bullet"></span>
+                  <div>
+                    <strong>New author profile approved</strong>
+                    <p>12 minutes ago</p>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <span class="timeline-bullet"></span>
+                  <div>
+                    <strong>Reading list campaign launched</strong>
+                    <p>1 hour ago</p>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <span class="timeline-bullet"></span>
+                  <div>
+                    <strong>Moderation report exported</strong>
+                    <p>3 hours ago</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section class="storybook-summary" id="components" style="margin-top: 24px;">
+            <article class="story-card">
+              <h3>Header</h3>
+              <p>Global navigation, search, and actions with strong clear hierarchy.</p>
+            </article>
+            <article class="story-card">
+              <h3>Sidebar</h3>
+              <p>Logical grouping of management sections with compact navigation affordances.</p>
+            </article>
+            <article class="story-card">
+              <h3>Data table</h3>
+              <p>Dense admin tables with sorting, badges, filters, and compact actions.</p>
+            </article>
+          </section>
+
+          <section class="component-grid" id="colors" style="margin-top: 24px;">
+            <article class="panel">
+              <div class="panel-header">
+                <h2>Color system</h2>
+              </div>
+              <div class="legend">
+                <span><i class="dot primary"></i> Primary</span>
+                <span><i class="dot success"></i> Success</span>
+                <span><i class="dot info"></i> Info</span>
+              </div>
+              <div class="stats-mini" style="margin-top: 18px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <span class="chip chip-primary">#4F46E5</span>
+                <span class="chip chip-success">#16A34A</span>
+                <span class="chip chip-warning">#F59E0B</span>
+                <span class="chip chip-info">#0EA5E9</span>
+              </div>
+            </article>
+            <article class="panel" id="typography">
+              <div class="panel-header">
+                <h2>Typography</h2>
+              </div>
+              <h3 style="margin:0 0 8px; font-size: 2rem; letter-spacing: -0.06em;">Heading scale</h3>
+              <p style="margin: 0; color: var(--color-text-soft);">Body text uses a balanced, high-legibility sans-serif rhythm with strong contrast.</p>
+            </article>
+          </section>
+
+          <section class="component-grid" style="margin-top: 24px;">
+            <article class="panel">
+              <div class="panel-header">
+                <h2>Component inventory</h2>
+              </div>
+              <div class="list-stack">
+                <div class="list-row"><span>Filters</span><strong>12</strong></div>
+                <div class="list-row"><span>Toasts</span><strong>8</strong></div>
+                <div class="list-row"><span>Modals</span><strong>5</strong></div>
+                <div class="list-row"><span>Role states</span><strong>4</strong></div>
+              </div>
+            </article>
+            <article class="panel">
+              <div class="panel-header">
+                <h2>Design QA</h2>
+              </div>
+              <div class="status-pills">
+                <span class="badge success">AA contrast</span>
+                <span class="badge info">Keyboard ready</span>
+                <span class="badge warning">RTL-ready</span>
+              </div>
+            </article>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="./storybook.js"></script>
+  </body>
+</html>

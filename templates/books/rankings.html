@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Rankings | AfriNovel{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>🏆 Book Rankings</h1>
+    <p class="page-subtitle">Discover the most popular and highly-rated books on AfriNovel</p>
+  </div>
+  
+  <div class="filters">
+    <form method="get" class="filter-form">
+      <div class="filter-group">
+        <label for="type">Ranking Type</label>
+        <select name="type" id="type">
+          <option value="rating" {% if ranking_type == 'rating' %}selected{% endif %}>Highest Rated</option>
+          <option value="reads" {% if ranking_type == 'reads' %}selected{% endif %}>Most Read</option>
+          <option value="reviews" {% if ranking_type == 'reviews' %}selected{% endif %}>Most Reviewed</option>
+          <option value="trending" {% if ranking_type == 'trending' %}selected{% endif %}>Trending</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="time">Time Period</label>
+        <select name="time" id="time">
+          <option value="all" {% if time_filter == 'all' %}selected{% endif %}>All Time</option>
+          <option value="month" {% if time_filter == 'month' %}selected{% endif %}>This Month</option>
+          <option value="week" {% if time_filter == 'week' %}selected{% endif %}>This Week</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="category">Category</label>
+        <select name="category" id="category">
+          <option value="">All Categories</option>
+          {% for genre in genres %}
+            <option value="{{ genre.slug }}" {% if category_filter == genre.slug %}selected{% endif %}>{{ genre.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <button type="submit" class="filter-button">Apply Filters</button>
+      <a href="{% url 'rankings' %}" class="clear-filters">Clear</a>
+    </form>
+  </div>
+  
+  <div class="ranking-list">
+    {% for book in books %}
+      {% with rank=start_rank|add:forloop.counter0 %}
+        {% include "components/ranking_item.html" with book=book rank=rank show_genres=True show_rating=True show_stats=True show_action=True action_text="Read" %}
+      {% endwith %}
+    {% empty %}
+      <div class="empty-state">
+        <div class="empty-icon">🏆</div>
+        <h3>No books found for this ranking</h3>
+        <p>Try adjusting your filters or check back later for updated rankings.</p>
+        <a href="{% url 'discover' %}" class="action-button">Discover Books</a>
+      </div>
+    {% endfor %}
+  </div>
+  
+  {% if books.has_other_pages %}
+    <div class="pagination">
+      {% if books.has_previous %}
+        <a href="?page=1&type={{ ranking_type }}&time={{ time_filter }}&category={{ category_filter }}">« First</a>
+        <a href="?page={{ books.previous_page_number }}&type={{ ranking_type }}&time={{ time_filter }}&category={{ category_filter }}">Previous</a>
+      {% endif %}
+      
+      <span class="page-info">
+        Page {{ books.number }} of {{ books.paginator.num_pages }}
+      </span>
+      
+      {% if books.has_next %}
+        <a href="?page={{ books.next_page_number }}&type={{ ranking_type }}&time={{ time_filter }}&category={{ category_filter }}">Next</a>
+        <a href="?page={{ books.paginator.num_pages }}&type={{ ranking_type }}&time={{ time_filter }}&category={{ category_filter }}">Last »</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header {
+    margin-bottom: var(--spacing-6);
+  }
+  
+  .page-header h1 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .page-subtitle {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+  }
+  
+  .filters {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-5);
+    margin-bottom: var(--spacing-6);
+  }
+  
+  .filter-form {
+    display: flex;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    min-width: 150px;
+  }
+  
+  .filter-group label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+  }
+  
+  .filter-group select {
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+  }
+  
+  .filter-button {
+    padding: var(--spacing-2) var(--spacing-5);
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+  
+  .filter-button:hover {
+    opacity: 0.9;
+  }
+  
+  .clear-filters {
+    padding: var(--spacing-2) var(--spacing-4);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .clear-filters:hover {
+    color: var(--color-accent);
+  }
+  
+  .ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-12);
+    color: var(--color-text-secondary);
+  }
+  
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .empty-state h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .action-button {
+    display: inline-block;
+    padding: var(--spacing-3) var(--spacing-6);
+    background: var(--color-accent);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-base);
+    margin-top: var(--spacing-4);
+  }
+  
+  .action-button:hover {
+    opacity: 0.9;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-8);
+    padding: var(--spacing-4);
+  }
+  
+  .pagination a {
+    padding: var(--spacing-2) var(--spacing-4);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    transition: all var(--transition-base);
+  }
+  
+  .pagination a:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+  
+  .page-info {
+    padding: var(--spacing-2) var(--spacing-4);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  @media (max-width: 768px) {
+    .filter-form {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .filter-group {
+      min-width: 100%;
+    }
+    
+    .page-header h1 {
+      font-size: var(--font-size-2xl);
+    }
+    
+    .pagination {
+      flex-wrap: wrap;
+    }
+  }
+</style>
+{% endblock %}

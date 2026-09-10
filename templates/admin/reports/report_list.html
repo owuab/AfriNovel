@@ -1,0 +1,349 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Content Reports | Admin Dashboard{% endblock %}
+
+{% block extrahead %}
+<style>
+    .admin-header {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .report-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border-left: 4px solid #f56565;
+    }
+
+    .report-card.resolved {
+        border-left-color: #48bb78;
+        opacity: 0.7;
+    }
+
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .report-title {
+        flex: 1;
+    }
+
+    .report-title h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .report-type {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(245, 101, 101, 0.2);
+        color: #f56565;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .report-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-item {
+        background: #f7fafc;
+        padding: 12px;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .stat-item .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #718096;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .stat-item .value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .reporter-info,
+    .reported-user-info {
+        background: #f7fafc;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+    }
+
+    .info-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        font-size: 14px;
+        color: #2d3748;
+    }
+
+    .report-description {
+        background: #fffaf0;
+        border-left: 3px solid #ed8936;
+        padding: 16px;
+        border-radius: 6px;
+        margin: 16px 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: #4a5568;
+    }
+
+    .action-section {
+        background: #f7fafc;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 16px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-success {
+        background: #48bb78;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #f56565;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #cbd5e0;
+        color: #2d3748;
+    }
+
+    .filter-pills {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .filter-pill {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 2px solid transparent;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s;
+    }
+
+    .filter-pill.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h2>🚩 Content Reports & Moderation</h2>
+    <p>Review and resolve reported content</p>
+</div>
+
+<!-- Stats -->
+<div class="report-stats">
+    <div class="stat-item">
+        <div class="label">Total Reports</div>
+        <div class="value">{{ reports.paginator.count|default:0 }}</div>
+    </div>
+    <div class="stat-item">
+        <div class="label">Pending</div>
+        <div class="value" style="color: #ed8936;">{{ pending_count|default:0 }}</div>
+    </div>
+    <div class="stat-item">
+        <div class="label">Under Review</div>
+        <div class="value" style="color: #4299e1;">{{ reviewing_count|default:0 }}</div>
+    </div>
+    <div class="stat-item">
+        <div class="label">Resolved</div>
+        <div class="value" style="color: #48bb78;">{{ resolved_count|default:0 }}</div>
+    </div>
+</div>
+
+<!-- Reports List -->
+{% if reports %}
+    {% for report in reports %}
+    <div class="report-card {% if report.resolved %}resolved{% endif %}">
+        <div class="report-header">
+            <div class="report-title">
+                <h3>Report #{{ report.id }}</h3>
+                <span class="report-type">{{ report.get_reason_display }}</span>
+            </div>
+            <div style="text-align: right;">
+                <div style="display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                    {% if report.resolved %}
+                        background: rgba(72, 187, 120, 0.2); color: #48bb78;
+                    {% else %}
+                        background: rgba(237, 137, 54, 0.2); color: #ed8936;
+                    {% endif %}
+                ">
+                    {% if report.resolved %}Resolved{% else %}Pending{% endif %}
+                </div>
+                <div style="font-size: 12px; color: #718096; margin-top: 8px;">
+                    {{ report.created_at|date:"M d, Y H:i" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporter Info -->
+        <div class="reporter-info">
+            <div class="info-label">📝 Reported By</div>
+            <div class="info-value">
+                <strong>{{ report.reporter.username }}</strong> 
+                <span style="color: #718096;">({{ report.reporter.email }})</span>
+            </div>
+        </div>
+
+        <!-- Reported Content Info -->
+        <div class="reported-user-info">
+            <div class="info-label">👤 Reported User</div>
+            <div class="info-value">
+                <strong>{{ report.reported_user.username }}</strong>
+                <span style="color: #718096;">({{ report.reported_user.email }})</span>
+            </div>
+        </div>
+
+        <!-- Report Description -->
+        <div>
+            <div style="font-size: 12px; font-weight: 600; color: #718096; margin-bottom: 8px; text-transform: uppercase;">Description</div>
+            <div class="report-description">
+                {{ report.details|default:"No additional details provided." }}
+            </div>
+        </div>
+
+        <!-- Action Section -->
+        {% if not report.resolved %}
+        <div class="action-section">
+            <h4 style="margin-top: 0; color: #2d3748;">Take Action</h4>
+            
+            <form method="post" action="{% url 'admin_panel:resolve-report' report.id %}">
+                {% csrf_token %}
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #2d3748;">
+                        Action to Take:
+                    </label>
+                    <select name="action_taken" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        <option value="">-- Select Action --</option>
+                        <option value="content_removed">Remove Content</option>
+                        <option value="user_warned">Warn User</option>
+                        <option value="user_suspended">Suspend User</option>
+                        <option value="no_action">No Action Needed</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #2d3748;">
+                        Resolution Details:
+                    </label>
+                    <textarea name="resolution" placeholder="Explain the action taken..." style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: inherit; min-height: 100px;" required></textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-success">✓ Resolve Report</button>
+                </div>
+            </form>
+
+            <!-- Dismiss Option -->
+            <form method="post" action="{% url 'admin_panel:dismiss-report' report.id %}" style="margin-top: 12px;">
+                {% csrf_token %}
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #2d3748;">
+                        Dismiss Reason (if applicable):
+                    </label>
+                    <textarea name="resolution" placeholder="Why is this report being dismissed?" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: inherit; min-height: 80px;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-secondary">↩️ Dismiss Report</button>
+            </form>
+        </div>
+        {% else %}
+        <div style="background: #f0fff4; border-left: 3px solid #48bb78; padding: 16px; border-radius: 6px; margin-top: 16px;">
+            <p style="margin: 0; color: #22543d; font-weight: 600;">✓ This report has been resolved</p>
+            <p style="margin: 8px 0 0 0; color: #275e61; font-size: 13px;">Resolved on {{ report.created_at|date:"M d, Y H:i" }}</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div style="display: flex; justify-content: center; gap: 8px; padding: 30px; margin-top: 20px; background: white; border-radius: 12px;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&status={{ status_filter }}" class="btn" style="background: #667eea; color: white;">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}" class="btn" style="background: #667eea; color: white;">← Previous</a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span style="padding: 10px 20px; background: #667eea; color: white; border-radius: 6px; font-weight: 600;">{{ num }}</span>
+            {% else %}
+                <a href="?page={{ num }}&status={{ status_filter }}" class="btn" style="background: #e2e8f0; color: #2d3748;">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}" class="btn" style="background: #667eea; color: white;">Next →</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&status={{ status_filter }}" class="btn" style="background: #667eea; color: white;">Last</a>
+        {% endif %}
+    </div>
+    {% endif %}
+{% else %}
+    <div style="background: white; border-radius: 12px; padding: 60px 20px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);">
+        <div style="font-size: 48px; margin-bottom: 16px;">✨</div>
+        <p style="font-size: 16px; color: #718096; margin: 0;">No reports to review!</p>
+        <p style="font-size: 13px; color: #a0aec0; margin: 8px 0 0 0;">Your community is in great shape.</p>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Recommendations | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-960 { max-width: 960px; margin: 0 auto; }
+
+  .back-link {
+    color: var(--color-success);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: var(--spacing-3);
+  }
+
+  .back-link:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .intro {
+    color: var(--color-text-secondary);
+    margin: var(--spacing-3) 0 var(--spacing-6);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-3);
+  }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3);
+    transition: all var(--transition-base);
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .cover {
+    height: 190px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-2);
+  }
+
+  h2 {
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-1);
+    font-weight: 700;
+  }
+
+  .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .card p {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-2) 0;
+    line-height: var(--line-height-relaxed);
+  }
+
+  .button {
+    display: inline-block;
+    margin-top: var(--spacing-2);
+    background: var(--color-success);
+    color: white;
+    text-decoration: none;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--border-radius-sm);
+    font: bold var(--font-size-xs) Arial, sans-serif;
+    transition: all var(--transition-base);
+  }
+
+  .button:hover { opacity: 0.9; }
+
+  .empty-message {
+    text-align: center;
+    color: var(--color-text-secondary);
+    padding: var(--spacing-8);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container max-width-960">
+  <a class="back-link" href="{% url 'social_feed' %}">← Community</a>
+  <h1>Recommendations</h1>
+  <p class="intro">Popular books selected from your reading community and library interests.</p>
+
+  <div class="grid">
+    {% for book in recommended_books %}
+      <article class="card">
+        <div class="cover" style="background: {{ book.cover_color }}"></div>
+        <h2>{{ book.title }}</h2>
+        <div class="meta">{{ book.author.name }}</div>
+        <p>{{ book.summary|truncatechars:110 }}</p>
+        <div class="meta">Because you enjoy reading in this community.</div>
+        <a class="button" href="{% url 'book_detail' book.slug %}">View book</a>
+      </article>
+    {% empty %}
+      <div class="empty-message">
+        <p>No recommendations yet. Add books to your library to personalize this list.</p>
+      </div>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

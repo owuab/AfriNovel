@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Admin Roles | AfriNovel Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><p class="eyebrow">Administration</p><h1>Admin roles</h1><p class="page-intro">Manage access to operational tools.</p></div>
+  <a class="primary-button" href="{% url 'admin_panel:role-assign' %}">Assign role</a>
+</div>
+<div class="panel role-table-panel">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>User</th><th>Role</th><th>Assigned by</th><th>Assigned</th><th></th></tr></thead>
+      <tbody>
+      {% for admin in admins %}
+        <tr>
+          <td><strong>{{ admin.user.username }}</strong><br><span class="table-secondary">{{ admin.user.email }}</span></td>
+          <td><span class="badge badge-info">{{ admin.get_role_display }}</span></td>
+          <td>{{ admin.assigned_by|default:"System" }}</td>
+          <td>{{ admin.assigned_at|date:"M d, Y" }}</td>
+          <td><a class="text-action" href="{% url 'admin_panel:role-detail' admin.pk %}">View</a></td>
+        </tr>
+      {% empty %}<tr><td colspan="5">No active admin roles found.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}<div class="paginator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}{{ admin_role.user.username }} | Admin Role{% endblock %}
+
+{% block content %}
+<div class="page-header"><div><p class="eyebrow">Administration / Role</p><h1>{{ admin_role.user.username }}</h1><p class="page-intro">{{ admin_role.get_role_display }}</p></div><a class="secondary-button" href="{% url 'admin_panel:admin-roles' %}">Back to roles</a></div>
+<div class="content-grid admin-detail-grid">
+  <section class="panel"><div class="panel-header"><h2>Assignment</h2></div><dl class="detail-list"><div><dt>User</dt><dd>{{ admin_role.user.username }}</dd></div><div><dt>Email</dt><dd>{{ admin_role.user.email|default:"Not provided" }}</dd></div><div><dt>Role</dt><dd><span class="badge badge-info">{{ admin_role.get_role_display }}</span></dd></div><div><dt>Assigned by</dt><dd>{{ admin_role.assigned_by|default:"System" }}</dd></div><div><dt>Assigned</dt><dd>{{ admin_role.assigned_at|date:"M d, Y" }}</dd></div></dl></section>
+  <section class="panel"><div class="panel-header"><h2>Additional permissions</h2></div>{% if admin_role.permissions.all %}<ul class="detail-permission-list">{% for permission in admin_role.permissions.all %}<li>{{ permission.name }}</li>{% empty %}<li>No additional permissions.</li>{% endfor %}</ul>{% else %}<p class="table-secondary">No additional permissions.</p>{% endif %}{% if admin_role.notes %}<p class="role-notes">{{ admin_role.notes }}</p>{% endif %}</section>
+</div>
+{% endblock %}

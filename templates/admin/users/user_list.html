@@ -1,0 +1,257 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}User Management | Admin Dashboard{% endblock %}
+
+{% block extrahead %}
+<style>
+    .admin-header {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .filter-section {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .filter-section form {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #2d3748;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .users-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .user-row {
+        padding: 16px;
+        border-bottom: 1px solid #e2e8f0;
+        display: grid;
+        grid-template-columns: 1fr 150px 150px 150px 120px;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .user-row:hover {
+        background: #f7fafc;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+
+    .user-details h4 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .user-details p {
+        margin: 4px 0 0 0;
+        font-size: 12px;
+        color: #718096;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding: 30px 20px;
+        background: white;
+        border-radius: 12px;
+        margin-top: 30px;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+        color: #667eea;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .pagination a:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    .pagination .current {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h2>👥 User Management</h2>
+    <p>Manage, monitor, and moderate user accounts</p>
+</div>
+
+<!-- Search & Filter -->
+<div class="filter-section">
+    <form method="get" class="filter-form">
+        <div class="form-group">
+            <label for="search">Search Users</label>
+            <input type="text" id="search" name="search" placeholder="Username, email, or name..." value="{{ search_query }}">
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Users</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended</option>
+                <option value="admin" {% if status_filter == 'admin' %}selected{% endif %}>Admin Users</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="users-table">
+    {% if users %}
+        <div style="padding: 16px; background: #f7fafc; border-bottom: 2px solid #e2e8f0; display: grid; grid-template-columns: 1fr 150px 150px 150px 120px; gap: 15px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4a5568; letter-spacing: 0.5px;">
+            <div>User</div>
+            <div>Status</div>
+            <div>Joined</div>
+            <div>Role</div>
+            <div>Actions</div>
+        </div>
+
+        {% for user in users %}
+        <div class="user-row">
+            <div class="user-info">
+                <div class="user-avatar">{{ user.username|first|upper }}</div>
+                <div class="user-details">
+                    <h4>{{ user.username }}</h4>
+                    <p>{{ user.email }}</p>
+                </div>
+            </div>
+
+            <div>
+                {% if user.suspension_count > 0 %}
+                    <span class="badge suspended">Suspended</span>
+                {% elif user.is_active %}
+                    <span class="badge active">Active</span>
+                {% else %}
+                    <span class="badge" style="background: #cbd5e0; color: #4a5568;">Inactive</span>
+                {% endif %}
+            </div>
+
+            <div style="font-size: 13px; color: #718096;">
+                {{ user.date_joined|date:"M d, Y" }}
+            </div>
+
+            <div>
+                {% if user.admin_role %}
+                    <span class="badge" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                        {{ user.admin_role.get_role_display|truncatewords:2 }}
+                    </span>
+                {% else %}
+                    <span style="font-size: 13px; color: #718096;">User</span>
+                {% endif %}
+            </div>
+
+            <div>
+                <a href="{% url 'admin_panel:user-detail' user.id %}" class="btn btn-sm btn-primary">View</a>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}&status={{ status_filter }}">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}&status={{ status_filter }}">← Previous</a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="current">{{ num }}</span>
+                {% else %}
+                    <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}&status={{ status_filter }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}&status={{ status_filter }}">Next →</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}&status={{ status_filter }}">Last</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div style="padding: 60px 20px; text-align: center; color: #718096;">
+            <div style="font-size: 48px; margin-bottom: 16px;">👤</div>
+            <p>No users found matching your criteria.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

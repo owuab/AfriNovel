@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Recommendations | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .header {
+    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-7);
+    margin-bottom: var(--spacing-7);
+  }
+
+  .header h1 {
+    margin: 0 0 var(--spacing-2);
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+  }
+
+  .header p {
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: var(--line-height-relaxed);
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-5);
+  }
+
+  .book-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    overflow: hidden;
+    transition: all var(--transition-base);
+  }
+
+  .book-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .cover {
+    height: 220px;
+    border-radius: var(--border-radius-sm);
+    margin: calc(var(--spacing-4) * -1) calc(var(--spacing-4) * -1) var(--spacing-3);
+  }
+
+  .title {
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-2);
+    line-height: 1.4;
+    color: var(--color-text-primary);
+  }
+
+  .author {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .rating {
+    color: #d4a574;
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-2);
+    font-weight: 600;
+  }
+
+  .genres {
+    display: flex;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-2);
+  }
+
+  .genre-tag {
+    background: rgba(122, 76, 61, 0.1);
+    color: var(--color-accent);
+    border-radius: 999px;
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+
+  .summary {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-3);
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .actions {
+    display: flex;
+    gap: var(--spacing-2);
+  }
+
+  .btn-small {
+    flex: 1;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    transition: all var(--transition-base);
+  }
+
+  .btn-small:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    background: var(--color-border);
+    color: var(--color-accent);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-8) var(--spacing-4);
+    color: var(--color-text-secondary);
+  }
+
+  .empty-state a {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="header">
+    <h1>Books for You</h1>
+    {% if has_reading_history %}
+      <p>Personalized recommendations based on your reading history and favorite genres.</p>
+    {% else %}
+      <p>Start building your reading history! Add books to your shelf, and we'll personalize recommendations just for you.</p>
+    {% endif %}
+  </div>
+
+  {% if recommended_books %}
+    <div class="book-grid">
+      {% for book in recommended_books %}
+        <div class="book-card">
+          <div class="cover" style="background: {{ book.cover_color }};"></div>
+          <div class="title">{{ book.title }}</div>
+          <div class="author">{{ book.author.name }}</div>
+          {% if book.rating %}
+            <div class="rating">★★★★★ {{ book.rating }}</div>
+          {% endif %}
+          <div class="genres">
+            {% for genre in book.genres.all %}
+              <span class="genre-tag">{{ genre.name }}</span>
+            {% endfor %}
+          </div>
+          <div class="summary">{{ book.summary }}</div>
+          <div class="actions">
+            <a href="{% url 'book_detail' book.slug %}" class="btn-small">View Book</a>
+            <form method="post" action="{% url 'add_to_bookshelf' book.slug %}" style="flex: 1;">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="want_to_read" />
+              <button type="submit" class="btn-small btn-secondary" style="width: 100%; margin: 0;">Add</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No recommendations available yet.</p>
+      {% if not has_reading_history %}
+        <p><a href="{% url 'search_books' %}">Discover books</a> to get started with personalized recommendations!</p>
+      {% else %}
+        <p><a href="{% url 'search_books' %}">Browse more books</a> or explore by <a href="{% url 'home' %}">genre</a>.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

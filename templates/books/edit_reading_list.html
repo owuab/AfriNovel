@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Reading List | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-600 { max-width: 600px; margin: 0 auto; }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-6);
+  }
+
+  h1 {
+    margin: 0 0 var(--spacing-1);
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+  }
+
+  .form-group {
+    margin-bottom: var(--spacing-4);
+  }
+
+  label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: var(--spacing-1);
+    color: var(--color-text-primary);
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: var(--spacing-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    font-family: Arial, sans-serif;
+    font-size: var(--font-size-base);
+    transition: all var(--transition-base);
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(122, 76, 61, 0.1);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .checkbox-group input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .checkbox-group label {
+    margin: 0;
+    cursor: pointer;
+    flex: 1;
+  }
+
+  .button-group {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-6);
+  }
+
+  button {
+    flex: 1;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3);
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  button:hover { opacity: 0.9; }
+
+  .cancel-btn {
+    background: var(--color-border);
+    color: var(--color-accent);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .error {
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+    color: #c33;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container max-width-600">
+  <div class="card">
+    <h1>Edit Reading List</h1>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label for="title">List Title *</label>
+        <input type="text" id="title" name="title" value="{{ reading_list.title }}" required />
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description">{{ reading_list.description }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="is_public" name="is_public" {% if reading_list.is_public %}checked{% endif %} />
+          <label for="is_public">Make this list public</label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="submit">Save Changes</button>
+        <a href="{% url 'reading_list_detail' reading_list.user.username reading_list.slug %}" class="cancel-btn">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

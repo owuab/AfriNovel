@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Reading List | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-600 { max-width: 600px; margin: 0 auto; }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-6);
+  }
+
+  h1 {
+    margin: 0 0 var(--spacing-1);
+    font-size: var(--font-size-3xl);
+    letter-spacing: -0.05em;
+    color: #c33;
+  }
+
+  .card > p {
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-6);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .list-info {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .list-info strong {
+    display: block;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-1);
+    font-weight: 700;
+  }
+
+  .list-info small {
+    display: block;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .button-group {
+    display: flex;
+    gap: var(--spacing-2);
+  }
+
+  button {
+    flex: 1;
+    background: #c33;
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3);
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  button:hover { opacity: 0.9; }
+
+  .cancel-btn {
+    background: var(--color-border);
+    color: var(--color-accent);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .cancel-btn:hover { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container max-width-600">
+  <div class="card">
+    <h1>Delete Reading List?</h1>
+    <p>This action cannot be undone. The reading list and all its contents will be permanently deleted.</p>
+
+    <div class="list-info">
+      <strong>{{ reading_list.title }}</strong>
+      <small>{{ reading_list.books.count }} book{{ reading_list.books.count|pluralize }}</small>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="button-group">
+        <button type="submit">Delete List</button>
+        <a href="{% url 'reading_list_detail' reading_list.user.username reading_list.slug %}" class="cancel-btn">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

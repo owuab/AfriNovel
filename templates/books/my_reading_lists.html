@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Reading Lists | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .header {
+    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-6);
+    margin-bottom: var(--spacing-7);
+  }
+
+  .header h1 {
+    margin: 0 0 var(--spacing-1);
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+  }
+
+  .header p {
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .create-btn {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3) var(--spacing-4);
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-size: var(--font-size-base);
+    transition: all var(--transition-base);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .create-btn:hover { opacity: 0.9; }
+
+  .lists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-5);
+  }
+
+  .list-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-5);
+    transition: all var(--transition-base);
+  }
+
+  .list-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .list-card h3 {
+    margin: 0 0 var(--spacing-1);
+    font-size: var(--font-size-lg);
+    color: var(--color-text-primary);
+  }
+
+  .list-card .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .list-card .description {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .list-card .count {
+    background: var(--color-bg-secondary);
+    color: var(--color-accent);
+    border-radius: 999px;
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .list-actions {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-3);
+  }
+
+  .btn-small {
+    flex: 1;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+    font-weight: 600;
+    transition: all var(--transition-base);
+  }
+
+  .btn-small:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    background: var(--color-border);
+    color: var(--color-accent);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-8) var(--spacing-4);
+    color: var(--color-text-secondary);
+  }
+
+  .empty-state a {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="header">
+    <h1>My Reading Lists</h1>
+    <p>Create and manage curated collections of books.</p>
+  </div>
+
+  <div style="margin-bottom: var(--spacing-6);">
+    <a href="{% url 'create_reading_list' %}" class="create-btn">+ Create New List</a>
+  </div>
+
+  {% if reading_lists %}
+    <div class="lists-grid">
+      {% for list in reading_lists %}
+        <div class="list-card">
+          <h3>{{ list.title }}</h3>
+          <div class="meta">
+            {% if list.is_public %}
+              <span>🌍 Public</span>
+            {% else %}
+              <span>🔒 Private</span>
+            {% endif %}
+            • {{ list.created_at|date:"M d, Y" }}
+          </div>
+          {% if list.description %}
+            <div class="description">{{ list.description|truncatewords:20 }}</div>
+          {% endif %}
+          <span class="count">{{ list.books.count }} books</span>
+          <div class="list-actions">
+            <a href="{% url 'reading_list_detail' list.user.username list.slug %}" class="btn-small">View</a>
+            <a href="{% url 'edit_reading_list' list.slug %}" class="btn-small btn-secondary">Edit</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No reading lists yet.</p>
+      <p><a href="{% url 'create_reading_list' %}">Create your first reading list</a> to start organizing books!</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logs | BookClub Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../storybook.css" />
+  </head>
+  <body>
+    <div class="design-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">B</div>
+          <div>
+            <div class="brand-name">BookClub</div>
+            <div class="brand-subtitle">Admin Console</div>
+          </div>
+        </div>
+
+        <div class="side-section">
+          <div class="side-label">Navigation</div>
+          <a class="nav-link" href="../index.html">Storybook home</a>
+          <a class="nav-link" href="./overview.html">Overview</a>
+          <a class="nav-link" href="./users.html">Users</a>
+          <a class="nav-link" href="./settings.html">Settings</a>
+          <a class="nav-link is-active" href="./logs.html">Logs</a>
+          <a class="nav-link" href="./crud-editor.html">CRUD editor</a>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="search">
+            <span>⌕</span>
+            <input type="search" placeholder="Search logs, actions, events..." />
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-theme-toggle type="button">☾</button>
+            <button class="secondary-btn" type="button">Filters</button>
+            <button class="primary-btn" type="button">Export logs</button>
+          </div>
+        </header>
+
+        <div class="page">
+          <div class="page-header">
+            <div>
+              <div class="kicker">Audit trail</div>
+              <h1>System logs</h1>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Recent events</h2>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Result</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>09:12</td>
+                    <td>Leah Martin</td>
+                    <td>Approved author submission</td>
+                    <td><span class="badge success">Success</span></td>
+                  </tr>
+                  <tr>
+                    <td>08:44</td>
+                    <td>Omar Ali</td>
+                    <td>Edited reading list</td>
+                    <td><span class="badge info">Updated</span></td>
+                  </tr>
+                  <tr>
+                    <td>08:17</td>
+                    <td>System</td>
+                    <td>Scheduled publication sync</td>
+                    <td><span class="badge warning">Deferred</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="../storybook.js"></script>
+  </body>
+</html>

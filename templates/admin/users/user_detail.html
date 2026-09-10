@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}{{ user_obj.username }} | User Management{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+  <p class="eyebrow">User management</p>
+  <h1>{{ user_obj.get_full_name|default:user_obj.username }}</h1>
+  <p>{{ user_obj.email|default:"No email address" }}</p>
+</div>
+
+<div class="content-grid admin-detail-grid">
+  <section class="panel">
+    <div class="panel-header"><h2>Account</h2></div>
+    <dl class="detail-list">
+      <div><dt>Username</dt><dd>{{ user_obj.username }}</dd></div>
+      <div><dt>Status</dt><dd>{% if user_obj.is_active %}Active{% else %}Inactive{% endif %}</dd></div>
+      <div><dt>Joined</dt><dd>{{ user_obj.date_joined|date:"M d, Y" }}</dd></div>
+      <div><dt>Reviews</dt><dd>{{ reviews }}</dd></div>
+      <div><dt>Published books</dt><dd>{{ books_published }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header"><h2>Moderation</h2></div>
+    {% if is_suspended %}
+      <p class="badge badge-danger">Suspended</p>
+    {% else %}
+      <p class="badge badge-success">No active suspension</p>
+    {% endif %}
+    {% if suspensions %}
+      <div class="list-stack detail-list-stack">
+        {% for suspension in suspensions %}
+          <div class="list-row"><span>{{ suspension.get_reason_display }}</span><span>{{ suspension.suspended_at|date:"M d, Y" }}</span></div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

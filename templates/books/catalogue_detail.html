@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ book.title }} | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-1180 { max-width: 1180px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-5);
+    padding: var(--spacing-5) 0;
+    font-family: Arial, sans-serif;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .brand {
+    font: 700 var(--font-size-2xl) Georgia, serif;
+  }
+
+  .nav {
+    display: flex;
+    gap: var(--spacing-4);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .nav a { text-decoration: none; color: inherit; }
+  .nav a:hover { color: var(--color-accent); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr) 270px;
+    gap: var(--spacing-7);
+    margin-top: var(--spacing-6);
+  }
+
+  .cover {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .cover-empty {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 2/3;
+    border-radius: var(--border-radius-sm);
+    background: linear-gradient(135deg, #d5c2a4, #9d795f);
+    font-size: var(--font-size-4xl);
+    color: white;
+  }
+
+  .main { padding: var(--spacing-1) 0; }
+
+  .eyebrow {
+    font: 700 var(--font-size-xs) Arial, sans-serif;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-success);
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 4vw, 4rem);
+    line-height: 1.02;
+    margin: var(--spacing-2) 0;
+    color: var(--color-text-primary);
+  }
+
+  h2 {
+    font-size: var(--font-size-lg);
+    margin: var(--spacing-7) 0 var(--spacing-2);
+    color: var(--color-text-primary);
+  }
+
+  .byline, .meta {
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+  }
+
+  .description {
+    line-height: 1.75;
+    color: var(--color-text-primary);
+    max-width: 690px;
+    margin: var(--spacing-3) 0;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-1);
+  }
+
+  .tag {
+    font: 700 var(--font-size-xs) Arial, sans-serif;
+    color: var(--color-success);
+    border: 1px solid var(--color-border);
+    background: rgba(47, 93, 80, 0.05);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--border-radius-xs);
+  }
+
+  .panel {
+    height: max-content;
+    padding: var(--spacing-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-tertiary);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .panel h2 { margin-top: 0; }
+
+  .badge {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-2);
+    color: white;
+    border-radius: var(--border-radius-xs);
+    background: var(--color-success);
+    font: 700 var(--font-size-xs) Arial, sans-serif;
+    letter-spacing: 0.06em;
+  }
+
+  .button {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    background: var(--color-success);
+    color: white;
+    padding: var(--spacing-3);
+    font: 700 var(--font-size-sm) Arial, sans-serif;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    margin-top: var(--spacing-3);
+    transition: all var(--transition-base);
+  }
+
+  .button:hover { opacity: 0.9; }
+
+  .button.secondary {
+    background: var(--color-bg-secondary);
+    color: var(--color-accent);
+    border: 1px solid var(--color-border);
+  }
+
+  .panel p { color: var(--color-text-secondary); margin: var(--spacing-2) 0; }
+
+  .label {
+    font: 700 var(--font-size-xs) Arial, sans-serif;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-success);
+  }
+
+  .source-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .source-list li {
+    padding: var(--spacing-2) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .source-list li:last-child { border-bottom: none; }
+
+  .source-list a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .source-list small {
+    display: block;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container max-width-1180">
+  <header>
+    <a class="brand" href="{% url 'home' %}">AfriNovel</a>
+    <nav class="nav">
+      <a href="{% url 'discover' %}">Discover</a>
+      <a href="{% url 'catalogue_library' %}">My Library</a>
+    </nav>
+  </header>
+
+  {% if provider_error %}
+    <div class="card" style="background: #fee; border: 1px solid #fcc; padding: var(--spacing-3); margin-bottom: var(--spacing-3);">{{ provider_error }}</div>
+  {% endif %}
+
+  <div class="layout">
+    <aside>
+      {% if book.cover_image_url %}
+        <img class="cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">
+      {% else %}
+        <div class="cover-empty" aria-label="No cover available">B</div>
+      {% endif %}
+    </aside>
+
+    <article class="main">
+      <div class="eyebrow">{{ book.source|title }} catalogue</div>
+      <h1>{{ book.title }}</h1>
+      <p class="byline">{{ book.authors|join:", "|default:"Unknown author" }}</p>
+      <p class="meta">
+        {% if book.publication_year %}First published {{ book.publication_year }}{% endif %}
+        {% if book.publisher %} · {{ book.publisher }}{% endif %}
+        {% if book.languages %} · Original language: {{ book.languages|join:", " }}{% endif %}
+      </p>
+      <p class="meta">{{ book.view_count }} views</p>
+
+      {% if book.description %}
+        <h2>About this book</h2>
+        <p class="description">{{ book.description }}</p>
+      {% endif %}
+
+      {% if book.subjects %}
+        <h2>Subjects</h2>
+        <div class="tags">
+          {% for subject in book.subjects %}
+            <span class="tag">{{ subject }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <h2>Publication information</h2>
+      <p class="meta">
+        {% if book.isbn13 %}ISBN-13: {{ book.isbn13 }}{% elif book.isbn10 %}ISBN-10: {{ book.isbn10 }}{% else %}No ISBN provided by this catalogue record.{% endif %}
+        {% if book.page_count %}<br>Estimated pages: {{ book.page_count }}{% endif %}
+      </p>
+    </article>
+
+    <aside class="panel">
+      <div class="label">Reading availability</div>
+      <p><span class="badge">{{ book.get_access_type_display|upper }}</span></p>
+
+      {% if book.can_read_in_app %}
+        <p class="meta">This public-domain or authorized edition can be read inside AfriNovel.</p>
+        <a class="button" href="{% url 'catalogue_reader' book.pk %}">Read now</a>
+      {% elif book.borrowable %}
+        <p class="meta">This title is available through an authorized borrowing service.</p>
+        <a class="button" rel="noopener" target="_blank" href="{{ book.reading_url }}">Borrow at source</a>
+      {% else %}
+        <p class="meta">This title is catalogued here, but AfriNovel is not authorized to reproduce its full text.</p>
+        <a class="button" rel="noopener" target="_blank" href="{{ book.reading_url|default:book.source_url }}">Read at source</a>
+      {% endif %}
+
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'catalogue_library_action' book.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save">
+          <input type="hidden" name="state" value="saved">
+          <button class="button secondary" type="submit">{% if library_entry %}Saved to my library{% else %}Add to library{% endif %}</button>
+        </form>
+
+        {% if progress %}
+          <a class="button secondary" href="{% url 'catalogue_reader' book.pk %}">Continue reading {{ progress.percent|floatformat:0 }}%</a>
+        {% endif %}
+      {% else %}
+        <a class="button secondary" href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to save</a>
+      {% endif %}
+
+      <h2>Available editions</h2>
+      <ul class="source-list">
+        <li>
+          <a rel="noopener" target="_blank" href="{{ book.source_url }}">{{ book.source|title }}</a>
+          <small>{{ book.get_access_type_display }}{% if book.license %} · {{ book.license }}{% endif %}</small>
+        </li>
+        {% for source in sources %}
+          <li>
+            <a rel="noopener" target="_blank" href="{{ source.source_url }}">{{ source.provider|title }}</a>
+            <small>{{ source.get_access_type_display }}{% if source.license %} · {{ source.license }}{% endif %}</small>
+          </li>
+        {% endfor %}
+      </ul>
+    </aside>
+  </div>
+</main>
+{% endblock %}

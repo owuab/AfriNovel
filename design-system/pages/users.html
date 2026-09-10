@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Users | BookClub Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../storybook.css" />
+  </head>
+  <body>
+    <div class="design-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">B</div>
+          <div>
+            <div class="brand-name">BookClub</div>
+            <div class="brand-subtitle">Admin Console</div>
+          </div>
+        </div>
+
+        <div class="side-section">
+          <div class="side-label">Navigation</div>
+          <a class="nav-link" href="../index.html">Storybook home</a>
+          <a class="nav-link" href="./overview.html">Overview</a>
+          <a class="nav-link is-active" href="./users.html">Users</a>
+          <a class="nav-link" href="./settings.html">Settings</a>
+          <a class="nav-link" href="./logs.html">Logs</a>
+          <a class="nav-link" href="./crud-editor.html">CRUD editor</a>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="search">
+            <span>⌕</span>
+            <input type="search" placeholder="Search users, roles, permissions..." />
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-theme-toggle type="button">☾</button>
+            <button class="secondary-btn" type="button">Filters</button>
+            <button class="primary-btn" type="button">Add user</button>
+          </div>
+        </header>
+
+        <div class="page">
+          <div class="page-header">
+            <div>
+              <div class="kicker">Directory</div>
+              <h1>Users</h1>
+            </div>
+            <button class="primary-btn" type="button">Invite member</button>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Team members</h2>
+              <button class="ghost-btn">Export list</button>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Last active</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Leah Martin</td>
+                    <td>Administrator</td>
+                    <td><span class="badge success">Active</span></td>
+                    <td>2 minutes ago</td>
+                    <td><button class="ghost-btn" type="button">Edit</button></td>
+                  </tr>
+                  <tr>
+                    <td>Omar Ali</td>
+                    <td>Editor</td>
+                    <td><span class="badge info">Online</span></td>
+                    <td>18 minutes ago</td>
+                    <td><button class="ghost-btn" type="button">Edit</button></td>
+                  </tr>
+                  <tr>
+                    <td>Sofia Chen</td>
+                    <td>Auditor</td>
+                    <td><span class="badge warning">Paused</span></td>
+                    <td>1 day ago</td>
+                    <td><button class="ghost-btn" type="button">Edit</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="../storybook.js"></script>
+  </body>
+</html>

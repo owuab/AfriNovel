@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Book | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-600 { max-width: 600px; margin: 0 auto; }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-6);
+  }
+
+  .book-info {
+    display: flex;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+    padding-bottom: var(--spacing-6);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .cover {
+    width: 80px;
+    height: 120px;
+    border-radius: var(--border-radius-sm);
+    flex-shrink: 0;
+  }
+
+  .book-details h2 {
+    margin: 0 0 var(--spacing-1);
+    font-size: var(--font-size-lg);
+    color: var(--color-text-primary);
+  }
+
+  .book-details p {
+    margin: 0 0 var(--spacing-1);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .form-group {
+    margin-bottom: var(--spacing-4);
+  }
+
+  label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: var(--spacing-1);
+    color: var(--color-text-primary);
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: var(--spacing-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    font-family: Arial, sans-serif;
+    font-size: var(--font-size-base);
+    transition: all var(--transition-base);
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(122, 76, 61, 0.1);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .help-text {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-1);
+  }
+
+  .button-group {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-6);
+  }
+
+  button {
+    flex: 1;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3) var(--spacing-4);
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  button:hover { opacity: 0.9; }
+
+  .cancel-btn {
+    background: var(--color-border);
+    color: var(--color-accent);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container max-width-600">
+  <div class="card">
+    <div class="book-info">
+      <div class="cover" style="background: {{ shelf_item.book.cover_color }};"></div>
+      <div class="book-details">
+        <h2>{{ shelf_item.book.title }}</h2>
+        <p>{{ shelf_item.book.author.name }}</p>
+        <p>Added {{ shelf_item.added_at|date:"M d, Y" }}</p>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label for="status">Reading Status</label>
+        <select name="status" id="status">
+          <option value="want_to_read" {% if shelf_item.status == "want_to_read" %}selected{% endif %}>Want to Read</option>
+          <option value="currently_reading" {% if shelf_item.status == "currently_reading" %}selected{% endif %}>Currently Reading</option>
+          <option value="read" {% if shelf_item.status == "read" %}selected{% endif %}>Read</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="progress_percent">Progress (%)</label>
+        <input type="number" name="progress_percent" id="progress_percent" min="0" max="100" value="{{ shelf_item.progress_percent }}" />
+        <div class="help-text">0-100%</div>
+      </div>
+
+      <div class="form-group">
+        <label for="rating">Rating</label>
+        <select name="rating" id="rating">
+          <option value="">No rating</option>
+          <option value="1" {% if shelf_item.rating == 1 %}selected{% endif %}>1 ★</option>
+          <option value="2" {% if shelf_item.rating == 2 %}selected{% endif %}>2 ★★</option>
+          <option value="3" {% if shelf_item.rating == 3 %}selected{% endif %}>3 ★★★</option>
+          <option value="4" {% if shelf_item.rating == 4 %}selected{% endif %}>4 ★★★★</option>
+          <option value="5" {% if shelf_item.rating == 5 %}selected{% endif %}>5 ★★★★★</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Personal Notes</label>
+        <textarea name="notes" id="notes" placeholder="Add your thoughts, favorite quotes, or reading notes...">{{ shelf_item.notes }}</textarea>
+      </div>
+
+      <div class="button-group">
+        <button type="submit">Save Changes</button>
+        <a href="{% url 'view_bookshelf' %}" class="cancel-btn">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

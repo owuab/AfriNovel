@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ author.name }} | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .top {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: var(--spacing-6);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-5);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .avatar {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #d6b2a0, #7b4d3c);
+    flex-shrink: 0;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: var(--font-size-4xl);
+    letter-spacing: -0.05em;
+    color: var(--color-text-primary);
+  }
+
+  .author-bio {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .author-stats {
+    display: flex;
+    gap: var(--spacing-4);
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-3);
+    font-size: var(--font-size-sm);
+  }
+
+  .panel {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-5);
+    margin-top: var(--spacing-6);
+  }
+
+  .panel h3 {
+    font-size: var(--font-size-2xl);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-4);
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  .book-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    background: var(--color-bg-secondary);
+  }
+
+  .cover {
+    height: 170px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-3);
+    background: linear-gradient(135deg, #dcae7b, #8a563f);
+  }
+
+  .book-card strong {
+    color: var(--color-text-primary);
+    font-weight: 700;
+  }
+
+  .review-item {
+    padding: var(--spacing-3) 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .review-item:last-child {
+    border-bottom: none;
+  }
+
+  .empty-message {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  @media (max-width: 800px) {
+    .top, .book-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="top">
+    <div class="avatar"></div>
+    <div>
+      <h1>{{ author.name }}</h1>
+      <p class="author-bio">{{ author.bio|default:"Writer and contributor to the AfriNovel community." }}</p>
+      <div class="author-stats">
+        <span>{{ books.count }} books</span>
+        <span>2.8K followers</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Books</h3>
+    <div class="book-grid">
+      {% for book in books %}
+        <div class="book-card">
+          <div class="cover" style="background: {{ book.cover_color }};"></div>
+          <strong>{{ book.title }}</strong>
+        </div>
+      {% empty %}
+        <p class="empty-message">No books available yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Recent reviews</h3>
+    {% for review in reviews %}
+      <div class="review-item">{{ review.content }}</div>
+    {% empty %}
+      <p class="empty-message">No reviews yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

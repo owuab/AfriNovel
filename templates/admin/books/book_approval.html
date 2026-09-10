@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Review {{ book.title }} | AfriNovel Admin{% endblock %}
+
+{% block content %}
+<div class="module">
+  <h1>Review book</h1>
+  <h2>{{ book.title }}</h2>
+  <p>By {{ book.author.name }}</p>
+  <p>{{ book.summary }}</p>
+  <p>Status: {{ approval_status.get_status_display }}</p>
+
+  {% if approval_status.status == 'pending' or approval_status.status == 'revision_needed' %}
+  <form method="post" action="{% url 'admin_panel:approve-book' book.id %}">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      <div class="form-row">
+        <label for="feedback">Feedback</label>
+        <textarea id="feedback" name="feedback" rows="5"></textarea>
+      </div>
+    </fieldset>
+    <div class="submit-row">
+      <button type="submit">Approve for publication</button>
+    </div>
+  </form>
+
+  <form method="post" action="{% url 'admin_panel:reject-book' book.id %}">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      <div class="form-row">
+        <label for="reason">Rejection reason</label>
+        <textarea id="reason" name="reason" rows="5" required></textarea>
+      </div>
+    </fieldset>
+    <div class="submit-row">
+      <button type="submit">Reject book</button>
+    </div>
+  </form>
+  {% else %}
+  <p>This book has already been reviewed.</p>
+  {% endif %}
+
+  <p><a href="{% url 'admin_panel:pending-books' %}">Back to book approvals</a></p>
+</div>
+{% endblock %}

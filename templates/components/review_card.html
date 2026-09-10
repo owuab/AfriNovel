@@ -1,0 +1,179 @@
+{% load static %}
+
+<article class="review-card">
+  <div class="review-header">
+    <div class="reviewer-avatar">
+      {% if review.user.social_profile.avatar_url %}
+        <img src="{{ review.user.social_profile.avatar_url }}" alt="{{ review.user.username }}" class="avatar-image">
+      {% else %}
+        <div class="avatar-placeholder">{{ review.user.username|slice:":1"|upper }}</div>
+      {% endif %}
+    </div>
+    <div class="reviewer-info">
+      <div class="reviewer-name">
+        <a href="{% url 'social_profile' review.user.username %}">{{ review.user.get_full_name|default:review.user.username }}</a>
+      </div>
+      <div class="review-date">{{ review.created_at|date:"M d, Y" }}</div>
+    </div>
+  </div>
+  
+  <div class="review-content">
+    <p>{{ review.content }}</p>
+  </div>
+  
+  {% if show_book and review.book %}
+    <div class="review-book">
+      <span>Reviewing:</span>
+      <a href="{{ review.book.get_absolute_url }}">{{ review.book.title }}</a>
+    </div>
+  {% endif %}
+  
+  {% if show_actions %}
+    <div class="review-actions">
+      <button class="action-button like-button" aria-label="Like review">
+        <span class="like-icon">♥</span>
+        <span class="like-count">{{ review.likes.count|default:0 }}</span>
+      </button>
+      <a href="{{ review.book.get_absolute_url }}#reviews" class="action-button reply-button">Reply</a>
+    </div>
+  {% endif %}
+</article>
+
+{% block extra_css %}
+<style>
+  .review-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-5);
+    margin-bottom: var(--spacing-4);
+    transition: all var(--transition-base);
+  }
+  
+  .review-card:hover {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .review-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .reviewer-avatar {
+    flex-shrink: 0;
+  }
+  
+  .avatar-image,
+  .avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .avatar-placeholder {
+    background: linear-gradient(135deg, #d6b2a0, #7b4d3c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-lg);
+  }
+  
+  .reviewer-info {
+    flex: 1;
+  }
+  
+  .reviewer-name a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .reviewer-name a:hover {
+    color: var(--color-accent);
+  }
+  
+  .review-date {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-1);
+  }
+  
+  .review-rating {
+    color: var(--color-accent);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .review-content {
+    color: var(--color-text-primary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .review-content p {
+    margin: 0;
+  }
+  
+  .review-book {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    padding-top: var(--spacing-3);
+    border-top: 1px solid var(--color-border-light);
+  }
+  
+  .review-book a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .review-book a:hover {
+    text-decoration: underline;
+  }
+  
+  .review-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-3);
+    padding-top: var(--spacing-3);
+    border-top: 1px solid var(--color-border-light);
+  }
+  
+  .action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-base);
+    cursor: pointer;
+  }
+  
+  .action-button:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+  
+  .like-icon {
+    color: var(--color-danger);
+  }
+  
+  @media (max-width: 768px) {
+    .review-card {
+      padding: var(--spacing-4);
+    }
+  }
+</style>
+{% endblock %}

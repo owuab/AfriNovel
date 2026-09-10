@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roles & Access | BookClub Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../storybook.css" />
+  </head>
+  <body>
+    <div class="design-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">B</div>
+          <div>
+            <div class="brand-name">BookClub</div>
+            <div class="brand-subtitle">Admin Console</div>
+          </div>
+        </div>
+        <div class="side-section">
+          <div class="side-label">Navigation</div>
+          <a class="nav-link" href="../index.html">Storybook home</a>
+          <a class="nav-link" href="./overview.html">Overview</a>
+          <a class="nav-link" href="./users.html">Users</a>
+          <a class="nav-link" href="./settings.html">Settings</a>
+          <a class="nav-link" href="./logs.html">Logs</a>
+          <a class="nav-link" href="./crud-editor.html">CRUD editor</a>
+          <a class="nav-link" href="./reports.html">Reports</a>
+          <a class="nav-link is-active" href="./roles.html">Roles & access</a>
+        </div>
+      </aside>
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="search">
+            <span>⌕</span>
+            <input type="search" placeholder="Search roles, policies, permissions..." />
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-theme-toggle type="button">☾</button>
+            <button class="secondary-btn" type="button">Duplicate</button>
+            <button class="primary-btn" type="button">New policy</button>
+          </div>
+        </header>
+        <div class="page">
+          <div class="page-header">
+            <div>
+              <div class="kicker">Permissions</div>
+              <h1>Roles & access</h1>
+            </div>
+          </div>
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Access matrix</h2>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Role</th>
+                    <th>Users</th>
+                    <th>Books</th>
+                    <th>Analytics</th>
+                    <th>Settings</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Admin</td>
+                    <td><span class="badge success">Full</span></td>
+                    <td><span class="badge success">Full</span></td>
+                    <td><span class="badge success">Full</span></td>
+                    <td><span class="badge success">Full</span></td>
+                  </tr>
+                  <tr>
+                    <td>Editor</td>
+                    <td><span class="badge warning">View only</span></td>
+                    <td><span class="badge success">Edit</span></td>
+                    <td><span class="badge info">Report</span></td>
+                    <td><span class="badge warning">No access</span></td>
+                  </tr>
+                  <tr>
+                    <td>Auditor</td>
+                    <td><span class="badge info">View</span></td>
+                    <td><span class="badge info">View</span></td>
+                    <td><span class="badge success">Export</span></td>
+                    <td><span class="badge warning">No access</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script src="../storybook.js"></script>
+  </body>
+</html>

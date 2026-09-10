@@ -1,0 +1,131 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}AfriNovel - A global reading community{% endblock %}">
+    <meta name="theme-color" content="#7a4c3d">
+    
+    <title>{% block title %}AfriNovel{% endblock %}</title>
+    
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+    <link rel="stylesheet" href="{% static 'css/layout.css' %}?v=2">
+    
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>📚</text></svg>">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main" class="sr-only">Skip to main content</a>
+    
+    <!-- Header Navigation -->
+    {% block header %}
+    <header class="site-header">
+        <nav class="site-nav">
+            <div class="container">
+                <div class="nav-wrapper">
+                    <div class="nav-brand">
+                        <a href="{% url 'home' %}"><img class="nav-brand-logo" src="{% static 'images/afrinovel-logo.svg' %}?v=2" alt=""><span>AfriNovel</span></a>
+                    </div>
+                    
+                    <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-controls="nav-menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    
+                    <div class="nav-menu" id="nav-menu">
+                        <a href="{% url 'discover' %}" class="nav-link">Discover</a>
+                        <a href="{% url 'rankings' %}" class="nav-link">Rankings</a>
+                        <a href="{% url 'categories' %}" class="nav-link">Categories</a>
+                        <a href="{% url 'completed' %}" class="nav-link">Completed</a>
+                        
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'view_bookshelf' %}" class="nav-link">Bookshelf</a>
+                            <a href="{% url 'reading_history' %}" class="nav-link">History</a>
+                            <a href="{% url 'publish_book' %}" class="nav-link">Publish a book</a>
+                            <div class="nav-divider"></div>
+                            <a href="{% url 'profile' %}" class="nav-link nav-user">{{ user.get_full_name|default:user.username }}</a>
+                            <a href="{% url 'logout' %}" class="nav-link nav-logout">Sign Out</a>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="nav-link">Sign In</a>
+                            <a href="{% url 'signup' %}" class="button button-sm">Create Account</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    {% endblock %}
+    
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}">
+            <div class="message-icon">
+                {% if message.tags == 'success' %}✓
+                {% elif message.tags == 'error' %}✕
+                {% elif message.tags == 'warning' %}⚠
+                {% else %}ℹ{% endif %}
+            </div>
+            <div class="message-content">{{ message }}</div>
+            <button class="message-close" type="button" aria-label="Close message">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main id="main" class="site-main">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    {% block footer %}
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About AfriNovel</h3>
+                    <p>A global community dedicated to celebrating books, authors, and the joy of reading.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="{% url 'discover' %}">Discover Books</a></li>
+                        <li><a href="{% url 'discover' %}">Featured Authors</a></li>
+                        <li><a href="{% url 'discover' %}">Community</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 AfriNovel. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+    
+    <!-- Page-specific JS -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Global Scripts -->
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

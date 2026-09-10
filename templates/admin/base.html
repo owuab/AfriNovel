@@ -1,0 +1,91 @@
+{% load i18n static %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en-us' }}" dir="{% if LANGUAGE_CODE|slice:':2' in 'ar he fa ur' %}rtl{% else %}ltr{% endif %}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{{ site_title|default:'AfriNovel Admin' }}{% endblock %}</title>
+    {% block extrastyle %}{% endblock %}
+    {% block extrahead %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'admin/admin.css' %}?v=23" />
+  </head>
+  <body class="admin-body {% if is_popup %}popup{% endif %} {% block bodyclass %}{% endblock %}" data-theme="light">
+    {% block body %}
+    <a class="skip-to-content-link" href="#content-start">{% translate 'Skip to main content' %}</a>
+    <div class="admin-shell">
+      <aside class="sidebar">
+        <a class="brand-wrap" href="{% url 'admin_panel:dashboard' %}">
+          <span class="brand-mark">A</span>
+          <span>
+            <span class="brand-name">AfriNovel</span>
+            <span class="brand-subtitle">Admin Console</span>
+          </span>
+        </a>
+
+        <nav class="nav" aria-label="Sidebar navigation">
+          <span class="nav-label">Workspace</span>
+          <a class="nav-item" href="{% url 'admin_panel:dashboard' %}"><span class="nav-icon">◫</span><span>Overview</span></a>
+          <a class="nav-item" href="{% url 'bookclub_admin:books_book_changelist' %}"><span class="nav-icon">B</span><span>Books</span></a>
+          <a class="nav-item" href="{% url 'bookclub_admin:books_author_changelist' %}"><span class="nav-icon">A</span><span>Authors</span></a>
+          <a class="nav-item" href="{% url 'bookclub_admin:books_review_changelist' %}"><span class="nav-icon">R</span><span>Reviews</span></a>
+          <a class="nav-item" href="{% url 'bookclub_admin:books_readinglist_changelist' %}"><span class="nav-icon">L</span><span>Lists</span></a>
+          <span class="nav-label">Operations</span>
+          <a class="nav-item" href="{% url 'admin_panel:users-list' %}"><span class="nav-icon">U</span><span>User management</span></a>
+          <a class="nav-item" href="{% url 'admin_panel:pending-books' %}"><span class="nav-icon">P</span><span>Book approvals</span></a>
+          <a class="nav-item" href="{% url 'admin_panel:content-reports' %}"><span class="nav-icon">!</span><span>Content reports</span></a>
+          <span class="nav-label">Administration</span>
+          <a class="nav-item" href="{% url 'admin_panel:permission-matrix' %}"><span class="nav-icon">M</span><span>Permission matrix</span></a>
+          <a class="nav-item" href="{% url 'admin_panel:admin-roles' %}"><span class="nav-icon">R</span><span>Admin roles</span></a>
+          <a class="nav-item" href="{% url 'admin_panel:role-assign' %}"><span class="nav-icon">+</span><span>Assign role</span></a>
+          <a class="nav-item" href="{% url 'admin_panel:audit-logs' %}"><span class="nav-icon">L</span><span>Audit logs</span></a>
+          <a class="nav-item" href="/"><span class="nav-icon">↗</span><span>View AfriNovel</span></a>
+        </nav>
+
+        <div class="sidebar-card">
+          <div class="sidebar-card-label">Admin session</div>
+          <strong>{{ user.username }}</strong>
+          <span>{% if user.is_superuser %}Superuser{% else %}Staff member{% endif %}</span>
+          <form method="post" action="{% url 'bookclub_admin:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="sidebar-action">Sign out</button>
+          </form>
+        </div>
+      </aside>
+
+      <div class="main-panel">
+        <header class="topbar">
+          <button class="icon-button mobile-only" type="button" aria-label="Toggle sidebar" aria-controls="admin-sidebar" aria-expanded="false"><span class="ui-icon ui-icon-menu" aria-hidden="true"></span></button>
+          <div class="topbar-search" role="search">
+            <span class="ui-icon ui-icon-search" aria-hidden="true"></span>
+            <form method="get" action="{% url 'bookclub_admin:index' %}">
+              <input type="search" name="q" aria-label="Search admin" placeholder="Search the console" value="{{ request.GET.q|default:'' }}" />
+            </form>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" type="button" aria-label="Toggle theme" data-theme-toggle><span class="ui-icon ui-icon-theme" aria-hidden="true"></span></button>
+            <a class="user-menu" href="{% url 'bookclub_admin:password_change' %}">
+              <span class="avatar">{{ user.username|first|upper }}</span>
+              <span class="user-meta"><strong>{{ user.get_full_name|default:user.username }}</strong><span>{% if user.is_superuser %}Superuser{% else %}Staff member{% endif %}</span></span>
+            </a>
+          </div>
+        </header>
+
+        <main id="content-start" class="content-panel" tabindex="-1">
+          {% if messages %}
+            <ul class="messagelist">{% for message in messages %}<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>{% endfor %}</ul>
+          {% endif %}
+          <div id="content" class="{% block coltype %}colM{% endblock %}">
+            {% block pretitle %}{% endblock %}
+            {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+            {% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}</h2>{% endif %}{% endblock %}
+            {% block content %}{% endblock %}
+            {% block sidebar %}{% endblock %}
+            <br class="clear" />
+          </div>
+        </main>
+      </div>
+    </div>
+    {% endblock %}
+    {% block extrabody %}{% endblock %}
+    <script defer src="{% static 'admin/admin.js' %}"></script>
+  </body>
+</html>

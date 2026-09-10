@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}@{{ profile_user.username }} | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-920 { max-width: 920px; margin: 0 auto; }
+
+  .top {
+    padding: var(--spacing-5) 0;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+  }
+
+  .top a {
+    color: var(--color-success);
+    text-decoration: none;
+  }
+
+  .top a:hover { text-decoration: underline; }
+
+  .banner {
+    height: 180px;
+    background: linear-gradient(120deg, #b8d3c7, #e8d3b8);
+    border-radius: 8px 8px 0 0;
+    background-size: cover;
+    background-image: url('{{ profile.banner_url }}');
+  }
+
+  .head {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    padding: 0 var(--spacing-5) var(--spacing-4);
+    border-radius: 0 0 8px 8px;
+  }
+
+  .avatar {
+    width: 94px;
+    height: 94px;
+    margin-top: -47px;
+    border: 4px solid var(--color-bg-tertiary);
+    border-radius: 50%;
+    background: #bdd4c8;
+    display: grid;
+    place-items: center;
+    font-size: var(--font-size-2xl);
+    font-weight: bold;
+    color: #154c45;
+  }
+
+  .head-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-4);
+    align-items: flex-end;
+  }
+
+  h1 {
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+    margin: var(--spacing-3) 0 0;
+  }
+
+  .button {
+    border: 1px solid var(--color-success);
+    background: var(--color-success);
+    color: white;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-2) var(--spacing-3);
+    font-weight: 600;
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .button:hover { opacity: 0.9; }
+
+  .stats, .tabs {
+    display: flex;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+  }
+
+  .stats a, .tabs a {
+    color: var(--color-success);
+    text-decoration: none;
+    font-size: var(--font-size-base);
+  }
+
+  .tabs {
+    border-bottom: 1px solid var(--color-border);
+    margin-top: var(--spacing-4);
+  }
+
+  .tabs a {
+    padding: var(--spacing-3) var(--spacing-1);
+  }
+
+  .tabs a.active {
+    font-weight: bold;
+    border-bottom: 3px solid var(--color-success);
+  }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    margin: var(--spacing-3) 0;
+  }
+
+  .post {
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-2) 0;
+  }
+
+  .post:last-child { border-bottom: none; }
+
+  .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .cover {
+    width: 42px;
+    height: 60px;
+    background: #b78b69;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: var(--spacing-3);
+    border-radius: var(--border-radius-sm);
+  }
+
+  @media (max-width: 500px) {
+    .head-row { align-items: flex-start; flex-direction: column; }
+    .banner { height: 120px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container max-width-920">
+  <div class="top">
+    <a href="{% url 'social_feed' %}">← Community</a>
+  </div>
+  
+  <section class="banner"></section>
+  
+  <section class="head">
+    <div class="head-row">
+      <div>
+        <div class="avatar">{{ profile_user.username|slice:':1'|upper }}</div>
+        <h1>{{ profile.display_name|default:profile_user.username }}</h1>
+      </div>
+      {% if user.is_authenticated and profile_user != user %}
+        <form method="post" action="{% url 'toggle_user_follow' profile_user.username %}">
+          {% csrf_token %}
+          <button class="button">
+            {% if is_following %}Unfollow{% else %}Follow{% endif %}
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    {% if profile.bio %}
+      <p style="color: var(--color-text-secondary); margin-top: var(--spacing-3);">{{ profile.bio }}</p>
+    {% endif %}
+
+    <div class="stats">
+      <a href="{% url 'followers_page' profile_user.username 'followers' %}">
+        <strong>{{ followers_count }}</strong> followers
+      </a>
+      <a href="{% url 'followers_page' profile_user.username 'following' %}">
+        <strong>{{ following_count }}</strong> following
+      </a>
+    </div>
+
+    <nav class="tabs">
+      <a href="?tab=posts" class="{% if active_tab == 'posts' %}active{% endif %}">Posts</a>
+      <a href="?tab=reviews" class="{% if active_tab == 'reviews' %}active{% endif %}">Reviews</a>
+      <a href="?tab=books" class="{% if active_tab == 'books' %}active{% endif %}">Books</a>
+    </nav>
+  </section>
+
+  {% if posts %}
+    <div class="card">
+      {% for post in posts %}
+        <article class="post">
+          <strong>{{ post.author.username }}</strong>
+          <p style="color: var(--color-text-primary);">{{ post.content }}</p>
+          <div class="meta">{{ post.created_at|timesince }} ago</div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--color-text-secondary); padding: var(--spacing-8);">No posts yet.</p>
+  {% endif %}
+</main>
+{% endblock %}

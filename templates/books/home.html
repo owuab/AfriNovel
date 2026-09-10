@@ -1,0 +1,644 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Home | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hero-section {
+    padding: var(--spacing-8) 0;
+  }
+
+  .homepage-search {
+    display: grid;
+    gap: var(--spacing-3);
+    max-width: 860px;
+    margin: var(--spacing-10) auto var(--spacing-4);
+    padding: var(--spacing-4) var(--spacing-5) var(--spacing-6);
+    text-align: center;
+  }
+
+  .homepage-search-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-2xl);
+    letter-spacing: -0.03em;
+  }
+
+  .homepage-search-form {
+    display: grid;
+    gap: var(--spacing-4);
+    width: min(100%, 584px);
+    max-width: 584px;
+    margin: var(--spacing-4) auto 0;
+  }
+
+  .homepage-search-control {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    min-width: 0;
+    padding: 0 var(--spacing-4);
+    border: 1px solid var(--color-border-dark);
+    border-radius: 999px;
+    background: var(--color-bg-tertiary);
+    box-shadow: 0 2px 8px rgba(60, 64, 67, .12);
+    transition: box-shadow var(--transition-base), border-color var(--transition-base);
+  }
+
+  .homepage-search-icon { display: block; width: 20px; height: 20px; flex: 0 0 20px; }
+  .homepage-search-icon img { display: block; width: 100%; height: 100%; border-radius: 5px; }
+
+  .homepage-search-control input {
+    width: 100%;
+    min-height: 46px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--color-text-primary);
+  }
+
+  .homepage-search-control:focus-within {
+    border-color: var(--color-border-dark);
+    box-shadow: 0 3px 12px rgba(60, 64, 67, .2);
+  }
+
+  .homepage-search-submit {
+    min-height: 42px;
+    justify-self: center;
+    padding: 0 var(--spacing-4);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm);
+    background: #f8f9fa;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, .12);
+  }
+
+  .homepage-search-submit:hover { border-color: var(--color-border-dark); box-shadow: 0 1px 2px rgba(60, 64, 67, .2); }
+  .homepage-search-submit:focus-visible { outline: 3px solid var(--color-warning); outline-offset: 2px; }
+
+  .hero-featured {
+    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    display: grid;
+    grid-template-columns: 1fr 0.8fr;
+    gap: var(--spacing-8);
+    padding: var(--spacing-8);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .featured-badge {
+    display: inline-block;
+    background: rgba(122, 76, 61, 0.1);
+    color: var(--color-accent);
+    border-radius: 999px;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-3);
+  }
+
+  .featured-book h1 {
+    margin: var(--spacing-4) 0 var(--spacing-3);
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    letter-spacing: -0.05em;
+    line-height: 1.1;
+    color: var(--color-text-primary);
+  }
+
+  .featured-book .author {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .featured-book .description {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-4);
+    max-width: 600px;
+  }
+
+  .featured-book .meta {
+    display: flex;
+    gap: var(--spacing-4);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-4);
+  }
+
+  .featured-book .rating {
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+
+  .featured-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-5);
+  }
+
+  .featured-actions .button {
+    min-height: 44px;
+    padding: var(--spacing-3) var(--spacing-5);
+    border-radius: var(--border-radius-md);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .featured-actions .primary {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+  }
+
+  .featured-actions .secondary {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+  }
+
+  .featured-cover {
+    width: 100%;
+    max-width: 320px;
+    height: 400px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-2xl);
+    margin: 0 auto;
+  }
+
+  .quick-access {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-4);
+    margin: var(--spacing-8) 0;
+  }
+
+  .quick-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-5);
+    text-align: center;
+    text-decoration: none;
+    transition: all var(--transition-base);
+  }
+
+  .quick-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--color-accent);
+  }
+
+  .quick-card .icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-3);
+  }
+
+  .quick-card h3 {
+    margin: 0 0 var(--spacing-2);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+  }
+
+  .quick-card p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .section {
+    padding: var(--spacing-8) 0;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-5);
+  }
+
+  .section-header h2 {
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+  }
+
+  .section-header a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .section-header a:hover {
+    text-decoration: underline;
+  }
+
+  .genre-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-3);
+  }
+
+  .genre-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-4);
+    text-align: center;
+    text-decoration: none;
+    transition: all var(--transition-base);
+  }
+
+  .genre-card:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--color-accent);
+  }
+
+  .genre-card h3 {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+  }
+
+  .genre-card .count {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-1);
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--spacing-5);
+  }
+
+  .ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .ranking-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    padding: var(--spacing-4) 0;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .ranking-item:last-child {
+    border-bottom: none;
+  }
+
+  .rank-number {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-accent);
+    width: 40px;
+    text-align: center;
+  }
+
+  .ranking-cover {
+    width: 60px;
+    height: 80px;
+    border-radius: var(--border-radius-sm);
+    object-fit: cover;
+  }
+
+  .ranking-info {
+    flex: 1;
+  }
+
+  .ranking-info h4 {
+    margin: 0 0 var(--spacing-1);
+    color: var(--color-text-primary);
+  }
+
+  .ranking-info h4 a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+
+  .ranking-info h4 a:hover {
+    color: var(--color-accent);
+  }
+
+  .ranking-info .author {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ranking-info .rating {
+    color: var(--color-accent);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+  }
+
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-8);
+    color: var(--color-text-secondary);
+  }
+
+  @media (max-width: 992px) {
+    .hero-featured {
+      grid-template-columns: 1fr;
+    }
+
+    .quick-access {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .book-grid {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-featured {
+      padding: var(--spacing-6);
+    }
+
+    .quick-access {
+      grid-template-columns: 1fr;
+    }
+
+    .featured-actions {
+      flex-direction: column;
+    }
+
+    .featured-actions .button {
+      width: 100%;
+      text-align: center;
+    }
+
+    .book-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <section class="homepage-search" aria-labelledby="homepage-search-heading">
+    <h2 class="homepage-search-heading" id="homepage-search-heading">Find your next read</h2>
+    <form class="homepage-search-form" method="get" action="{% url 'search_books' %}">
+      <label class="homepage-search-control" for="homepage-search-input">
+        <span class="homepage-search-icon" aria-hidden="true"><img src="{% static 'images/afrinovel-logo.svg' %}?v=2" alt=""></span>
+        <input id="homepage-search-input" name="q" type="search" placeholder="Search by title, author, or topic" autocomplete="off" />
+      </label>
+      <button class="homepage-search-submit" type="submit">Search books</button>
+    </form>
+  </section>
+
+  <!-- Hero Featured Book -->
+  {% if featured_book %}
+  <section class="hero-section">
+    <div class="hero-featured">
+      <div class="featured-book">
+        <span class="featured-badge">Featured Book</span>
+        <h1>{{ featured_book.title }}</h1>
+        <div class="author">by {{ featured_book.author.name }}</div>
+        <div class="description">{{ featured_book.summary|truncatewords:30 }}</div>
+        <div class="meta">
+          <span class="rating">★ {{ featured_book.rating }}</span>
+          <span>{{ featured_book.genres.all|join:", " }}</span>
+        </div>
+        <div class="featured-actions">
+          <a href="{{ featured_book.get_absolute_url }}" class="button primary">Read Now</a>
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'add_to_bookshelf' featured_book.slug %}" style="display: inline;">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="want_to_read">
+              <button type="submit" class="button secondary">Add to Bookshelf</button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}" class="button secondary">Sign in to save</a>
+          {% endif %}
+        </div>
+      </div>
+      {% if featured_book.cover_image_url %}
+        <img class="featured-cover" src="{{ featured_book.cover_image_url }}" alt="Cover of {{ featured_book.title }}">
+      {% else %}
+        <div class="featured-cover" style="background: {{ featured_book.cover_color }};"></div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Quick Access Cards -->
+  <div class="quick-access">
+    <a href="{% url 'view_bookshelf' %}" class="quick-card">
+      <div class="icon">📚</div>
+      <h3>My Bookshelf</h3>
+      <p>Books you saved</p>
+    </a>
+    <a href="{% url 'reading_history' %}" class="quick-card">
+      <div class="icon">📖</div>
+      <h3>Reading History</h3>
+      <p>Continue reading</p>
+    </a>
+    <a href="{% url 'rankings' %}" class="quick-card">
+      <div class="icon">🏆</div>
+      <h3>Rankings</h3>
+      <p>Most popular books</p>
+    </a>
+    <a href="{% url 'completed' %}" class="quick-card">
+      <div class="icon">✅</div>
+      <h3>Completed</h3>
+      <p>Finished books</p>
+    </a>
+  </div>
+
+  <!-- Browse by Genre -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Browse by Genre</h2>
+      <a href="{% url 'categories' %}">View all →</a>
+    </div>
+    <div class="genre-grid">
+      {% for genre in genres %}
+        <a href="{% url 'genre_page' genre.slug %}" class="genre-card">
+          <h3>{{ genre.name }}</h3>
+          <div class="count">{{ genre.book_count }} book{{ genre.book_count|pluralize }}</div>
+        </a>
+      {% empty %}
+        <div class="empty-state">No genres available</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Asian Books -->
+  <section class="section" aria-labelledby="asian-books-heading">
+    <div class="section-header">
+      <h2 id="asian-books-heading">Asian Books</h2>
+      <a href="{% url 'discover' %}?category=asian">Explore all &rarr;</a>
+    </div>
+    <div class="genre-grid" aria-label="Asian book subcategories">
+      {% for value, label in asian_subcategories %}
+        <span class="genre-card"><h3>{{ label }}</h3></span>
+      {% endfor %}
+    </div>
+    <div class="book-grid">
+      {% for book in asian_books %}
+        <article class="book-card">
+          <a href="{% url 'catalogue_detail' book.pk %}" class="book-link">
+            {% if book.cover_image_url %}
+              <img class="book-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+            {% else %}
+              <div class="book-cover placeholder-cover">{{ book.title|slice:':1' }}</div>
+            {% endif %}
+            <div class="book-info">
+              <h3 class="book-title">{{ book.title }}</h3>
+              <span class="book-genres">{{ book.authors|join:", " }}</span>
+            </div>
+          </a>
+        </article>
+      {% empty %}
+        <div class="empty-state">Asian books will appear here as they are catalogued.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Popular Books -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Popular Books</h2>
+      <a href="{% url 'rankings' %}">View all →</a>
+    </div>
+    <div class="book-grid">
+      {% for book in popular_books %}
+        {% include "components/book_card.html" with book=book show_rating=True show_action=True %}
+      {% empty %}
+        <div class="empty-state">No popular books yet</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Free to Read -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Free to Read</h2>
+      <a href="{% url 'discover' %}">Explore catalogue →</a>
+    </div>
+    <div class="book-grid">
+      {% for book in free_catalog_books %}
+        <article class="book-card">
+          <a href="{% url 'catalogue_detail' book.pk %}" class="book-link">
+            {% if book.cover_image_url %}
+              <img class="book-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+            {% else %}
+              <div class="book-cover" style="background: linear-gradient(135deg, #d7c2a3, #84614f);"></div>
+            {% endif %}
+          </a>
+          <div class="book-content">
+            <div class="book-badge badge-popular">Free to read</div>
+            <h3 class="book-title"><a href="{% url 'catalogue_detail' book.pk %}">{{ book.title }}</a></h3>
+            <div class="book-meta">
+              <span class="book-author">{{ book.authors|join:", "|default:"Unknown author" }}</span>
+              <span class="book-genres">{{ book.subjects|slice:':3'|join:", "|default:"Public domain" }}</span>
+            </div>
+            <div class="book-action">
+              <a href="{% url 'catalogue_detail' book.pk %}" class="action-button">Read</a>
+            </div>
+          </div>
+        </article>
+      {% empty %}
+        <div class="empty-state">No free public-domain books are available yet.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Recently Added -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Recently Added</h2>
+      <a href="{% url 'discover' %}">View all →</a>
+    </div>
+    <div class="book-grid">
+      {% for book in recent_books %}
+        {% include "components/book_card.html" with book=book show_badge=True badge_class="badge-new" badge_text="New" %}
+      {% empty %}
+        <div class="empty-state">No recent books</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Top Rankings -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Top Rankings</h2>
+      <a href="{% url 'rankings' %}">View all →</a>
+    </div>
+    <ul class="ranking-list">
+      {% for book in top_ranked %}
+        <li class="ranking-item">
+          <div class="rank-number">{{ forloop.counter }}</div>
+          <div class="ranking-cover" style="background: {{ book.cover_color }};"></div>
+          <div class="ranking-info">
+            <h4><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></h4>
+            <div class="author">{{ book.author.name }}</div>
+            <div class="rating">★ {{ book.rating }}</div>
+          </div>
+        </li>
+      {% empty %}
+        <div class="empty-state">No rankings available</div>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <!-- Recent Reviews -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Recent Reviews</h2>
+      <a href="#">View all →</a>
+    </div>
+    <div class="reviews-grid">
+      {% for review in recent_reviews %}
+        {% include "components/review_card.html" with review=review show_book=True %}
+      {% empty %}
+        <div class="empty-state">No reviews yet</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Recommended For You -->
+  {% if user.is_authenticated and recommended_books %}
+  <section class="section">
+    <div class="section-header">
+      <h2>Recommended For You</h2>
+      <a href="{% url 'recommendations' %}">View all →</a>
+    </div>
+    <div class="book-grid">
+      {% for book in recommended_books %}
+        {% include "components/book_card.html" with book=book show_rating=True show_badge=True badge_class="badge-popular" badge_text="Recommended" %}
+      {% empty %}
+        <div class="empty-state">No recommendations yet. Start reading to get personalized suggestions!</div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

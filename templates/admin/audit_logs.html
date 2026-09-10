@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Audit Logs | AfriNovel Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><p class="eyebrow">Administration / Activity</p><h1>Audit logs</h1><p class="page-intro">Review actions taken across the admin console.</p></div>
+</div>
+<div class="panel role-table-panel audit-log-panel">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th>Description</th><th>IP address</th></tr></thead>
+      <tbody>
+      {% for log in audit_logs %}
+        <tr>
+          <td><time datetime="{{ log.created_at|date:'c' }}">{{ log.created_at|date:"M d, Y H:i" }}</time></td>
+          <td>{{ log.admin_user|default:"System" }}</td>
+          <td><span class="badge badge-info">{{ log.get_action_display }}</span></td>
+          <td>{{ log.target_user|default:"-" }}</td>
+          <td>{{ log.description }}</td>
+          <td>{{ log.ip_address|default:"-" }}</td>
+        </tr>
+      {% empty %}<tr><td colspan="6">No audit activity recorded yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}<div class="paginator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+:root {
+  --color-bg: #f4f1ea;
+  --color-bg-strong: #e2f0eb;
+  --color-surface: #fffdf9;
+  --color-surface-alt: #f8f6f1;
+  --color-surface-muted: #e2f0eb;
+  --color-border: #ded8ce;
+  --color-text: #1d2b2a;
+  --color-text-soft: #536361;
+  --color-text-muted: #7e8b87;
+  --color-primary: #176b5b;
+  --color-primary-strong: #0f4e43;
+  --color-primary-soft: #e2f0eb;
+  --color-accent: #e38d4e;
+  --color-success: #16a34a;
+  --color-success-soft: #dcfce7;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fef3c7;
+  --color-danger: #ef4444;
+  --color-danger-soft: #fee2e2;
+  --color-info: #0ea5e9;
+  --color-info-soft: #e0f2fe;
+  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 18px 44px rgba(15, 23, 42, 0.12);
+  --radius-sm: 8px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --font-sans: "DM Sans", "Aptos", "Segoe UI", sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 36px;
+  --line-height-tight: 1.2;
+  --line-height-base: 1.6;
+  --transition-fast: 160ms ease;
+}
+
+[data-theme="dark"] {
+  --color-bg: #17211f;
+  --color-bg-strong: #203f36;
+  --color-surface: #202d2a;
+  --color-surface-alt: #263632;
+  --color-surface-muted: #203f36;
+  --color-border: #3b4b46;
+  --color-text: #eef5f0;
+  --color-text-soft: #c1d0ca;
+  --color-text-muted: #92a49c;
+  --color-primary: #62c3a5;
+  --color-primary-strong: #8ad6bd;
+  --color-primary-soft: #203f36;
+  --color-accent: #f1ae70;
+  --color-success: #22c55e;
+  --color-success-soft: rgba(34, 197, 94, 0.12);
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.16);
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(248, 113, 113, 0.12);
+  --color-info: #38bdf8;
+  --color-info-soft: rgba(56, 189, 248, 0.12);
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--line-height-base);
+}
+
+* { box-sizing: border-box; }
+
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; }

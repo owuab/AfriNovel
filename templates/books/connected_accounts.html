@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static %}
+{% load socialaccount %}
+
+{% block title %}Connected Accounts | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-760 { max-width: 760px; margin: 0 auto; }
+
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-6);
+  }
+
+  .brand {
+    font-weight: 700;
+    font-size: var(--font-size-lg);
+    letter-spacing: 0.06em;
+    color: var(--color-text-primary);
+  }
+
+  .back {
+    font-size: var(--font-size-base);
+    color: var(--color-success);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .back:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: clamp(2.3rem, 5vw, 3.6rem);
+    letter-spacing: -0.04em;
+    margin: var(--spacing-8) 0 var(--spacing-1);
+    color: var(--color-text-primary);
+  }
+
+  .lead {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    max-width: 600px;
+  }
+
+  .card {
+    margin-top: var(--spacing-6);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-tertiary);
+    overflow: hidden;
+  }
+
+  .provider {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .provider:last-child { border-bottom: none; }
+
+  .symbol {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--border-radius-sm);
+    background: rgba(47, 93, 80, 0.1);
+    color: var(--color-success);
+    font: bold var(--font-size-lg) Arial, sans-serif;
+    flex-shrink: 0;
+  }
+
+  .info { flex: 1; }
+
+  .info strong {
+    display: block;
+    color: var(--color-text-primary);
+    font-weight: 700;
+  }
+
+  .info small {
+    display: block;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-1);
+  }
+
+  .action {
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-2);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    font: bold var(--font-size-xs) Arial, sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .action:hover { opacity: 0.9; }
+
+  .disconnect { color: #c33; }
+
+  .notice {
+    margin-top: var(--spacing-4);
+    padding: var(--spacing-3);
+    background: #fff2ed;
+    border-left: 4px solid #b16644;
+    color: #734127;
+    font: var(--font-size-base) Arial, sans-serif;
+    border-radius: var(--border-radius-sm);
+  }
+
+  .messages {
+    margin-top: var(--spacing-4);
+    padding: var(--spacing-3);
+    background: rgba(47, 93, 80, 0.05);
+    border-left: 4px solid var(--color-success);
+    color: var(--color-text-primary);
+    font: var(--font-size-base) Arial, sans-serif;
+    border-radius: var(--border-radius-sm);
+  }
+
+  @media (max-width: 520px) {
+    .provider { align-items: flex-start; flex-wrap: wrap; }
+    .action { margin-left: 50px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container max-width-760">
+  <div class="top">
+    <div class="brand">BOOK CLUB</div>
+    <a class="back" href="{% url 'profile' %}">Back to profile</a>
+  </div>
+
+  <h1>Connected Accounts</h1>
+  <p class="lead">Manage social media and service integrations.</p>
+
+  <div class="card">
+    {% for provider in providers %}
+      <div class="provider">
+        <div class="symbol">{{ provider|upper|first }}</div>
+        <div class="info">
+          <strong>{{ provider|title }}</strong>
+          <small>
+            {% if provider in connected_providers %}
+              Connected
+            {% else %}
+              Not connected
+            {% endif %}
+          </small>
+        </div>
+        {% if provider in connected_providers %}
+          <form method="post" action="{% url 'socialaccount_disconnect' provider %}" style="display: inline;">
+            {% csrf_token %}
+            <button class="action disconnect" type="submit">Disconnect</button>
+          </form>
+        {% else %}
+          <a href="{% url 'socialaccount_connections' %}" class="action">Connect</a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if notice %}
+    <div class="notice">{{ notice }}</div>
+  {% endif %}
+
+  <div class="messages">
+    <p>Connecting accounts allows AfriNovel to sync your reading activity across platforms and personalize your recommendations.</p>
+  </div>
+</main>
+{% endblock %}

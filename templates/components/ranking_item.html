@@ -1,0 +1,251 @@
+{% load static %}
+
+<article class="ranking-item">
+  <div class="rank-number {% if rank == 1 %}rank-1{% elif rank == 2 %}rank-2{% elif rank == 3 %}rank-3{% endif %}">{{ rank }}</div>
+  
+  <a href="{{ book.get_absolute_url }}" class="book-link">
+    {% if book.cover_image_url %}
+      <img class="book-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+    {% else %}
+      <div class="book-cover" style="background: {{ book.cover_color }};"></div>
+    {% endif %}
+  </a>
+  
+  <div class="book-info">
+    <h3 class="book-title">
+      <a href="{{ book.get_absolute_url }}">{{ book.title }}</a>
+    </h3>
+    
+    <div class="book-meta">
+      <span class="book-author">{{ book.author.name }}</span>
+      {% if show_genres %}
+        <span class="book-genres">
+          {% for genre in book.genres.all %}
+            {{ genre.name }}{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        </span>
+      {% endif %}
+    </div>
+    
+    {% if show_rating %}
+      <div class="book-rating">
+        <span class="rating-stars">★★★★★</span>
+        <span class="rating-value">{{ book.rating|floatformat:1 }}</span>
+      </div>
+    {% endif %}
+    
+    {% if show_stats %}
+      <div class="book-stats">
+        {% if book.bookshelf_count %}
+          <span class="stat">{{ book.bookshelf_count }} readers</span>
+        {% endif %}
+        {% if book.review_count %}
+          <span class="stat">{{ book.review_count }} reviews</span>
+        {% endif %}
+      </div>
+    {% endif %}
+    
+    {% if show_trend %}
+      <div class="trend-indicator {{ trend_class }}">
+        {{ trend_text }}
+      </div>
+    {% endif %}
+  </div>
+  
+  {% if show_action %}
+    <div class="book-action">
+      <a href="{{ book.get_absolute_url }}" class="action-button">{{ action_text|default:'Read' }}</a>
+    </div>
+  {% endif %}
+</article>
+
+{% block extra_css %}
+<style>
+  .ranking-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-4);
+    transition: all var(--transition-base);
+  }
+  
+  .ranking-item:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-accent);
+  }
+  
+  .rank-number {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-accent);
+    min-width: 40px;
+    text-align: center;
+  }
+  
+  .rank-number.rank-1 {
+    color: #FFD700;
+    font-size: var(--font-size-3xl);
+  }
+  
+  .rank-number.rank-2 {
+    color: #C0C0C0;
+    font-size: var(--font-size-2xl);
+  }
+  
+  .rank-number.rank-3 {
+    color: #CD7F32;
+    font-size: var(--font-size-2xl);
+  }
+  
+  .book-link {
+    text-decoration: none;
+  }
+  
+  .book-cover {
+    width: 80px;
+    height: 120px;
+    border-radius: var(--border-radius-sm);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  
+  .book-info {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .book-title {
+    margin: 0 0 var(--spacing-2);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.3;
+  }
+  
+  .book-title a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+  
+  .book-title a:hover {
+    color: var(--color-accent);
+  }
+  
+  .book-meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .book-author {
+    display: block;
+    margin-bottom: var(--spacing-1);
+  }
+  
+  .book-genres {
+    display: block;
+    opacity: 0.8;
+  }
+  
+  .book-rating {
+    color: var(--color-accent);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-2);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+  }
+  
+  .rating-stars {
+    font-size: var(--font-size-sm);
+  }
+  
+  .book-stats {
+    display: flex;
+    gap: var(--spacing-3);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+  }
+  
+  .trend-indicator {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: var(--border-radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .trend-up {
+    background: var(--color-success-light);
+    color: var(--color-success);
+  }
+  
+  .trend-down {
+    background: var(--color-danger-light);
+    color: var(--color-danger);
+  }
+  
+  .trend-same {
+    background: var(--color-info-light);
+    color: var(--color-info);
+  }
+  
+  .book-action {
+    flex-shrink: 0;
+  }
+  
+  .action-button {
+    display: inline-block;
+    padding: var(--spacing-2) var(--spacing-4);
+    background: var(--color-accent);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-base);
+    white-space: nowrap;
+  }
+  
+  .action-button:hover {
+    opacity: 0.9;
+  }
+  
+  @media (max-width: 768px) {
+    .ranking-item {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .rank-number {
+      font-size: var(--font-size-xl);
+    }
+    
+    .book-cover {
+      width: 60px;
+      height: 90px;
+    }
+    
+    .book-stats {
+      justify-content: center;
+    }
+    
+    .book-action {
+      width: 100%;
+    }
+    
+    .action-button {
+      display: block;
+      text-align: center;
+    }
+  }
+</style>
+{% endblock %}

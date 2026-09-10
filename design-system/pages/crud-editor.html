@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRUD Editor | BookClub Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../storybook.css" />
+  </head>
+  <body>
+    <div class="design-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">B</div>
+          <div>
+            <div class="brand-name">BookClub</div>
+            <div class="brand-subtitle">Admin Console</div>
+          </div>
+        </div>
+
+        <div class="side-section">
+          <div class="side-label">Navigation</div>
+          <a class="nav-link" href="../index.html">Storybook home</a>
+          <a class="nav-link" href="./overview.html">Overview</a>
+          <a class="nav-link" href="./users.html">Users</a>
+          <a class="nav-link" href="./settings.html">Settings</a>
+          <a class="nav-link" href="./logs.html">Logs</a>
+          <a class="nav-link is-active" href="./crud-editor.html">CRUD editor</a>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="search">
+            <span>⌕</span>
+            <input type="search" placeholder="Search records..." />
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-theme-toggle type="button">☾</button>
+            <button class="secondary-btn" type="button">Discard</button>
+            <button class="primary-btn" type="button">Publish</button>
+          </div>
+        </header>
+
+        <div class="page">
+          <div class="page-header">
+            <div>
+              <div class="kicker">Record editor</div>
+              <h1>Edit book</h1>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Book details</h2>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Title</label>
+                <input type="text" value="The Lantern Archive" />
+              </div>
+              <div class="field">
+                <label>Author</label>
+                <input type="text" value="Maya Rowan" />
+              </div>
+              <div class="field">
+                <label>Category</label>
+                <select>
+                  <option>Fantasy</option>
+                  <option>Drama</option>
+                  <option>Sci-fi</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <select>
+                  <option>Published</option>
+                  <option>Draft</option>
+                  <option>Archived</option>
+                </select>
+              </div>
+              <div class="field" style="grid-column: 1 / -1;">
+                <label>Description</label>
+                <textarea rows="5">A luminous fantasy novel about memory, inheritance, and the cost of carrying the past into the future.</textarea>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="../storybook.js"></script>
+  </body>
+</html>

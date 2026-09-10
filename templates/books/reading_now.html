@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Reading Now | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-link {
+    color: var(--color-success);
+    text-decoration: none;
+    font: bold var(--font-size-sm) Arial, sans-serif;
+    display: inline-block;
+    margin-bottom: var(--spacing-6);
+  }
+
+  .back-link:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--spacing-3);
+  }
+
+  .card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+  }
+
+  .cover {
+    width: 60px;
+    height: 85px;
+    background: #b78b69;
+    border-radius: var(--border-radius-sm);
+    float: left;
+    margin: 0 var(--spacing-3) var(--spacing-2) 0;
+  }
+
+  h2 {
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-2);
+  }
+
+  .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .bar {
+    height: 8px;
+    background: var(--color-border);
+    border-radius: 4px;
+    overflow: hidden;
+    clear: both;
+    margin-top: var(--spacing-3);
+  }
+
+  .bar span {
+    display: block;
+    height: 100%;
+    background: var(--color-success);
+  }
+
+  .button {
+    display: inline-block;
+    margin-top: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-success);
+    color: white;
+    text-decoration: none;
+    font: bold var(--font-size-xs) Arial, sans-serif;
+    transition: all var(--transition-base);
+  }
+
+  .button:hover { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container">
+  <a class="back-link" href="{% url 'reader_dashboard' %}">← My Library</a>
+  <h1>Reading Now</h1>
+  <div class="grid">
+    {% for item in local_books %}
+      <article class="card">
+        <div class="cover" style="background: {{ item.book.cover_color }}"></div>
+        <h2>{{ item.book.title }}</h2>
+        <div class="meta">{{ item.book.author.name }}</div>
+        <div class="meta">{{ item.progress_percent }}% complete</div>
+        <div class="bar"><span style="width: {{ item.progress_percent }}%"></span></div>
+        <a class="button" href="{% url 'book_detail' item.book.slug %}">Continue Reading</a>
+      </article>
+    {% endfor %}
+    {% for item in catalogue_books %}
+      <article class="card">
+        {% if item.book.cover_image_url %}
+          <img class="cover" src="{{ item.book.cover_image_url }}" alt="">
+        {% else %}
+          <div class="cover"></div>
+        {% endif %}
+        <h2>{{ item.book.title }}</h2>
+        <div class="meta">{{ item.book.authors|join:', ' }}</div>
+        <div class="meta">{{ item.chapter|default:'Beginning' }} · {{ item.percent|floatformat:0 }}% complete</div>
+        <div class="bar"><span style="width: {{ item.percent }}%"></span></div>
+        <a class="button" href="{% url 'catalogue_reader' item.book.pk %}">Continue</a>
+      </article>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

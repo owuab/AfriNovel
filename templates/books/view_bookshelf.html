@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Bookshelf | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Bookshelf page specific styles */
+
+  .header {
+    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-5);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .header h1 {
+    font-size: var(--font-size-3xl);
+    letter-spacing: -0.05em;
+    margin-bottom: var(--spacing-2);
+    color: var(--color-text-primary);
+  }
+
+  .header p {
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+  }
+
+  .stat-box {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
+  .stat-label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-4);
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: var(--spacing-2) var(--spacing-4);
+    cursor: pointer;
+    color: var(--color-text-primary);
+    font-weight: 600;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .filter-btn.active {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+
+  .filter-btn:hover {
+    border-color: var(--color-accent);
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  .book-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-4);
+  }
+
+  .cover {
+    height: 200px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .title {
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-2);
+    color: var(--color-text-primary);
+  }
+
+  .author {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .status-badge {
+    display: inline-block;
+    background: rgba(122, 76, 61, 0.1);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+    color: var(--color-accent);
+    margin-bottom: var(--spacing-2);
+    font-weight: 600;
+  }
+
+  .progress {
+    background: var(--color-border);
+    height: 6px;
+    border-radius: 3px;
+    margin-bottom: var(--spacing-2);
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    background: var(--color-accent);
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  .rating {
+    color: #d4a574;
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .actions {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-2);
+  }
+
+  .btn {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+  }
+
+  .btn:hover {
+    opacity: 0.9;
+  }
+
+  .btn-secondary {
+    background: var(--color-border);
+    color: var(--color-accent);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-8);
+    color: var(--color-text-secondary);
+  }
+
+  .empty-state a {
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+
+  @media (max-width: 800px) {
+    .stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="header">
+    <h1>My Bookshelf</h1>
+    <p>Track your reading journey across AfriNovel.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-number">{{ reading_stats.total }}</div>
+      <div class="stat-label">Total Books</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number">{{ reading_stats.currently_reading }}</div>
+      <div class="stat-label">Currently Reading</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number">{{ reading_stats.want_to_read }}</div>
+      <div class="stat-label">Want to Read</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number">{{ reading_stats.read }}</div>
+      <div class="stat-label">Read</div>
+    </div>
+  </div>
+
+  <div class="filter-buttons">
+    <a href="{% url 'view_bookshelf' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+    {% for value, label in status_choices %}
+      <a href="{% url 'view_bookshelf' %}?status={{ value }}" class="filter-btn {% if status_filter == value %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if bookshelf %}
+    <div class="book-grid">
+      {% for item in bookshelf %}
+        <div class="book-card">
+          <div class="cover" style="background: {{ item.book.cover_color }};"></div>
+          <div class="title">{{ item.book.title }}</div>
+          <div class="author">{{ item.book.author.name }}</div>
+          <span class="status-badge">{{ item.get_status_display }}</span>
+          {% if item.progress_percent > 0 %}
+            <div class="progress">
+              <div class="progress-bar" style="width: {{ item.progress_percent }}%;"></div>
+            </div>
+            <div style="color: var(--color-text-secondary); font-size: var(--font-size-xs);">{{ item.progress_percent }}% read</div>
+          {% endif %}
+          {% if item.rating %}
+            <div class="rating">★★★★★ {{ item.rating }}/5</div>
+          {% endif %}
+          <div class="actions">
+            <a href="{% url 'update_bookshelf' item.id %}" class="btn">Edit</a>
+            <form method="post" action="{% url 'remove_from_bookshelf' item.id %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary" onclick="return confirm('Remove from bookshelf?')">Remove</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>Your bookshelf is empty. <a href="{% url 'search_books' %}">Search and add books</a> to get started!</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

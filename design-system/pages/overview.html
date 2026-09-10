@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Overview | BookClub Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../storybook.css" />
+  </head>
+  <body>
+    <div class="design-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">B</div>
+          <div>
+            <div class="brand-name">BookClub</div>
+            <div class="brand-subtitle">Admin Console</div>
+          </div>
+        </div>
+
+        <div class="side-section">
+          <div class="side-label">Navigation</div>
+          <a class="nav-link" href="../index.html">Storybook home</a>
+          <a class="nav-link is-active" href="./overview.html">Overview</a>
+          <a class="nav-link" href="./users.html">Users</a>
+          <a class="nav-link" href="./settings.html">Settings</a>
+          <a class="nav-link" href="./logs.html">Logs</a>
+          <a class="nav-link" href="./crud-editor.html">CRUD editor</a>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="search">
+            <span>⌕</span>
+            <input type="search" placeholder="Search books, users, logs..." />
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-theme-toggle type="button">☾</button>
+            <button class="secondary-btn" type="button">Export</button>
+            <div class="user-pill">
+              <div class="avatar">A</div>
+              <div>
+                <strong>Admin</strong><br />
+                <small>Ops lead</small>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="page">
+          <div class="page-header">
+            <div>
+              <div class="kicker">Operations overview</div>
+              <h1>BookClub command center</h1>
+            </div>
+            <button class="primary-btn" type="button">Create report</button>
+          </div>
+
+          <section class="metrics-grid">
+            <article class="metric-card primary">
+              <div class="metric-label">Total books</div>
+              <div class="metric-value">1,284</div>
+              <div class="metric-meta">+9.2% from last month</div>
+            </article>
+            <article class="metric-card success">
+              <div class="metric-label">Monthly active readers</div>
+              <div class="metric-value">128.4K</div>
+              <div class="metric-meta">+18.6% growth</div>
+            </article>
+            <article class="metric-card info">
+              <div class="metric-label">Published</div>
+              <div class="metric-value">962</div>
+              <div class="metric-meta">74.9% of catalog</div>
+            </article>
+            <article class="metric-card warning">
+              <div class="metric-label">Avg rating</div>
+              <div class="metric-value">4.8</div>
+              <div class="metric-meta">Top title: The Lantern Archive</div>
+            </article>
+          </section>
+
+          <section class="content-grid">
+            <article class="panel">
+              <div class="panel-header">
+                <h2>Content pipeline</h2>
+                <button class="ghost-btn" type="button">This quarter</button>
+              </div>
+              <div class="bar-chart">
+                <span style="height: 44%"></span>
+                <span style="height: 58%"></span>
+                <span style="height: 49%"></span>
+                <span style="height: 76%"></span>
+                <span style="height: 63%"></span>
+                <span style="height: 81%"></span>
+                <span style="height: 72%"></span>
+              </div>
+              <div class="legend">
+                <span><i class="dot primary"></i> Submissions</span>
+                <span><i class="dot success"></i> Published</span>
+                <span><i class="dot info"></i> Engagement</span>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <h2>Recent activity</h2>
+              </div>
+              <div class="timeline">
+                <div class="timeline-item">
+                  <span class="timeline-bullet"></span>
+                  <div>
+                    <strong>Review queue update</strong>
+                    <p>12 minutes ago</p>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <span class="timeline-bullet"></span>
+                  <div>
+                    <strong>New author approved</strong>
+                    <p>48 minutes ago</p>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <span class="timeline-bullet"></span>
+                  <div>
+                    <strong>Featured list published</strong>
+                    <p>3 hours ago</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section style="margin-top: 22px;">
+            <article class="panel">
+              <div class="panel-header">
+                <h2>Top performers</h2>
+                <button class="ghost-btn" type="button">Export CSV</button>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Author</th>
+                      <th>Followers</th>
+                      <th>Books</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Maya Rowan</td>
+                      <td>84.2K</td>
+                      <td>19</td>
+                      <td><span class="badge success">Trending</span></td>
+                    </tr>
+                    <tr>
+                      <td>Daniel Hsu</td>
+                      <td>61.4K</td>
+                      <td>14</td>
+                      <td><span class="badge info">Popular</span></td>
+                    </tr>
+                    <tr>
+                      <td>Priya Shah</td>
+                      <td>43.8K</td>
+                      <td>11</td>
+                      <td><span class="badge warning">Growth</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="../storybook.js"></script>
+  </body>
+</html>

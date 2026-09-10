@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ reading_list.title }} | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .header {
+    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-7);
+    margin-bottom: var(--spacing-7);
+  }
+
+  .header h1 {
+    margin: 0 0 var(--spacing-1);
+    font-size: var(--font-size-3xl);
+    color: var(--color-text-primary);
+  }
+
+  .header .meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+  }
+
+  .header .description {
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-3);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .header .stats {
+    display: flex;
+    gap: var(--spacing-5);
+    margin-top: var(--spacing-4);
+  }
+
+  .stat {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .stat strong { font-weight: 700; }
+
+  .header .actions {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-4);
+  }
+
+  .btn {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    transition: all var(--transition-base);
+  }
+
+  .btn:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    background: var(--color-border);
+    color: var(--color-accent);
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  .book-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-3);
+    transition: all var(--transition-base);
+  }
+
+  .book-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .cover {
+    height: 200px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .title {
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-1);
+    color: var(--color-text-primary);
+  }
+
+  .author {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .book-actions {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-2);
+  }
+
+  .btn-small {
+    flex: 1;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+    font-weight: 600;
+    transition: all var(--transition-base);
+  }
+
+  .btn-small:hover { opacity: 0.9; }
+
+  .btn-remove {
+    background: var(--color-bg-secondary);
+    color: var(--color-accent);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-8) var(--spacing-4);
+    color: var(--color-text-secondary);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="header">
+    <h1>{{ reading_list.title }}</h1>
+    <div class="meta">
+      By <strong>{{ reading_list.user.username }}</strong>
+      {% if reading_list.is_public %}
+        • 🌍 Public
+      {% else %}
+        • 🔒 Private
+      {% endif %}
+      • Created {{ reading_list.created_at|date:"M d, Y" }}
+    </div>
+    
+    {% if reading_list.description %}
+      <div class="description">{{ reading_list.description }}</div>
+    {% endif %}
+
+    <div class="stats">
+      <div class="stat"><strong>{{ book_count }}</strong> books</div>
+    </div>
+
+    {% if is_owner %}
+      <div class="actions">
+        <a href="{% url 'edit_reading_list' reading_list.slug %}" class="btn">Edit</a>
+        <a href="{% url 'delete_reading_list' reading_list.slug %}" class="btn btn-secondary">Delete</a>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if books %}
+    <div class="book-grid">
+      {% for book in books %}
+        <div class="book-card">
+          <a href="{% url 'book_detail' book.slug %}" style="text-decoration: none; color: inherit;">
+            <div class="cover" style="background: {{ book.cover_color }};"></div>
+            <div class="title">{{ book.title }}</div>
+          </a>
+          <div class="author">{{ book.author.name }}</div>
+          
+          <div class="book-actions">
+            <a href="{% url 'book_detail' book.slug %}" class="btn-small">View</a>
+            {% if is_owner %}
+              <a href="{% url 'remove_from_reading_list' reading_list.slug book.id %}" class="btn-small btn-remove" onclick="return confirm('Remove from list?')">Remove</a>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No books in this list yet.</p>
+      {% if is_owner %}
+        <p><a href="{% url 'search_books' %}" style="color: var(--color-accent); text-decoration: underline;">Search and add books</a> to this list!</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

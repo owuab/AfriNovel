@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ section_title }} | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Reader Dashboard specific styles using design system tokens */
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-7);
+  }
+
+  .sidebar, .content, .hero-card, .panel, .stat, .book-card {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+  }
+
+  .sidebar {
+    padding: var(--spacing-5);
+  }
+
+  .section-title {
+    margin: 0 0 var(--spacing-3);
+    font-size: var(--font-size-xl);
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 46px;
+    padding: var(--spacing-3) var(--spacing-3);
+    border-radius: var(--border-radius-sm);
+    margin: var(--spacing-2) 0;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-weight: 600;
+    transition: background var(--transition-base), color var(--transition-base);
+    text-decoration: none;
+  }
+
+  .menu-item.active {
+    background: rgba(122, 76, 61, 0.1);
+    color: var(--color-accent);
+  }
+
+  a.menu-item:hover {
+    background: rgba(47, 93, 80, 0.1);
+    color: var(--color-success);
+  }
+
+  .content {
+    padding: var(--spacing-6);
+  }
+
+  .hero-card {
+    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
+    padding: var(--spacing-6);
+  }
+
+  .hero-card h2 {
+    margin: 0 0 var(--spacing-2);
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    letter-spacing: -0.06em;
+    color: var(--color-text-primary);
+  }
+
+  .hero-card p {
+    margin: 0;
+    color: var(--color-text-secondary);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-4);
+    margin-top: var(--spacing-6);
+  }
+
+  .stat {
+    padding: var(--spacing-5) var(--spacing-5);
+    background: var(--color-bg-secondary);
+  }
+
+  .stat-label {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+
+  .stat-value {
+    font-size: clamp(1.8rem, 2.6vw, 2.5rem);
+    font-weight: 700;
+    margin-top: var(--spacing-3);
+    letter-spacing: -0.06em;
+    color: var(--color-text-primary);
+  }
+
+  .dashboard-section {
+    margin-top: var(--spacing-7);
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4);
+  }
+
+  .section-header h3 {
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+  }
+
+  .link-text {
+    color: var(--color-accent);
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-4);
+  }
+
+  .book-card {
+    padding: var(--spacing-3);
+    background: var(--color-bg-tertiary);
+  }
+
+  .cover {
+    height: 180px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .book-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+    align-items: center;
+  }
+
+  .book-title {
+    font-weight: 700;
+    display: block;
+    color: var(--color-text-primary);
+  }
+
+  .book-author {
+    margin-top: var(--spacing-2);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .pill {
+    display: inline-block;
+    background: rgba(122, 76, 61, 0.1);
+    color: var(--color-accent);
+    border-radius: 999px;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: var(--color-bg-disabled);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: var(--spacing-3);
+  }
+
+  .progress-bar span {
+    display: block;
+    height: 100%;
+    background: var(--color-success);
+  }
+
+  @media (max-width: 860px) {
+    .main-grid, .stats, .book-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container main-grid">
+  <aside class="sidebar">
+    <h3 class="section-title">Reader</h3>
+    <div class="menu-item active">My Library</div>
+    <a class="menu-item" href="{% url 'reading_now' %}">Reading now</a>
+    <a class="menu-item" href="{% url 'social_reviews' %}">Reviews</a>
+    <a class="menu-item" href="{% url 'book_recommendations' %}">Recommendations</a>
+    <a class="menu-item" href="{% url 'social_feed_tab' 'following' %}">Following feed</a>
+  </aside>
+
+  <section class="content">
+    <div class="hero-card">
+      <h2>{{ section_title }}</h2>
+      <p>Your personal bookshelf, progress tracker, and reading culture dashboard.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Books read</div>
+        <div class="stat-value">{{ reading_stats.read }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Currently reading</div>
+        <div class="stat-value">{{ reading_stats.currently_reading }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total bookshelf</div>
+        <div class="stat-value">{{ reading_stats.total }}</div>
+      </div>
+    </div>
+
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h3>Currently reading</h3>
+      </div>
+      {% if currently_reading %}
+        <div class="book-grid">
+          {% for item in currently_reading %}
+            <div class="book-card">
+              <div class="cover" style="background: {{ item.book.cover_color }};"></div>
+              <div class="book-row">
+                <span class="book-title">{{ item.book.title }}</span>
+                <span class="pill">{{ item.progress_percent }}%</span>
+              </div>
+              <div class="book-author">{{ item.book.author.name }}</div>
+              <div class="progress-bar"><span style="width: {{ item.progress_percent }}%"></span></div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color:var(--color-text-secondary);">No books currently reading. <a href="{% url 'view_bookshelf' %}" style="color:var(--color-accent); font-weight:700;">View your bookshelf</a> to start!</p>
+      {% endif %}
+    </div>
+
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h3>Want to read</h3>
+        <a class="link-text" href="{% url 'view_bookshelf' %}">View all →</a>
+      </div>
+      <div class="book-grid">
+        {% for item in want_to_read %}
+          <div class="book-card">
+            <div class="cover" style="background: {{ item.book.cover_color }};"></div>
+            <div class="book-row">
+              <span class="book-title">{{ item.book.title }}</span>
+              <span class="pill">{{ item.book.rating }}</span>
+            </div>
+            <div class="book-author">{{ item.book.author.name }}</div>
+          </div>
+        {% empty %}
+          <p>No books in "Want to read." <a href="{% url 'search_books' %}" style="color:var(--color-accent); font-weight:700;">Discover books</a>!</p>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

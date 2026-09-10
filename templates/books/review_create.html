@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Write a review | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .max-width-800 { max-width: 800px; margin: 0 auto; }
+
+  .panel {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-6);
+  }
+
+  h1 {
+    margin-top: 0;
+    font-size: var(--font-size-3xl);
+    letter-spacing: -0.05em;
+    color: var(--color-text-primary);
+  }
+
+  .subtitle {
+    color: var(--color-text-secondary);
+  }
+
+  .subtitle strong { font-weight: 700; }
+
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: var(--spacing-3);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--color-border);
+    font-size: var(--font-size-base);
+    font-family: Arial, sans-serif;
+    resize: vertical;
+    transition: all var(--transition-base);
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(122, 76, 61, 0.1);
+  }
+
+  .button-group {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-4);
+  }
+
+  .btn {
+    display: inline-block;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-3) var(--spacing-4);
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--transition-base);
+  }
+
+  .btn:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    background: var(--color-bg-secondary);
+    color: var(--color-accent);
+    border: 1px solid var(--color-border);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container max-width-800">
+  <div class="panel">
+    <h1>Write a review</h1>
+    <p class="subtitle">Share your thoughts on <strong>{{ book.title }}</strong>.</p>
+    
+    <form method="post">
+      {% csrf_token %}
+      <textarea name="content" placeholder="What stood out to you? Your review will be visible to the AfriNovel community."></textarea>
+      
+      <div class="button-group">
+        <button class="btn" type="submit">Publish review</button>
+        <a class="btn btn-secondary" href="{% url 'book_detail' book.slug %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
