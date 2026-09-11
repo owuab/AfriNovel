@@ -76,6 +76,17 @@
 .nav-link.nav-user {
   font-weight: var(--font-weight-semibold);
   color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.nav-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-border);
 }
 
 .nav-divider {

@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from pathlib import Path
 from uuid import uuid4
+from django.core.validators import FileExtensionValidator
 
 
 class Permission(models.Model):
@@ -534,6 +535,12 @@ class UserProfile(models.Model):
     bio = models.CharField(max_length=280, blank=True)
     location = models.CharField(max_length=100, blank=True)
     website = models.URLField(blank=True)
+    avatar = models.ImageField(
+        upload_to='profile_avatars/',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'gif', 'webp'])]
+    )
     avatar_url = models.URLField(blank=True)
     banner_url = models.URLField(blank=True)
     allow_followers = models.CharField(max_length=16, choices=VISIBILITY_CHOICES, default=EVERYONE)
@@ -547,6 +554,16 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.display_name or self.user.username
+
+    def get_avatar_url(self):
+        """Return avatar URL, preferring uploaded avatar over URL"""
+        if self.avatar:
+            return self.avatar.url
+        elif self.avatar_url:
+            return self.avatar_url
+        else:
+            # Default avatar based on username
+            return f"https://ui-avatars.com/api/?name={self.user.username}&background=random"
 
 
 class UserFollow(models.Model):

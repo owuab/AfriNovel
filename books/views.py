@@ -5,6 +5,7 @@ from datetime import timedelta
 import json
 import zipfile
 from pathlib import Path
+from .forms import ProfileEditForm
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, JsonResponse
@@ -747,16 +748,39 @@ def disconnect_social_account(request, provider):
 @login_required
 def profile_view(request):
     user = request.user
+    profile = _profile_for(user)
     authored_books = Book.objects.filter(author__name=user.username)[:4]
     context = {
         'user': user,
+        'profile': profile,
         'authored_books': authored_books,
         'reviews': Review.objects.filter(user=user)[:5],
         'books_read_count': user.bookshelf.filter(status=UserBookshelf.READ).count(),
         'followers_count': user.follower_users.count(),
-        'profile_view_count': _profile_for(user).profile_views,
+        'profile_view_count': profile.profile_views,
     }
     return render(request, 'books/profile.html', context)
+
+
+@login_required
+def profile_edit(request):
+    """Edit user profile including avatar upload"""
+    profile = _profile_for(request.user)
+    
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('profile')
+    else:
+        form = ProfileEditForm(instance=profile)
+    
+    context = {
+        'form': form,
+        'profile': profile,
+    }
+    return render(request, 'books/profile_edit.html', context)
 
 
 def author_profile(request, author_name):

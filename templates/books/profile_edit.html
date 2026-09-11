@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-edit-container {
+    max-width: 800px;
+    margin: var(--spacing-7) auto;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-7);
+  }
+
+  .profile-edit-header {
+    margin-bottom: var(--spacing-6);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-4);
+  }
+
+  .profile-edit-header h1 {
+    margin: 0 0 var(--spacing-2);
+    font-size: var(--font-size-2xl);
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+  }
+
+  .form-group {
+    margin-bottom: var(--spacing-4);
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: var(--spacing-2);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+  }
+
+  .form-control {
+    width: 100%;
+    padding: var(--spacing-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(122, 76, 61, 0.1);
+  }
+
+  .avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--color-border);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+  }
+
+  .button {
+    padding: var(--spacing-3) var(--spacing-5);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .button-primary {
+    background: var(--color-accent);
+    color: white;
+  }
+
+  .button-primary:hover {
+    background: #6a3d2e;
+  }
+
+  .button-secondary {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+  }
+
+  .button-secondary:hover {
+    background: var(--color-bg-tertiary);
+  }
+
+  .help-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="profile-edit-container">
+    <div class="profile-edit-header">
+      <h1>Edit Profile</h1>
+      <p style="color: var(--color-text-secondary);">Update your profile information and avatar</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label>Current Avatar</label>
+        {% if profile.get_avatar_url %}
+          <img src="{{ profile.get_avatar_url }}" alt="Current avatar" class="avatar-preview">
+        {% else %}
+          <div class="avatar-preview" style="background: linear-gradient(135deg, #d6b2a0, #7b4d3c);"></div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.avatar.id_for_label }}">Upload New Avatar</label>
+        {{ form.avatar }}
+        <p class="help-text">Upload an image (JPG, PNG, GIF, WebP) or provide a URL below</p>
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.avatar_url.id_for_label }}">Or Provide Avatar URL</label>
+        {{ form.avatar_url }}
+        <p class="help-text">Leave both empty to keep current avatar</p>
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.display_name.id_for_label }}">Display Name</label>
+        {{ form.display_name }}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.bio.id_for_label }}">Bio</label>
+        {{ form.bio }}
+        <p class="help-text">Tell us about yourself (max 280 characters)</p>
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.location.id_for_label }}">Location</label>
+        {{ form.location }}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.website.id_for_label }}">Website</label>
+        {{ form.website }}
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button button-primary">Save Changes</button>
+        <a href="{% url 'profile' %}" class="button button-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

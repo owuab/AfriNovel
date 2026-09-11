@@ -28,6 +28,13 @@
     border-radius: 50%;
     background: linear-gradient(135deg, #d6b2a0, #7b4d3c);
     box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .hero-info h1 {
@@ -164,13 +171,18 @@
 <div class="container">
   <div class="hero-panel">
     <div class="hero-inner">
-      <div class="avatar"></div>
+      <div class="avatar">
+        {% if user.social_profile.get_avatar_url %}
+          <img src="{{ user.social_profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+        {% endif %}
+      </div>
       <div class="hero-info">
         <h1>{{ user.username }}</h1>
-        <p>Reader and writer exploring global literature and emerging voices.</p>
+        <p>{{ user.social_profile.bio|default:"Reader and writer exploring global literature and emerging voices." }}</p>
         {% if user.is_staff or user.is_superuser %}
           <p><a class="admin-control-link" href="{% url 'admin_panel:dashboard' %}">Open admin control panel</a></p>
         {% endif %}
+        <p><a href="{% url 'profile_edit' %}" style="color: var(--color-accent); font-weight: 700;">Edit Profile</a></p>
         <div class="stats-grid">
           <a class="stat-box" href="{% url 'social_profile_tab' user.username 'books' %}">
             <div class="stat-label">Books read</div>
