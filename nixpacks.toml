@@ -1,0 +1,8 @@
+[phases.build]
+cmds = ["python manage.py collectstatic --noinput"]
+
+[phases.start]
+cmd = "gunicorn bookclub.wsgi:application --bind 0.0.0.0:$PORT"
+
+[variables]
+PYTHONUNBUFFERED = "1"
