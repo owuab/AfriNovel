@@ -47,3 +47,14 @@ class ProfileEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['avatar'].required = False
         self.fields['avatar_url'].required = False
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        avatar = cleaned_data.get('avatar')
+        avatar_url = cleaned_data.get('avatar_url')
+        
+        # If both avatar and avatar_url are provided, prefer the uploaded file
+        if avatar and avatar_url:
+            cleaned_data['avatar_url'] = ''
+        
+        return cleaned_data

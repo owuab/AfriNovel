@@ -117,6 +117,14 @@
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       
+      {% if form.non_field_errors %}
+        <div class="form-group" style="background: #fee; border: 1px solid #fcc; padding: var(--spacing-3); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-4);">
+          {% for error in form.non_field_errors %}
+            <p style="color: #c33; margin: 0;">{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+      
       <div class="form-group">
         <label>Current Avatar</label>
         {% if profile.get_avatar_url %}
@@ -129,34 +137,76 @@
       <div class="form-group">
         <label for="{{ form.avatar.id_for_label }}">Upload New Avatar</label>
         {{ form.avatar }}
+        {% if form.avatar.errors %}
+          <div class="error" style="color: #c33; font-size: var(--font-size-sm); margin-top: var(--spacing-1);">
+            {% for error in form.avatar.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
         <p class="help-text">Upload an image (JPG, PNG, GIF, WebP) or provide a URL below</p>
       </div>
 
       <div class="form-group">
         <label for="{{ form.avatar_url.id_for_label }}">Or Provide Avatar URL</label>
         {{ form.avatar_url }}
+        {% if form.avatar_url.errors %}
+          <div class="error" style="color: #c33; font-size: var(--font-size-sm); margin-top: var(--spacing-1);">
+            {% for error in form.avatar_url.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
         <p class="help-text">Leave both empty to keep current avatar</p>
       </div>
 
       <div class="form-group">
         <label for="{{ form.display_name.id_for_label }}">Display Name</label>
         {{ form.display_name }}
+        {% if form.display_name.errors %}
+          <div class="error" style="color: #c33; font-size: var(--font-size-sm); margin-top: var(--spacing-1);">
+            {% for error in form.display_name.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
 
       <div class="form-group">
         <label for="{{ form.bio.id_for_label }}">Bio</label>
         {{ form.bio }}
+        {% if form.bio.errors %}
+          <div class="error" style="color: #c33; font-size: var(--font-size-sm); margin-top: var(--spacing-1);">
+            {% for error in form.bio.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
         <p class="help-text">Tell us about yourself (max 280 characters)</p>
       </div>
 
       <div class="form-group">
         <label for="{{ form.location.id_for_label }}">Location</label>
         {{ form.location }}
+        {% if form.location.errors %}
+          <div class="error" style="color: #c33; font-size: var(--font-size-sm); margin-top: var(--spacing-1);">
+            {% for error in form.location.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
 
       <div class="form-group">
         <label for="{{ form.website.id_for_label }}">Website</label>
         {{ form.website }}
+        {% if form.website.errors %}
+          <div class="error" style="color: #c33; font-size: var(--font-size-sm); margin-top: var(--spacing-1);">
+            {% for error in form.website.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
 
       <div class="form-actions">

@@ -773,6 +773,9 @@ def profile_edit(request):
             form.save()
             messages.success(request, 'Profile updated successfully!')
             return redirect('profile')
+        else:
+            # Form is invalid, show errors
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = ProfileEditForm(instance=profile)
     
