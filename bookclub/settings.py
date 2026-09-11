@@ -88,11 +88,6 @@ MIDDLEWARE = [
 if not DEBUG:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
-# Temporarily disable CSRF for development troubleshooting
-# TODO: Re-enable CSRF once cookie setting issue is resolved
-if DEBUG:
-    MIDDLEWARE = [m for m in MIDDLEWARE if m != 'django.middleware.csrf.CsrfViewMiddleware']
-
 ROOT_URLCONF = 'bookclub.urls'
 
 TEMPLATES = [
