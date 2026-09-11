@@ -150,6 +150,7 @@
             if (dropdownBtn && dropdownMenu) {
                 dropdownBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     const isExpanded = dropdownBtn.getAttribute('aria-expanded') === 'true';
                     dropdownBtn.setAttribute('aria-expanded', !isExpanded);
                     dropdownMenu.classList.toggle('show');
@@ -161,6 +162,11 @@
                         dropdownBtn.setAttribute('aria-expanded', 'false');
                         dropdownMenu.classList.remove('show');
                     }
+                });
+                
+                // Prevent dropdown from closing when clicking inside
+                dropdownMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
                 });
             }
         });

@@ -117,12 +117,14 @@
   transform: translateY(-10px);
   transition: all var(--transition-base);
   margin-top: var(--spacing-2);
+  pointer-events: none;
 }
 
 .dropdown-menu.show {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  pointer-events: auto;
 }
 
 .dropdown-item {
@@ -131,6 +133,7 @@
   color: var(--color-text-primary);
   text-decoration: none;
   transition: background var(--transition-fast);
+  cursor: pointer;
 }
 
 .dropdown-item:hover {
