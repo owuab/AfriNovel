@@ -126,6 +126,7 @@ SOCIALACCOUNT_ADAPTER = 'books.social_auth.BookClubSocialAccountAdapter'
 SOCIALACCOUNT_LOGIN_ON_GET = False
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = False
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = False
+ACCOUNT_UNIQUE_EMAIL = True
 
 SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
 SOCIAL_AUTH_REDIRECT_BASE_URL = os.getenv('SOCIAL_AUTH_REDIRECT_BASE_URL', SITE_URL).rstrip('/')
@@ -224,11 +225,24 @@ SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@afrinovel.com')
+
+# Allauth email settings
+ACCOUNT_EMAIL_SUBJECT_PREFIX = '[AfriNovel] '
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+ACCOUNT_PREVENT_ENUMERATION = True
+ACCOUNT_PASSWORD_RESET_TIMEOUT = 86400  # 24 hours in seconds
+ACCOUNT_PASSWORD_RESET_EXPIRE_INPUT = False
+ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 
 # ============================================================================
 # BOOK IMPORT & READING CONFIGURATION

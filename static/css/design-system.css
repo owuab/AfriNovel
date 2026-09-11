@@ -6,38 +6,38 @@
 /* ==================== COLOR PALETTE ==================== */
 :root {
   /* Backgrounds */
-  --color-bg-primary: #f5f1e8;
-  --color-bg-secondary: #fbf9f5;
+  --color-bg-primary: #f8f9fa;
+  --color-bg-secondary: #f0f0f0;
   --color-bg-tertiary: #ffffff;
-  
+
   /* Text Colors */
-  --color-text-primary: #1f2a2e;
-  --color-text-secondary: #5d6a6f;
-  --color-text-muted: #8a9199;
+  --color-text-primary: #333;
+  --color-text-secondary: #666;
+  --color-text-muted: #999;
   --color-text-inverse: #ffffff;
-  
+
   /* Semantic Colors */
-  --color-accent: #7a4c3d;
-  --color-accent-dark: #5d3a2e;
-  --color-accent-light: #e9d7cf;
+  --color-accent: #4b64ff;
+  --color-accent-dark: #3a54d9;
+  --color-accent-light: #e0e8ff;
   --color-success: #2f5d50;
   --color-success-light: #e8f4f0;
   --color-danger: #9d2929;
   --color-danger-light: #fff0ed;
-  --color-warning: #cc8800;
+  --color-warning: #ffcd27;
   --color-warning-light: #fff8f0;
   --color-info: #1e6b9a;
   --color-info-light: #e8f4fc;
-  
+
   /* Borders & Lines */
-  --color-border: #e7dfd2;
-  --color-border-light: #f0ede3;
-  --color-border-dark: #d4cac0;
-  
+  --color-border: #ddd;
+  --color-border-light: #eee;
+  --color-border-dark: #999;
+
   /* Interactive */
-  --color-link: #7a4c3d;
-  --color-link-hover: #5d3a2e;
-  --color-link-visited: #9b6b5d;
+  --color-link: #4b64ff;
+  --color-link-hover: #3a54d9;
+  --color-link-visited: #6b7eff;
   
   /* ==================== TYPOGRAPHY ==================== */
   --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -151,7 +151,7 @@ body {
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-normal);
   color: var(--color-text-primary);
-  background-color: var(--color-bg-primary);
+  background-color: #f8f9fa;
 }
 
 /* ==================== TYPOGRAPHY ==================== */
@@ -232,7 +232,7 @@ input[type="button"] {
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   border: var(--border-width-default) solid transparent;
-  border-radius: var(--border-radius-md);
+  border-radius: 4px;
   background-color: var(--color-accent);
   color: var(--color-text-inverse);
   cursor: pointer;
@@ -405,8 +405,8 @@ select {
   line-height: var(--line-height-normal);
   color: var(--color-text-primary);
   background-color: var(--color-bg-tertiary);
-  border: var(--border-width-default) solid var(--color-border);
-  border-radius: var(--border-radius-md);
+  border: var(--border-width-default) solid #333;
+  border-radius: 4px;
   transition: all var(--transition-fast);
   appearance: none;
   -webkit-appearance: none;
@@ -417,9 +417,9 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: var(--color-accent);
+  border-color: #4b64ff;
   background-color: var(--color-bg-tertiary);
-  box-shadow: 0 0 0 3px rgba(122, 76, 61, 0.1);
+  box-shadow: 0 0 0 3px rgba(75, 100, 255, 0.1);
 }
 
 input:disabled,
@@ -626,8 +626,8 @@ tbody tr:last-child td {
 /* ==================== CARDS & CONTAINERS ==================== */
 .card {
   background-color: var(--color-bg-tertiary);
-  border: var(--border-width-default) solid var(--color-border);
-  border-radius: var(--border-radius-lg);
+  border: var(--border-width-default) solid #333;
+  border-radius: 4px;
   padding: var(--spacing-6);
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-base);
@@ -635,7 +635,7 @@ tbody tr:last-child td {
 
 .card:hover {
   box-shadow: var(--shadow-md);
-  border-color: var(--color-border-dark);
+  border-color: #4b64ff;
 }
 
 .card-header {
@@ -644,7 +644,7 @@ tbody tr:last-child td {
   justify-content: space-between;
   margin-bottom: var(--spacing-6);
   padding-bottom: var(--spacing-4);
-  border-bottom: var(--border-width-default) solid var(--color-border);
+  border-bottom: var(--border-width-default) solid #333;
 }
 
 .card-title {
@@ -667,7 +667,7 @@ tbody tr:last-child td {
   align-items: center;
   justify-content: space-between;
   padding-top: var(--spacing-4);
-  border-top: var(--border-width-default) solid var(--color-border);
+  border-top: var(--border-width-default) solid #333;
   gap: var(--spacing-4);
 }
 

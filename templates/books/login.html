@@ -9,21 +9,21 @@
   .login-card { width: 100%; max-width: 450px; }
   .login-header { text-align: center; margin-bottom: var(--spacing-8); }
   .login-icon { font-size: 2.5rem; margin-bottom: var(--spacing-4); }
-  .login-header h1 { margin: 0; font-size: var(--font-size-2xl); }
-  .login-header p { margin: var(--spacing-2) 0 0; color: var(--color-text-secondary); }
-  .divider { display: flex; align-items: center; gap: var(--spacing-4); margin: var(--spacing-6) 0; color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); letter-spacing: 0.5px; }
-  .divider::before, .divider::after { content: ""; height: 1px; background: var(--color-border); flex: 1; }
+  .login-header h1 { margin: 0; font-size: var(--font-size-2xl); color: #333; }
+  .login-header p { margin: var(--spacing-2) 0 0; color: #666; }
+  .divider { display: flex; align-items: center; gap: var(--spacing-4); margin: var(--spacing-6) 0; color: #999; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); letter-spacing: 0.5px; }
+  .divider::before, .divider::after { content: ""; height: 1px; background: #ddd; flex: 1; }
   .social-buttons { display: flex; flex-direction: column; gap: var(--spacing-3); }
-  .social-button { display: flex; align-items: center; justify-content: center; gap: var(--spacing-3); padding: var(--spacing-4); border: var(--border-width-default) solid var(--color-border); border-radius: var(--border-radius-md); background: var(--color-bg-tertiary); color: var(--color-text-primary); text-decoration: none; font-weight: var(--font-weight-semibold); cursor: pointer; transition: all var(--transition-fast); }
-  .social-button:hover:not([aria-disabled=true]) { border-color: var(--color-accent); background: var(--color-accent-light); }
+  .social-button { display: flex; align-items: center; justify-content: center; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid #333; border-radius: 4px; background: #fff; color: #333; text-decoration: none; font-weight: var(--font-weight-semibold); cursor: pointer; transition: all var(--transition-fast); }
+  .social-button:hover:not([aria-disabled=true]) { border-color: #4b64ff; background: #f8f9fa; }
   .social-button[aria-disabled=true] { opacity: 0.5; cursor: not-allowed; }
   .provider-icon { width: 24px; height: 24px; flex: 0 0 24px; }
   .provider-icon svg { width: 100%; height: 100%; display: block; }
   .utility { margin: var(--spacing-4) 0 0; text-align: right; }
-  .utility a { font-weight: var(--font-weight-semibold); }
-  .login-footer { text-align: center; margin-top: var(--spacing-8); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
-  .login-footer a { font-weight: var(--font-weight-semibold); }
-  .config-note { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--spacing-6); text-align: center; }
+  .utility a { font-weight: var(--font-weight-semibold); color: #4b64ff; }
+  .login-footer { text-align: center; margin-top: var(--spacing-8); font-size: var(--font-size-sm); color: #666; }
+  .login-footer a { font-weight: var(--font-weight-semibold); color: #4b64ff; }
+  .config-note { font-size: var(--font-size-xs); color: #999; margin-top: var(--spacing-6); text-align: center; }
 </style>
 {% endblock %}
 
@@ -79,7 +79,7 @@
           <a href="{% url 'account_reset_password' %}">Forgot password?</a>
         </div>
 
-        <button type="submit" class="button" style="width: 100%; margin-top: var(--spacing-4);">Sign In</button>
+        <button type="submit" class="button" style="width: 100%; margin-top: var(--spacing-4); background: #4b64ff; border: none;">Sign In</button>
       </form>
 
       <div class="divider">OR</div>

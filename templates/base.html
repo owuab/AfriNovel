@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{% block meta_description %}AfriNovel - A global reading community{% endblock %}">
-    <meta name="theme-color" content="#7a4c3d">
+    <meta name="theme-color" content="#222">
     
     <title>{% block title %}AfriNovel{% endblock %}</title>
     
@@ -67,7 +67,7 @@
                             </div>
                         {% else %}
                             <a href="{% url 'login' %}" class="nav-link">Sign In</a>
-                            <a href="{% url 'signup' %}" class="button button-sm">Create Account</a>
+                            <a href="{% url 'signup' %}" class="nav-link" style="background-color: #4b64ff; color: #fff;">Create Account</a>
                         {% endif %}
                     </div>
                 </div>

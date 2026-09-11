@@ -67,6 +67,11 @@ class BookClubAccountAdapter(DefaultAccountAdapter):
             return '/admin-panel/dashboard/'
         return '/home/'
 
+    def send_password_reset_mail(self, email, user, context):
+        from django.conf import settings
+        context['site_url'] = settings.SITE_URL
+        return super().send_password_reset_mail(email, user, context)
+
 
 class BookClubSocialAccountAdapter(DefaultSocialAccountAdapter):
     """Do not silently link by email; users must explicitly connect while signed in."""
