@@ -31,22 +31,30 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
-# CSRF Trusted Origins for production
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
-
-# Additional CSRF settings for development
+# CSRF Trusted Origins configuration
 if DEBUG:
+    # Development origins
+    CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1', 'http://localhost', 'http://127.0.0.1:8001', 'http://localhost:8001']
     # Disable CSRF cookie secure flag in development
     CSRF_COOKIE_SECURE = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
-    # Allow CSRF to work without HTTPS in development
-    CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1', 'http://localhost', 'http://127.0.0.1:8001', 'http://localhost:8001']
     # Ensure CSRF cookie is set
     CSRF_COOKIE_HTTPONLY = False
     # Use session-based CSRF for better development experience
     CSRF_USE_SESSIONS = False
+else:
+    # Production: use environment variable or fallback to ALLOWED_HOSTS
+    csrf_origins_env = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+    if csrf_origins_env:
+        CSRF_TRUSTED_ORIGINS = csrf_origins_env.split(',')
+    else:
+        # Fallback: convert ALLOWED_HOSTS to HTTPS origins
+        CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host != '*']
+    # Production cookie security
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
 
 
 # Application definition
@@ -210,8 +218,6 @@ BOOK_PROVIDER_USER_AGENT = f'BookClub Legal Library/1.0 ({BOOK_PROVIDER_CONTACT_
 APSCHEDULER_DATETIME_FORMAT = 'N j, Y, f:s a'
 APSCHEDULER_RUN_NOW_TIMEOUT = 300
 
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true'
 
 
