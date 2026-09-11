@@ -34,6 +34,20 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 # CSRF Trusted Origins for production
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
 
+# Additional CSRF settings for development
+if DEBUG:
+    # Disable CSRF cookie secure flag in development
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    # Allow CSRF to work without HTTPS in development
+    CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1', 'http://localhost', 'http://127.0.0.1:8001', 'http://localhost:8001']
+    # Ensure CSRF cookie is set
+    CSRF_COOKIE_HTTPONLY = False
+    # Use session-based CSRF for better development experience
+    CSRF_USE_SESSIONS = False
+
 
 # Application definition
 
@@ -73,6 +87,11 @@ MIDDLEWARE = [
 # Add whitenoise middleware only in production
 if not DEBUG:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+# Temporarily disable CSRF for development troubleshooting
+# TODO: Re-enable CSRF once cookie setting issue is resolved
+if DEBUG:
+    MIDDLEWARE = [m for m in MIDDLEWARE if m != 'django.middleware.csrf.CsrfViewMiddleware']
 
 ROOT_URLCONF = 'bookclub.urls'
 
