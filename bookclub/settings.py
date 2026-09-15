@@ -58,16 +58,12 @@ else:
             if origin.strip()
         ]
     else:
-        # Fallback: convert ALLOWED_HOSTS to both HTTP and HTTPS origins
-        CSRF_TRUSTED_ORIGINS = []
-        for host in ALLOWED_HOSTS:
-            if host != '*':
-                CSRF_TRUSTED_ORIGINS.append(f'https://{host}')
-                CSRF_TRUSTED_ORIGINS.append(f'http://{host}')
+        # Fallback: convert ALLOWED_HOSTS to HTTPS origins only
+        CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host != '*']
     # Production cookie security
-    # Note: Railway handles SSL termination, so we need to allow both secure and non-secure cookies
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
+    # With SECURE_PROXY_SSL_HEADER, Django correctly recognizes HTTPS requests
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
 
@@ -237,8 +233,12 @@ BOOK_PROVIDER_USER_AGENT = f'BookClub Legal Library/1.0 ({BOOK_PROVIDER_CONTACT_
 APSCHEDULER_DATETIME_FORMAT = 'N j, Y, f:s a'
 APSCHEDULER_RUN_NOW_TIMEOUT = 300
 
-# Disable SSL redirect on Railway since it handles SSL termination
-SECURE_SSL_REDIRECT = False
+# HTTPS/SSL Configuration for Railway
+# Railway terminates SSL and forwards requests, so Django needs to trust the proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Disable SSL redirect since Railway handles SSL termination
+# Read from environment variable to allow Railway configuration control
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true'
 
 
 # Email
@@ -257,7 +257,8 @@ else:
 
 # Allauth email settings
 ACCOUNT_EMAIL_SUBJECT_PREFIX = '[AfriNovel] '
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+# Use HTTPS in production since Railway handles SSL termination
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if not DEBUG else 'http'
 ACCOUNT_PREVENT_ENUMERATION = True
 ACCOUNT_PASSWORD_RESET_TIMEOUT = 86400  # 24 hours in seconds
 ACCOUNT_PASSWORD_RESET_EXPIRE_INPUT = False
