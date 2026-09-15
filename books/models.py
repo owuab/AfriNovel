@@ -6,6 +6,7 @@ from django.utils.text import slugify
 from pathlib import Path
 from uuid import uuid4
 from django.core.validators import FileExtensionValidator
+from datetime import timedelta
 
 
 class Permission(models.Model):
@@ -108,9 +109,21 @@ class Book(models.Model):
         (ARCHIVED, 'Archived'),
     ]
 
+    ONGOING = 'ongoing'
+    COMPLETED = 'completed'
+    HIATUS = 'hiatus'
+    NOVEL_STATUS_CHOICES = [
+        (ONGOING, 'Ongoing'),
+        (COMPLETED, 'Completed'),
+        (HIATUS, 'Hiatus'),
+    ]
+
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
+    translator = models.CharField(max_length=200, blank=True, help_text='Translator name')
+    licensor = models.CharField(max_length=200, blank=True, help_text='Publisher/licensor name')
+    language = models.CharField(max_length=50, default='English', help_text='Original language')
     summary = models.TextField()
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     cover_url = models.URLField(max_length=1000, blank=True)
@@ -118,6 +131,7 @@ class Book(models.Model):
     view_count = models.PositiveIntegerField(default=0)
     cover_color = models.CharField(max_length=80, default='linear-gradient(135deg, #dcae7b, #8a563f)')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=DRAFT)
+    novel_status = models.CharField(max_length=20, choices=NOVEL_STATUS_CHOICES, default=ONGOING, help_text='Story status (ongoing/completed)')
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -142,7 +156,46 @@ class Book(models.Model):
         if self.catalog_book:
             return self.catalog_book.cover_image_url
         return ''
-        
+
+    @property
+    def chapter_count(self):
+        return self.chapters.count()
+
+    @property
+    def review_count(self):
+        return self.reviews.count()
+
+
+class Chapter(models.Model):
+    """Individual chapters for web novels"""
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='chapters')
+    chapter_number = models.PositiveIntegerField()
+    title = models.CharField(max_length=300)
+    slug = models.SlugField(max_length=300)
+    content = models.TextField(blank=True, help_text='Chapter content')
+    published_date = models.DateTimeField(null=True, blank=True)
+    is_free = models.BooleanField(default=True, help_text='Free to read without subscription')
+    is_locked = models.BooleanField(default=False, help_text='Locked for premium users')
+    word_count = models.PositiveIntegerField(default=0)
+    view_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['chapter_number']
+        unique_together = ['book', 'chapter_number']
+        indexes = [
+            models.Index(fields=['book', 'chapter_number']),
+            models.Index(fields=['book', 'is_free']),
+        ]
+
+    def __str__(self):
+        return f"Chapter {self.chapter_number}: {self.title}"
+
+    def get_absolute_url(self):
+        return reverse('chapter_detail', args=[self.book.slug, self.chapter_number])
+
+
 def book_upload_path(instance, filename):
     safe_name = slugify(Path(filename).stem) or 'book-file'
     suffix = Path(filename).suffix.lower()
@@ -180,20 +233,25 @@ class BookUpload(models.Model):
 class Review(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')], default=5)
     content = models.TextField()
+    helpful_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+        unique_together = ['book', 'user']
 
     def __str__(self):
-        return f'{self.user.username} on {self.book.title}'
+        return f'{self.user.username} on {self.book.title} ({self.rating}★)'
 
 
 class ReviewComment(models.Model):
     review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='review_comments')
     content = models.TextField()
+    helpful_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -201,6 +259,38 @@ class ReviewComment(models.Model):
 
     def __str__(self):
         return f'{self.user.username} on {self.review.book.title}'
+
+
+class UserFreeChapterAllowance(models.Model):
+    """Track free chapter allowance for users"""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='free_chapter_allowance')
+    free_chapters_remaining = models.PositiveIntegerField(default=2)
+    last_reset_time = models.DateTimeField(auto_now=True)
+    reset_interval_hours = models.PositiveIntegerField(default=23, help_text='Hours between free chapter resets')
+    total_free_chapters_per_reset = models.PositiveIntegerField(default=2)
+
+    def reset_if_needed(self):
+        """Reset free chapters if the interval has passed"""
+        time_since_reset = timezone.now() - self.last_reset_time
+        if time_since_reset >= timedelta(hours=self.reset_interval_hours):
+            self.free_chapters_remaining = self.total_free_chapters_per_reset
+            self.last_reset_time = timezone.now()
+            self.save()
+            return True
+        return False
+
+    def get_time_until_reset(self):
+        """Get time remaining until next reset"""
+        time_since_reset = timezone.now() - self.last_reset_time
+        time_until_reset = timedelta(hours=self.reset_interval_hours) - time_since_reset
+        return max(time_until_reset, timedelta())
+
+    class Meta:
+        verbose_name = "User Free Chapter Allowance"
+        verbose_name_plural = "User Free Chapter Allowances"
+
+    def __str__(self):
+        return f'{self.user.username}: {self.free_chapters_remaining} free chapters'
 
 
 class AuthorFollow(models.Model):
@@ -233,6 +323,8 @@ class UserBookshelf(models.Model):
     notes = models.TextField(blank=True)
     added_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    last_read_chapter = models.ForeignKey('Chapter', null=True, blank=True, on_delete=models.SET_NULL, related_name='read_by_users')
+    last_read_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('user', 'book')
