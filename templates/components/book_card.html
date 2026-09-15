@@ -1,218 +1,35 @@
 {% load static %}
 
-<article class="book-card">
-  <a href="{% if book.catalog_book and book.catalog_book.can_read_in_app %}{% url 'catalogue_reader' book.catalog_book.pk %}{% else %}{{ book.get_absolute_url }}{% endif %}" class="book-link">
+<article class="book-card-premium">
+  <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
     {% if book.cover_image_url %}
-      <img class="book-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+      <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy" decoding="async" width="200" height="300">
     {% else %}
-      <div class="book-cover" style="background: {{ book.cover_color }};"></div>
+      <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
+    {% endif %}
+    {% if show_badge %}
+      <span class="book-status status-ongoing">{{ badge_text }}</span>
+    {% elif book.novel_status == 'ongoing' %}
+      <span class="book-status status-ongoing">Ongoing</span>
+    {% elif book.novel_status == 'completed' %}
+      <span class="book-status status-completed">Completed</span>
     {% endif %}
   </a>
-  
   <div class="book-content">
     <h3 class="book-title">
-      <a href="{% if book.catalog_book and book.catalog_book.can_read_in_app %}{% url 'catalogue_reader' book.catalog_book.pk %}{% else %}{{ book.get_absolute_url }}{% endif %}">{{ book.title }}</a>
+      <a href="{{ book.get_absolute_url }}">{{ book.title }}</a>
     </h3>
-    
+    <div class="book-author">{{ book.author.name }}</div>
     <div class="book-meta">
-      <span class="book-author">{{ book.author.name }}</span>
-      {% if show_genres %}
-        <span class="book-genres">
-          {% for genre in book.genres.all %}
-            {{ genre.name }}{% if not forloop.last %}, {% endif %}
-          {% endfor %}
-        </span>
+      {% if show_rating and book.rating %}
+        <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
       {% endif %}
+      <span>{{ book.chapter_count }} chapters</span>
     </div>
-    
-    {% if show_rating and book.rating %}
-      <div class="book-rating">
-        <span class="rating-stars">★</span>
-        <span class="rating-value">{{ book.rating|floatformat:1 }}</span>
-      </div>
-    {% endif %}
-    
-    {% if show_status %}
-      <div class="book-status {{ status_class|default:'status-published' }}">
-        {{ status_text|default:book.get_status_display }}
-      </div>
-    {% endif %}
-    
-    {% if show_badge %}
-      <div class="book-badge {{ badge_class }}">
-        {{ badge_text }}
-      </div>
-    {% endif %}
-    
     {% if show_action %}
       <div class="book-action">
-        <a href="{% if book.catalog_book and book.catalog_book.can_read_in_app %}{% url 'catalogue_reader' book.catalog_book.pk %}{% else %}{{ book.get_absolute_url }}{% endif %}" class="action-button">{{ action_text|default:'Read' }}</a>
+        <a href="{{ book.get_absolute_url }}" class="action-button">{{ action_text|default:'Read' }}</a>
       </div>
     {% endif %}
   </div>
 </article>
-
-{% block extra_css %}
-<style>
-  .book-card {
-    background: #f8f9fa;
-    border: 1px solid #333;
-    border-radius: 4px;
-    padding: var(--spacing-3);
-    transition: all var(--transition-base);
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      text-decoration: none;
-      width: 100%;
-      justify-self: center;
-  }
-
-  .book-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-    border-color: #4b64ff;
-  }
-
-  .book-link {
-    text-decoration: none;
-  }
-
-  .book-cover {
-    aspect-ratio: 2 / 3;
-    height: auto;
-    border-radius: 4px;
-    margin-bottom: var(--spacing-2);
-    object-fit: cover;
-    width: 100%;
-    background: #ddd;
-  }
-
-  .book-content {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-  }
-
-  .book-title {
-    margin: 0 0 var(--spacing-1);
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-semibold);
-    line-height: 1.3;
-  }
-
-  .book-title a {
-    color: #333;
-    text-decoration: none;
-  }
-
-  .book-title a:hover {
-    color: #4b64ff;
-  }
-
-  .book-meta {
-    color: #666;
-    font-size: var(--font-size-xs);
-    margin-bottom: var(--spacing-1);
-  }
-
-  .book-author {
-    display: block;
-    margin-bottom: var(--spacing-1);
-  }
-
-  .book-genres {
-    display: block;
-    opacity: 0.8;
-  }
-
-  .book-rating {
-    color: #4b64ff;
-    font-weight: var(--font-weight-semibold);
-    margin-bottom: var(--spacing-2);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-1);
-  }
-
-  .rating-stars {
-    font-size: var(--font-size-lg);
-  }
-
-  .book-status {
-    display: inline-block;
-    padding: var(--spacing-1) var(--spacing-3);
-    border-radius: 4px;
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    margin-bottom: var(--spacing-2);
-  }
-
-  .status-published {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .status-draft {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .status-completed {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .book-badge {
-    display: inline-block;
-    background: #4b64ff;
-    color: #fff;
-    border-radius: 4px;
-    padding: var(--spacing-1) var(--spacing-3);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    margin-bottom: var(--spacing-2);
-  }
-
-  .badge-new {
-    background: #4b64ff;
-    color: #fff;
-  }
-
-  .badge-trending {
-    background: #ffcd27;
-    color: #333;
-  }
-
-  .badge-popular {
-    background: #4b64ff;
-    color: #fff;
-  }
-
-  .book-action {
-    margin-top: auto;
-  }
-
-  .action-button {
-    display: inline-block;
-    padding: var(--spacing-2) var(--spacing-4);
-    background: #4b64ff;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-weight: var(--font-weight-semibold);
-    transition: all var(--transition-base);
-    text-align: center;
-  }
-
-  .action-button:hover {
-    background: #3a54d9;
-  }
-
-  @media (max-width: 768px) {
-    .book-cover {
-      aspect-ratio: 2 / 3;
-    }
-  }
-</style>
-{% endblock %}

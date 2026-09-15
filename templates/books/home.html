@@ -5,247 +5,189 @@
 
 {% block extra_css %}
 <style>
-  .hero-section {
-    padding: var(--spacing-8) 0;
-  }
-
-  .homepage-search {
-    display: grid;
-    gap: var(--spacing-3);
-    max-width: 860px;
-    margin: var(--spacing-10) auto var(--spacing-4);
-    padding: var(--spacing-4) var(--spacing-5) var(--spacing-6);
-    text-align: center;
-  }
-
-  .homepage-search-heading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-2);
-    margin: 0;
-    color: #333;
-    font-size: var(--font-size-2xl);
-    letter-spacing: -0.03em;
-  }
-
-  .homepage-search-form {
-    display: grid;
-    gap: var(--spacing-4);
-    width: min(100%, 584px);
-    max-width: 584px;
-    margin: var(--spacing-4) auto 0;
-  }
-
-  .homepage-search-control {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-3);
-    min-width: 0;
-    padding: 0 var(--spacing-4);
-    border: 1px solid #333;
-    border-radius: 4px;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
-    transition: box-shadow var(--transition-base), border-color var(--transition-base);
-  }
-
-  .homepage-search-icon { display: block; width: 20px; height: 20px; flex: 0 0 20px; }
-  .homepage-search-icon img { display: block; width: 100%; height: 100%; border-radius: 5px; }
-
-  .homepage-search-control input {
-    width: 100%;
-    min-height: 46px;
+  .homepage-container {
     padding: 0;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: #333;
   }
 
-  .homepage-search-control:focus-within {
-    border-color: #4b64ff;
-    box-shadow: 0 3px 12px rgba(75, 100, 255, .2);
+  .hero-carousel {
+    position: relative;
+    min-height: 500px;
+    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
+    overflow: hidden;
   }
 
-  .homepage-search-submit {
-    min-height: 42px;
-    justify-self: center;
-    padding: 0 var(--spacing-4);
-    border: 1px solid #333;
-    border-radius: 4px;
-    background: #f8f9fa;
-    color: #333;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    cursor: pointer;
-    white-space: nowrap;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+  .hero-carousel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(216, 155, 53, 0.15) 0%, transparent 60%);
+    pointer-events: none;
   }
 
-  .homepage-search-submit:hover { border-color: #4b64ff; background: #4b64ff; color: #fff; box-shadow: 0 1px 2px rgba(75, 100, 255, .2); }
-  .homepage-search-submit:focus-visible { outline: 3px solid #4b64ff; outline-offset: 2px; }
+  .hero-slide {
+    display: none;
+    animation: fadeIn 0.5s ease-in-out;
+  }
 
-  .hero-featured {
-    background: #f8f9fa;
-    border: 1px solid #333;
-    border-radius: 4px;
+  .hero-slide.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-content {
     display: grid;
-    grid-template-columns: 1fr 0.8fr;
+    grid-template-columns: 1fr 1fr;
     gap: var(--spacing-8);
-    padding: var(--spacing-8);
-    box-shadow: var(--shadow-lg);
+    align-items: center;
+    padding: var(--spacing-12) var(--spacing-6);
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
   }
 
-  .featured-badge {
+  .hero-book-info .featured-badge {
     display: inline-block;
-    background: #4b64ff;
-    color: #fff;
-    border-radius: 4px;
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
     padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--border-radius-full);
     font-size: var(--font-size-xs);
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    font-weight: var(--font-weight-bold);
     text-transform: uppercase;
-    margin-bottom: var(--spacing-3);
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-4);
   }
 
-  .featured-book h1 {
-    margin: var(--spacing-4) 0 var(--spacing-3);
-    font-size: clamp(2rem, 4vw, 3.5rem);
-    letter-spacing: -0.05em;
+  .hero-book-info h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-3);
     line-height: 1.1;
-    color: #333;
   }
 
-  .featured-book .author {
-    color: #666;
+  .hero-book-info .author {
     font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
     margin-bottom: var(--spacing-3);
   }
 
-  .featured-book .description {
-    color: #666;
+  .hero-book-info .description {
+    color: var(--color-text-secondary);
     line-height: var(--line-height-relaxed);
     margin-bottom: var(--spacing-4);
     max-width: 600px;
   }
 
-  .featured-book .meta {
+  .hero-book-info .meta {
     display: flex;
     gap: var(--spacing-4);
-    color: #666;
+    color: var(--color-text-muted);
     font-size: var(--font-size-sm);
     margin-bottom: var(--spacing-4);
   }
 
-  .featured-book .rating {
-    color: #4b64ff;
-    font-weight: 700;
+  .hero-book-info .rating {
+    color: var(--color-rating);
+    font-weight: var(--font-weight-semibold);
   }
 
-  .featured-actions {
+  .hero-actions {
     display: flex;
     gap: var(--spacing-3);
-    margin-top: var(--spacing-5);
+    margin-top: var(--spacing-6);
   }
 
-  .featured-actions .button {
-    min-height: 44px;
-    padding: var(--spacing-3) var(--spacing-5);
-    border-radius: 4px;
-    font-weight: 700;
-    text-decoration: none;
-    white-space: nowrap;
+  .hero-controls {
+    position: absolute;
+    bottom: var(--spacing-6);
+    right: var(--spacing-6);
+    display: flex;
+    gap: var(--spacing-2);
+    z-index: 2;
   }
 
-  .featured-actions .primary {
-    background: #4b64ff;
-    color: white;
-    border: none;
+  .hero-control-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
   }
 
-  .featured-actions .secondary {
-    background: #fff;
-    color: #333;
-    border: 1px solid #333;
+  .hero-control-btn:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-inverse);
   }
 
-  .featured-cover {
-    width: 100%;
-    max-width: 320px;
-    height: 400px;
-    border-radius: 4px;
-    box-shadow: var(--shadow-2xl);
+  .hero-indicators {
+    position: absolute;
+    bottom: var(--spacing-6);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--spacing-2);
+    z-index: 2;
+  }
+
+  .hero-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-border);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .hero-indicator.active {
+    background: var(--color-accent);
+    transform: scale(1.2);
+  }
+
+  .premium-section {
+    padding: var(--spacing-12) var(--spacing-6);
+    max-width: 1400px;
     margin: 0 auto;
-  }
-
-  .quick-access {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-4);
-    margin: var(--spacing-8) 0;
-  }
-
-  .quick-card {
-    background: #f8f9fa;
-    border: 1px solid #333;
-    border-radius: 4px;
-    padding: var(--spacing-5);
-    text-align: center;
-    text-decoration: none;
-    transition: all var(--transition-base);
-  }
-
-  .quick-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-    border-color: #4b64ff;
-  }
-
-  .quick-card .icon {
-    font-size: 2.5rem;
-    margin-bottom: var(--spacing-3);
-  }
-
-  .quick-card h3 {
-    margin: 0 0 var(--spacing-2);
-    color: #333;
-    font-size: var(--font-size-base);
-  }
-
-  .quick-card p {
-    margin: 0;
-    color: #666;
-    font-size: var(--font-size-sm);
-  }
-
-  .section {
-    padding: var(--spacing-8) 0;
   }
 
   .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--spacing-5);
+    margin-bottom: var(--spacing-6);
   }
 
   .section-header h2 {
-    margin: 0;
     font-size: var(--font-size-2xl);
-    letter-spacing: -0.04em;
-    color: #333;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin: 0;
   }
 
   .section-header a {
-    color: #4b64ff;
+    color: var(--color-accent);
+    font-weight: var(--font-weight-semibold);
     text-decoration: none;
-    font-weight: 600;
+    transition: color var(--transition-fast);
   }
 
   .section-header a:hover {
-    text-decoration: underline;
+    color: var(--color-accent-light);
   }
 
   .genre-grid {
@@ -255,9 +197,9 @@
   }
 
   .genre-card {
-    background: #f8f9fa;
-    border: 1px solid #333;
-    border-radius: 4px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
     padding: var(--spacing-4);
     text-align: center;
     text-decoration: none;
@@ -265,215 +207,135 @@
   }
 
   .genre-card:hover {
-    box-shadow: var(--shadow-sm);
-    border-color: #4b64ff;
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
   }
 
   .genre-card h3 {
     margin: 0;
-    color: #333;
+    color: var(--color-text-primary);
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
   }
 
   .genre-card .count {
-    color: #666;
+    color: var(--color-text-muted);
     font-size: var(--font-size-xs);
     margin-top: var(--spacing-1);
   }
 
-  .book-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: var(--spacing-4);
-  }
-
-  .ranking-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .ranking-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-4);
-    padding: var(--spacing-4) 0;
-    border-bottom: 1px solid #ddd;
-  }
-
-  .ranking-item:last-child {
-    border-bottom: none;
-  }
-
-  .rank-number {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
-    color: #4b64ff;
-    width: 40px;
-    text-align: center;
-  }
-
-  .ranking-cover {
-    width: 60px;
-    height: 80px;
-    border-radius: 4px;
-    object-fit: cover;
-  }
-
-  .ranking-info {
-    flex: 1;
-  }
-
-  .ranking-info h4 {
-    margin: 0 0 var(--spacing-1);
-    color: #333;
-  }
-
-  .ranking-info h4 a {
-    color: #333;
-    text-decoration: none;
-  }
-
-  .ranking-info h4 a:hover {
-    color: #4b64ff;
-  }
-
-  .ranking-info .author {
-    color: #666;
-    font-size: var(--font-size-sm);
-  }
-
-  .ranking-info .rating {
-    color: #4b64ff;
-    font-weight: 600;
-    font-size: var(--font-size-sm);
-  }
-
-  .reviews-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-4);
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: var(--spacing-8);
-    color: #666;
-  }
-
   @media (max-width: 992px) {
-    .hero-featured {
+    .hero-content {
       grid-template-columns: 1fr;
+      text-align: center;
     }
 
-    .quick-access {
-      grid-template-columns: repeat(2, 1fr);
+    .hero-book-info .description {
+      max-width: 100%;
     }
 
-    .book-grid {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    .hero-actions {
+      justify-content: center;
+    }
+
+    .hero-controls {
+      bottom: var(--spacing-4);
+      right: var(--spacing-4);
+    }
+
+    .hero-indicators {
+      bottom: var(--spacing-4);
     }
   }
 
   @media (max-width: 768px) {
-    .hero-featured {
-      padding: var(--spacing-6);
+    .hero-carousel {
+      min-height: 400px;
     }
 
-    .quick-access {
-      grid-template-columns: 1fr;
+    .hero-content {
+      padding: var(--spacing-8) var(--spacing-4);
     }
 
-    .featured-actions {
+    .hero-book-info h1 {
+      font-size: 2rem;
+    }
+
+    .hero-actions {
       flex-direction: column;
     }
 
-    .featured-actions .button {
+    .hero-actions .button {
       width: 100%;
       text-align: center;
     }
 
-    .book-grid {
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    .premium-section {
+      padding: var(--spacing-8) var(--spacing-4);
     }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <section class="homepage-search" aria-labelledby="homepage-search-heading">
-    <h2 class="homepage-search-heading" id="homepage-search-heading">Find your next read</h2>
-    <form class="homepage-search-form" method="get" action="{% url 'search_books' %}">
-      <label class="homepage-search-control" for="homepage-search-input">
-        <span class="homepage-search-icon" aria-hidden="true"><img src="{% static 'images/afrinovel-logo.svg' %}?v=2" alt=""></span>
-        <input id="homepage-search-input" name="q" type="search" placeholder="Search by title, author, or topic" autocomplete="off" />
-      </label>
-      <button class="homepage-search-submit" type="submit">Search books</button>
-    </form>
-  </section>
-
-  <!-- Hero Featured Book -->
+<div class="homepage-container">
+  <!-- Hero Carousel -->
   {% if featured_book %}
-  <section class="hero-section">
-    <div class="hero-featured">
-      <div class="featured-book">
-        <span class="featured-badge">Featured Book</span>
-        <h1>{{ featured_book.title }}</h1>
-        <div class="author">by {{ featured_book.author.name }}</div>
-        <div class="description">{{ featured_book.summary|truncatewords:30 }}</div>
-        <div class="meta">
-          <span class="rating">★ {{ featured_book.rating }}</span>
-          <span>{{ featured_book.genres.all|join:", " }}</span>
+  <section class="hero-carousel">
+    <div class="hero-slide active">
+      <div class="hero-content">
+        <div class="hero-book-info">
+          <span class="featured-badge">Featured Novel</span>
+          <h1>{{ featured_book.title }}</h1>
+          <div class="author">by {{ featured_book.author.name }}</div>
+          <div class="description">{{ featured_book.summary|truncatewords:30 }}</div>
+          <div class="meta">
+            <span class="rating">★ {{ featured_book.rating }}</span>
+            <span>{{ featured_book.genres.all|join:", " }}</span>
+            <span>{{ featured_book.chapter_count }} chapters</span>
+          </div>
+          <div class="hero-actions">
+            <a href="{{ featured_book.get_absolute_url }}" class="button button-lg">Start Reading</a>
+            {% if user.is_authenticated %}
+              <form method="post" action="{% url 'add_to_bookshelf' featured_book.slug %}" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="want_to_read">
+                <button type="submit" class="button button-lg button-outline">Add to Bookshelf</button>
+              </form>
+            {% else %}
+              <a href="{% url 'login' %}" class="button button-lg button-outline">Sign in to save</a>
+            {% endif %}
+          </div>
         </div>
-        <div class="featured-actions">
-          <a href="{{ featured_book.get_absolute_url }}" class="button primary">Read Now</a>
-          {% if user.is_authenticated %}
-            <form method="post" action="{% url 'add_to_bookshelf' featured_book.slug %}" style="display: inline;">
-              {% csrf_token %}
-              <input type="hidden" name="status" value="want_to_read">
-              <button type="submit" class="button secondary">Add to Bookshelf</button>
-            </form>
-          {% else %}
-            <a href="{% url 'login' %}" class="button secondary">Sign in to save</a>
-          {% endif %}
-        </div>
+        {% if featured_book.cover_image_url %}
+          <img class="hero-book-cover" src="{{ featured_book.cover_image_url }}" alt="Cover of {{ featured_book.title }}">
+        {% else %}
+          <div class="hero-book-cover hero-book-cover-bg" style="background: {{ featured_book.cover_color }};"></div>
+        {% endif %}
       </div>
-      {% if featured_book.cover_image_url %}
-        <img class="featured-cover" src="{{ featured_book.cover_image_url }}" alt="Cover of {{ featured_book.title }}">
-      {% else %}
-        <div class="featured-cover" style="background: {{ featured_book.cover_color }};"></div>
-      {% endif %}
+    </div>
+    
+    <div class="hero-controls">
+      <button class="hero-control-btn" id="prev-slide" aria-label="Previous slide">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      <button class="hero-control-btn" id="next-slide" aria-label="Next slide">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 19l7-7-7-7"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="hero-indicators">
+      <div class="hero-indicator active" data-slide="0"></div>
     </div>
   </section>
   {% endif %}
 
-  <!-- Quick Access Cards -->
-  <div class="quick-access">
-    <a href="{% url 'view_bookshelf' %}" class="quick-card">
-      <div class="icon">📚</div>
-      <h3>My Bookshelf</h3>
-      <p>Books you saved</p>
-    </a>
-    <a href="{% url 'reading_history' %}" class="quick-card">
-      <div class="icon">📖</div>
-      <h3>Reading History</h3>
-      <p>Continue reading</p>
-    </a>
-    <a href="{% url 'rankings' %}" class="quick-card">
-      <div class="icon">🏆</div>
-      <h3>Rankings</h3>
-      <p>Most popular books</p>
-    </a>
-    <a href="{% url 'completed' %}" class="quick-card">
-      <div class="icon">✅</div>
-      <h3>Completed</h3>
-      <p>Finished books</p>
-    </a>
-  </div>
-
   <!-- Browse by Genre -->
-  <section class="section">
+  <section class="premium-section">
     <div class="section-header">
       <h2>Browse by Genre</h2>
       <a href="{% url 'categories' %}">View all →</a>
@@ -490,150 +352,166 @@
     </div>
   </section>
 
-  <!-- Asian Books -->
-  <section class="section" aria-labelledby="asian-books-heading">
+  <!-- Trending Novels -->
+  <section class="premium-section">
     <div class="section-header">
-      <h2 id="asian-books-heading">Asian Books</h2>
-      <a href="{% url 'discover' %}?category=asian">Explore all &rarr;</a>
-    </div>
-    <div class="genre-grid" aria-label="Asian book subcategories">
-      {% for value, label in asian_subcategories %}
-        <span class="genre-card"><h3>{{ label }}</h3></span>
-      {% endfor %}
-    </div>
-    <div class="book-grid">
-      {% for book in asian_books %}
-        <article class="book-card">
-          <a href="{% url 'catalogue_detail' book.pk %}" class="book-link">
-            {% if book.cover_image_url %}
-              <img class="book-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
-            {% else %}
-              <div class="book-cover placeholder-cover">{{ book.title|slice:':1' }}</div>
-            {% endif %}
-            <div class="book-info">
-              <h3 class="book-title">{{ book.title }}</h3>
-              <span class="book-genres">{{ book.authors|join:", " }}</span>
-            </div>
-          </a>
-        </article>
-      {% empty %}
-        <div class="empty-state">Asian books will appear here as they are catalogued.</div>
-      {% endfor %}
-    </div>
-  </section>
-
-  <!-- Popular Books -->
-  <section class="section">
-    <div class="section-header">
-      <h2>Popular Books</h2>
+      <h2>Trending Novels</h2>
       <a href="{% url 'rankings' %}">View all →</a>
     </div>
-    <div class="book-grid">
-      {% for book in popular_books %}
-        {% include "components/book_card.html" with book=book show_rating=True show_action=True %}
-      {% empty %}
-        <div class="empty-state">No popular books yet</div>
-      {% endfor %}
-    </div>
-  </section>
-
-  <!-- Free to Read -->
-  <section class="section">
-    <div class="section-header">
-      <h2>Free to Read</h2>
-      <a href="{% url 'discover' %}">Explore catalogue →</a>
-    </div>
-    <div class="book-grid">
-      {% for book in free_catalog_books %}
-        <article class="book-card">
-          <a href="{% url 'catalogue_detail' book.pk %}" class="book-link">
+    <div class="book-carousel">
+      {% for book in trending_books %}
+        <article class="book-card-premium">
+          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
             {% if book.cover_image_url %}
-              <img class="book-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
             {% else %}
-              <div class="book-cover" style="background: linear-gradient(135deg, #d7c2a3, #84614f);"></div>
+              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
+            {% endif %}
+            {% if book.novel_status == 'ongoing' %}
+              <span class="book-status status-ongoing">Ongoing</span>
+            {% elif book.novel_status == 'completed' %}
+              <span class="book-status status-completed">Completed</span>
             {% endif %}
           </a>
           <div class="book-content">
-            <div class="book-badge badge-popular">Free to read</div>
-            <h3 class="book-title"><a href="{% url 'catalogue_detail' book.pk %}">{{ book.title }}</a></h3>
+            <h3 class="book-title">{{ book.title }}</h3>
+            <div class="book-author">{{ book.author.name }}</div>
             <div class="book-meta">
-              <span class="book-author">{{ book.authors|join:", "|default:"Unknown author" }}</span>
-              <span class="book-genres">{{ book.subjects|slice:':3'|join:", "|default:"Public domain" }}</span>
-            </div>
-            <div class="book-action">
-              <a href="{% url 'catalogue_detail' book.pk %}" class="action-button">Read</a>
+              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
+              <span>{{ book.chapter_count }} chapters</span>
             </div>
           </div>
         </article>
       {% empty %}
-        <div class="empty-state">No free public-domain books are available yet.</div>
+        <div class="empty-state">No trending novels yet</div>
       {% endfor %}
     </div>
   </section>
 
-  <!-- Recently Added -->
-  <section class="section">
+  <!-- Latest Updates -->
+  <section class="premium-section">
     <div class="section-header">
-      <h2>Recently Added</h2>
+      <h2>Latest Updates</h2>
       <a href="{% url 'discover' %}">View all →</a>
     </div>
-    <div class="book-grid">
+    <div class="book-carousel">
       {% for book in recent_books %}
-        {% include "components/book_card.html" with book=book show_badge=True badge_class="badge-new" badge_text="New" %}
+        <article class="book-card-premium">
+          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
+            {% if book.cover_image_url %}
+              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+            {% else %}
+              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
+            {% endif %}
+            <span class="book-status status-ongoing">New</span>
+          </a>
+          <div class="book-content">
+            <h3 class="book-title">{{ book.title }}</h3>
+            <div class="book-author">{{ book.author.name }}</div>
+            <div class="book-meta">
+              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
+              <span>{{ book.chapter_count }} chapters</span>
+            </div>
+          </div>
+        </article>
       {% empty %}
-        <div class="empty-state">No recent books</div>
+        <div class="empty-state">No recent novels</div>
       {% endfor %}
     </div>
   </section>
 
-  <!-- Top Rankings -->
-  <section class="section">
+  <!-- Popular Novels -->
+  <section class="premium-section">
     <div class="section-header">
-      <h2>Top Rankings</h2>
+      <h2>Popular Novels</h2>
       <a href="{% url 'rankings' %}">View all →</a>
     </div>
-    <ul class="ranking-list">
-      {% for book in top_ranked %}
-        <li class="ranking-item">
-          <div class="rank-number">{{ forloop.counter }}</div>
-          <div class="ranking-cover" style="background: {{ book.cover_color }};"></div>
-          <div class="ranking-info">
-            <h4><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></h4>
-            <div class="author">{{ book.author.name }}</div>
-            <div class="rating">★ {{ book.rating }}</div>
+    <div class="book-carousel">
+      {% for book in popular_books %}
+        <article class="book-card-premium">
+          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
+            {% if book.cover_image_url %}
+              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+            {% else %}
+              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
+            {% endif %}
+          </a>
+          <div class="book-content">
+            <h3 class="book-title">{{ book.title }}</h3>
+            <div class="book-author">{{ book.author.name }}</div>
+            <div class="book-meta">
+              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
+              <span>{{ book.chapter_count }} chapters</span>
+            </div>
           </div>
-        </li>
+        </article>
       {% empty %}
-        <div class="empty-state">No rankings available</div>
+        <div class="empty-state">No popular novels yet</div>
       {% endfor %}
-    </ul>
+    </div>
   </section>
 
-  <!-- Recent Reviews -->
-  <section class="section">
+  <!-- Completed Novels -->
+  <section class="premium-section">
     <div class="section-header">
-      <h2>Recent Reviews</h2>
-      <a href="#">View all →</a>
+      <h2>Completed Novels</h2>
+      <a href="{% url 'completed' %}">View all →</a>
     </div>
-    <div class="reviews-grid">
-      {% for review in recent_reviews %}
-        {% include "components/review_card.html" with review=review show_book=True %}
+    <div class="book-carousel">
+      {% for book in popular_books %}
+        {% if book.novel_status == 'completed' %}
+        <article class="book-card-premium">
+          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
+            {% if book.cover_image_url %}
+              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+            {% else %}
+              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
+            {% endif %}
+            <span class="book-status status-completed">Completed</span>
+          </a>
+          <div class="book-content">
+            <h3 class="book-title">{{ book.title }}</h3>
+            <div class="book-author">{{ book.author.name }}</div>
+            <div class="book-meta">
+              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
+              <span>{{ book.chapter_count }} chapters</span>
+            </div>
+          </div>
+        </article>
+        {% endif %}
       {% empty %}
-        <div class="empty-state">No reviews yet</div>
+        <div class="empty-state">No completed novels yet</div>
       {% endfor %}
     </div>
   </section>
 
   <!-- Recommended For You -->
   {% if user.is_authenticated and recommended_books %}
-  <section class="section">
+  <section class="premium-section">
     <div class="section-header">
       <h2>Recommended For You</h2>
       <a href="{% url 'recommendations' %}">View all →</a>
     </div>
-    <div class="book-grid">
+    <div class="book-carousel">
       {% for book in recommended_books %}
-        {% include "components/book_card.html" with book=book show_rating=True show_badge=True badge_class="badge-popular" badge_text="Recommended" %}
+        <article class="book-card-premium">
+          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
+            {% if book.cover_image_url %}
+              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+            {% else %}
+              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
+            {% endif %}
+            <span class="book-status status-ongoing">Recommended</span>
+          </a>
+          <div class="book-content">
+            <h3 class="book-title">{{ book.title }}</h3>
+            <div class="book-author">{{ book.author.name }}</div>
+            <div class="book-meta">
+              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
+              <span>{{ book.chapter_count }} chapters</span>
+            </div>
+          </div>
+        </article>
       {% empty %}
         <div class="empty-state">No recommendations yet. Start reading to get personalized suggestions!</div>
       {% endfor %}
@@ -641,4 +519,86 @@
   </section>
   {% endif %}
 </div>
+
+<script>
+// Hero carousel functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const slides = document.querySelectorAll('.hero-slide');
+  const indicators = document.querySelectorAll('.hero-indicator');
+  const prevBtn = document.getElementById('prev-slide');
+  const nextBtn = document.getElementById('next-slide');
+  let currentSlide = 0;
+  let autoPlayInterval;
+
+  function showSlide(index) {
+    slides.forEach((slide, i) => {
+      slide.classList.remove('active');
+      if (indicators[i]) {
+        indicators[i].classList.remove('active');
+      }
+    });
+    
+    if (slides[index]) {
+      slides[index].classList.add('active');
+    }
+    if (indicators[index]) {
+      indicators[index].classList.add('active');
+    }
+    
+    currentSlide = index;
+  }
+
+  function nextSlide() {
+    const next = (currentSlide + 1) % slides.length;
+    showSlide(next);
+  }
+
+  function prevSlide() {
+    const prev = (currentSlide - 1 + slides.length) % slides.length;
+    showSlide(prev);
+  }
+
+  function startAutoPlay() {
+    autoPlayInterval = setInterval(nextSlide, 5000);
+  }
+
+  function stopAutoPlay() {
+    clearInterval(autoPlayInterval);
+  }
+
+  if (prevBtn && nextBtn) {
+    prevBtn.addEventListener('click', () => {
+      prevSlide();
+      stopAutoPlay();
+      startAutoPlay();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      nextSlide();
+      stopAutoPlay();
+      startAutoPlay();
+    });
+  }
+
+  indicators.forEach((indicator, index) => {
+    indicator.addEventListener('click', () => {
+      showSlide(index);
+      stopAutoPlay();
+      startAutoPlay();
+    });
+  });
+
+  // Auto-play carousel
+  if (slides.length > 1) {
+    startAutoPlay();
+    
+    // Pause on hover
+    const carousel = document.querySelector('.hero-carousel');
+    if (carousel) {
+      carousel.addEventListener('mouseenter', stopAutoPlay);
+      carousel.addEventListener('mouseleave', startAutoPlay);
+    }
+  }
+});
+</script>
 {% endblock %}

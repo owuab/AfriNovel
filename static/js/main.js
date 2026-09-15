@@ -6,9 +6,6 @@
 document.addEventListener('DOMContentLoaded', initializeUI);
 
 function initializeUI() {
-  // Initialize navigation toggle
-  initializeNavigation();
-  
   // Initialize message close buttons
   initializeMessages();
   
@@ -17,38 +14,9 @@ function initializeUI() {
   
   // Initialize accessibility features
   initializeAccessibility();
-}
-
-/**
- * Navigation Toggle
- */
-function initializeNavigation() {
-  const navToggle = document.querySelector('.nav-toggle');
-  const navMenu = document.querySelector('.nav-menu');
   
-  if (!navToggle || !navMenu) return;
-  
-  navToggle.addEventListener('click', () => {
-    navMenu.classList.toggle('active');
-    navToggle.setAttribute('aria-expanded', navMenu.classList.contains('active'));
-  });
-  
-  // Close menu when link is clicked
-  const navLinks = navMenu.querySelectorAll('.nav-link');
-  navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      navMenu.classList.remove('active');
-      navToggle.setAttribute('aria-expanded', 'false');
-    });
-  });
-  
-  // Close menu when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.site-nav')) {
-      navMenu.classList.remove('active');
-      navToggle.setAttribute('aria-expanded', 'false');
-    }
-  });
+  // Navigation is now handled by navbar.js module
+  // Carousel is now handled by carousel.js module
 }
 
 /**
@@ -219,7 +187,6 @@ addAnimationStyles();
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     initializeUI,
-    initializeNavigation,
     initializeMessages,
     initializeForms,
     initializeAccessibility,

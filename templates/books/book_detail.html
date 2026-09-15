@@ -3,217 +3,453 @@
 
 {% block title %}{{ book.title }} | AfriNovel{% endblock %}
 
+{% block meta_description %}Read {{ book.title }} by {{ book.author.name }} on AfriNovel. {{ book.summary|truncatewords:30 }}{% endblock %}
+
+{% block og_title %}{{ book.title }} | AfriNovel{% endblock %}
+{% block og_description %}Read {{ book.title }} by {{ book.author.name }} on AfriNovel. {{ book.summary|truncatewords:30 }}{% endblock %}
+{% block og_image %}{% if book.cover_image_url %}{{ book.cover_image_url }}{% else %}{% static 'images/afrinovel-og.jpg' %}{% endif %}{% endblock %}
+
+{% block twitter_title %}{{ book.title }} | AfriNovel{% endblock %}
+{% block twitter_description %}Read {{ book.title }} by {{ book.author.name }} on AfriNovel. {{ book.summary|truncatewords:30 }}{% endblock %}
+{% block twitter_image %}{% if book.cover_image_url %}{{ book.cover_image_url }}{% else %}{% static 'images/afrinovel-twitter.jpg' %}{% endif %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Book",
+  "name": "{{ book.title }}",
+  "author": {
+    "@type": "Person",
+    "name": "{{ book.author.name }}"
+  },
+  "description": "{{ book.summary|escapejs }}",
+  "image": "{% if book.cover_image_url %}{{ book.cover_image_url }}{% endif %}",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ book.rating }}",
+    "bestRating": "5",
+    "ratingCount": "{{ book.reviews.count }}"
+  },
+  "genre": [{% for genre in book.genres.all %}"{{ genre.name }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+  "numberOfPages": "{{ book.chapter_count }}",
+  "inLanguage": "en"
+}
+</script>
+{% endblock %}
+
 {% block extra_css %}
 <style>
-  /* Book detail page specific styles */
+  .novel-detail-container {
+    padding: var(--spacing-8) var(--spacing-6);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
 
-  .detail-layout {
+  .novel-header {
+    position: relative;
+    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-10);
+    margin-bottom: var(--spacing-8);
+    overflow: hidden;
+  }
+
+  .novel-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(216, 155, 53, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .novel-header-content {
     display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: var(--spacing-6);
-    margin-top: var(--spacing-6);
+    grid-template-columns: 300px 1fr;
+    gap: var(--spacing-8);
+    position: relative;
+    z-index: 1;
   }
 
-  .cover {
-    height: 420px;
-    border-radius: var(--border-radius-md);
-    background: {{ book.cover_color }};
-    box-shadow: var(--shadow-lg);
+  .novel-cover {
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 2/3;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-2xl);
+    object-fit: cover;
   }
 
-  .panel {
+  .novel-cover[style] {
+    object-fit: none;
+  }
+
+  .novel-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .novel-badges {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .novel-badge {
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: var(--border-radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-ongoing {
+    background: var(--color-success-light);
+    color: var(--color-success);
+  }
+
+  .badge-completed {
+    background: var(--color-info-light);
+    color: var(--color-info);
+  }
+
+  .badge-hiatus {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+  }
+
+  .novel-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
+    line-height: 1.1;
+  }
+
+  .novel-author {
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .novel-meta {
+    display: flex;
+    gap: var(--spacing-4);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .novel-rating {
+    color: var(--color-rating);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .novel-genres {
+    display: flex;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-4);
+  }
+
+  .genre-tag {
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-full);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .genre-tag:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-inverse);
+  }
+
+  .novel-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: auto;
+  }
+
+  .content-section {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-8);
+    margin-bottom: var(--spacing-8);
+  }
+
+  .section-title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .synopsis {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    max-width: 800px;
+  }
+
+  .synopsis p {
+    margin-bottom: var(--spacing-4);
+  }
+
+  .chapter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .chapter-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-4);
+    border-bottom: 1px solid var(--color-border);
+    transition: background var(--transition-fast);
+  }
+
+  .chapter-item:last-child {
+    border-bottom: none;
+  }
+
+  .chapter-item:hover {
+    background: var(--color-bg-tertiary);
+  }
+
+  .chapter-number {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    margin-right: var(--spacing-3);
+  }
+
+  .chapter-title {
+    flex: 1;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+  }
+
+  .chapter-title:hover {
+    color: var(--color-accent);
+  }
+
+  .chapter-date {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .review-grid {
+    display: grid;
+    gap: var(--spacing-4);
+  }
+
+  .review-card {
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-md);
     padding: var(--spacing-5);
   }
 
-  .meta {
-    color: var(--color-text-secondary);
-    margin: var(--spacing-2) 0;
-    font-size: var(--font-size-sm);
-  }
-
-  .tag-row {
-    display: flex;
-    gap: var(--spacing-2);
-    flex-wrap: wrap;
-    margin-top: var(--spacing-2);
-  }
-
-  .tag {
-    background: rgba(122, 76, 61, 0.1);
-    color: var(--color-accent);
-    border-radius: 999px;
-    padding: var(--spacing-2) var(--spacing-3);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-  }
-
-  .button-row {
-    display: flex;
-    gap: var(--spacing-3);
-    margin-top: var(--spacing-5);
-    flex-wrap: wrap;
-  }
-
-  .button-row .primary,
-  .button-row .secondary {
-    min-height: 36px;
-    padding: var(--spacing-2) var(--spacing-3);
-    font-size: var(--font-size-sm);
-    white-space: nowrap;
-  }
-
-  .button-row .primary,
-  .button-row .primary:visited {
-    color: white;
-  }
-
-  .button-row .secondary {
-    background: var(--color-bg-secondary);
-    color: var(--color-text-primary);
-    border-color: var(--color-border);
-  }
-
-  .button-row > .secondary {
-    min-height: 25px;
-    padding: 6px 9px;
-    font-size: 10px;
-  }
-
-  .button-row .secondary:hover {
-    background: var(--color-bg-primary);
-  }
-
-  h1 {
-    margin-bottom: var(--spacing-2);
-    font-size: var(--font-size-4xl);
-    letter-spacing: -0.05em;
-    color: var(--color-text-primary);
-  }
-
-  .summary {
-    width: 100%;
-    max-width: 68ch;
-    margin-inline: auto;
-    padding-inline: var(--spacing-2);
-    color: var(--color-text-secondary);
-    line-height: var(--line-height-relaxed);
-    font-size: var(--font-size-base);
-  }
-
-  .summary p {
-    margin: 0 0 var(--spacing-4);
-    text-align: justify;
-    text-justify: inter-word;
-    hyphens: auto;
-  }
-
-  .summary p:last-child {
-    margin-bottom: 0;
-  }
-
-  .review-card {
-    background: var(--color-bg-tertiary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-sm);
-    padding: var(--spacing-4);
-    margin-top: var(--spacing-3);
-  }
-
-  .review-head {
+  .review-header {
     display: flex;
     align-items: center;
-    gap: var(--spacing-2);
-    margin-bottom: var(--spacing-2);
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
   }
 
-  .avatar {
-    width: 36px;
-    height: 36px;
+  .review-avatar {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #d6b2a0, #7b4d3c);
+    background: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-inverse);
+    font-weight: var(--font-weight-semibold);
   }
 
-  section {
-    margin-top: var(--spacing-7);
+  .review-rating {
+    color: var(--color-rating);
+    font-weight: var(--font-weight-semibold);
   }
 
-  section h2 {
-    font-size: var(--font-size-2xl);
-    letter-spacing: -0.04em;
-    color: var(--color-text-primary);
-    margin-bottom: var(--spacing-4);
+  .review-content {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
   }
 
   @media (max-width: 768px) {
-    .detail-layout {
+    .novel-header-content {
       grid-template-columns: 1fr;
+      text-align: center;
+    }
+
+    .novel-cover {
+      max-width: 200px;
+      margin: 0 auto;
+    }
+
+    .novel-genres {
+      justify-content: center;
+    }
+
+    .novel-actions {
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .novel-detail-container {
+      padding: var(--spacing-6) var(--spacing-4);
+    }
+
+    .content-section {
+      padding: var(--spacing-6);
     }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<main class="container">
-  <div class="detail-layout">
-    <aside>
-      <div class="cover" aria-label="{{ book.title }} cover"></div>
-    </aside>
-
-    <section class="panel">
-      <div class="meta">{{ book.author.name }} • {{ book.genres.all|join:", " }}</div>
-      <h1>{{ book.title }}</h1>
-      <div class="meta">{% if book.rating %}Rating: {{ book.rating }} ★{% endif %} · {{ book.view_count }} views</div>
-
-      <div class="tag-row">
-        {% for genre in book.genres.all %}
-          <span class="tag">{{ genre.name }}</span>
-        {% endfor %}
-      </div>
-
-      <div class="button-row">
-        {% if has_uploaded_reader %}
-          <a class="button primary" href="{% url 'uploaded_book_reader' book.slug %}">Read now</a>
-        {% endif %}
-        {% if user.is_authenticated %}
-          <form method="post" action="{% url 'add_to_bookshelf' book.slug %}" style="flex: 1; display: flex; gap: var(--spacing-2);">
-            {% csrf_token %}
-            <select name="status" style="padding: var(--spacing-3) var(--spacing-4); border-radius: 999px; border: none; flex: 1; cursor: pointer; font-weight: 700;">
-              <option value="want_to_read">Add to Want to Read</option>
-              <option value="currently_reading">Add - Currently Reading</option>
-              <option value="read">Mark as Read</option>
-            </select>
-            <button type="submit" class="primary">Add</button>
-          </form>
-          <button class="secondary" onclick="location.href='{% url 'review_create' book.slug %}'">Write a review</button>
+<div class="novel-detail-container">
+  <div class="novel-header">
+    <div class="novel-header-content">
+      <div class="novel-cover-wrapper">
+        {% if book.cover_image_url %}
+          <img class="novel-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">
         {% else %}
-          <button class="primary" onclick="location.href='{% url 'login' %}'">Sign in to save</button>
+          <div class="novel-cover" style="background: {{ book.cover_color }};"></div>
         {% endif %}
       </div>
-
-      <h3 style="margin-top: var(--spacing-7); color: var(--color-text-primary);">Summary</h3>
-      <div class="summary">{{ book.summary|linebreaks }}</div>
-    </section>
+      
+      <div class="novel-info">
+        <div class="novel-badges">
+          {% if book.novel_status == 'ongoing' %}
+            <span class="novel-badge badge-ongoing">Ongoing</span>
+          {% elif book.novel_status == 'completed' %}
+            <span class="novel-badge badge-completed">Completed</span>
+          {% elif book.novel_status == 'hiatus' %}
+            <span class="novel-badge badge-hiatus">Hiatus</span>
+          {% endif %}
+        </div>
+        
+        <h1 class="novel-title">{{ book.title }}</h1>
+        <div class="novel-author">by {{ book.author.name }}</div>
+        
+        <div class="novel-meta">
+          <span class="novel-rating">★ {{ book.rating|floatformat:1 }}</span>
+          <span>{{ book.chapter_count }} chapters</span>
+          <span>{{ book.view_count }} views</span>
+        </div>
+        
+        <div class="novel-genres">
+          {% for genre in book.genres.all %}
+            <a href="{% url 'genre_page' genre.slug %}" class="genre-tag">{{ genre.name }}</a>
+          {% endfor %}
+        </div>
+        
+        <div class="novel-actions">
+          <a href="{% url 'uploaded_book_reader' book.slug %}" class="button button-lg">Start Reading</a>
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'add_to_bookshelf' book.slug %}" style="display: inline;">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="want_to_read">
+              <button type="submit" class="button button-lg button-outline">Add to Bookshelf</button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}" class="button button-lg button-outline">Sign in to save</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   </div>
 
-  <section>
-    <h2>Reader Reviews</h2>
-    {% for review in reviews %}
-      <div class="review-card">
-        <div class="review-head">
-          <div class="avatar"></div>
-          <div>
-            <strong style="color: var(--color-text-primary);">{{ review.user.username }}</strong><br />
-            <small style="color: var(--color-text-secondary);">{{ review.created_at|date:"M d, Y" }}</small>
-          </div>
-        </div>
-        <div style="color: var(--color-text-primary);">{{ review.content }}</div>
-      </div>
-    {% empty %}
-      <div class="review-card">No reviews yet. Be the first to share your thoughts.</div>
-    {% endfor %}
+  <section class="content-section">
+    <h2 class="section-title">Synopsis</h2>
+    <div class="synopsis">
+      {{ book.summary|linebreaks }}
+    </div>
   </section>
-</main>
+
+  <section class="content-section">
+    <h2 class="section-title">Latest Chapters</h2>
+    <ul class="chapter-list">
+      {% for chapter in book.chapters.all|slice:":10" %}
+        <li class="chapter-item">
+          <span class="chapter-number">Chapter {{ chapter.chapter_number }}</span>
+          <a href="{% url 'uploaded_book_reader' book.slug %}" class="chapter-title">{{ chapter.title }}</a>
+          <span class="chapter-date">{{ chapter.published_at|date:"M d, Y"|default:"N/A" }}</span>
+        </li>
+      {% empty %}
+        <li class="chapter-item">No chapters available yet</li>
+      {% endfor %}
+    </ul>
+    {% if book.chapters.count > 10 %}
+    <div style="text-align: center; margin-top: var(--spacing-4);">
+      <a href="#" class="button button-outline">View All {{ book.chapters.count }} Chapters</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="content-section">
+    <h2 class="section-title">Novel Details</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-4);">
+      <div>
+        <div style="color: var(--color-text-muted); font-size: var(--font-size-sm);">Status</div>
+        <div style="color: var(--color-text-primary); font-weight: var(--font-weight-semibold);">{{ book.get_novel_status_display }}</div>
+      </div>
+      <div>
+        <div style="color: var(--color-text-muted); font-size: var(--font-size-sm);">Author</div>
+        <div style="color: var(--color-text-primary); font-weight: var(--font-weight-semibold);">{{ book.author.name }}</div>
+      </div>
+      <div>
+        <div style="color: var(--color-text-muted); font-size: var(--font-size-sm);">Translator</div>
+        <div style="color: var(--color-text-primary); font-weight: var(--font-weight-semibold);">{{ book.translator|default:"N/A" }}</div>
+      </div>
+      <div>
+        <div style="color: var(--color-text-muted); font-size: var(--font-size-sm);">Total Chapters</div>
+        <div style="color: var(--color-text-primary); font-weight: var(--font-weight-semibold);">{{ book.chapter_count }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section">
+    <h2 class="section-title">Reader Reviews</h2>
+    <div class="review-grid">
+      {% for review in reviews %}
+        <div class="review-card">
+          <div class="review-header">
+            <div class="review-avatar">{{ review.user.username|slice:":1"|upper }}</div>
+            <div>
+              <div style="font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">{{ review.user.username }}</div>
+              <div class="review-rating">★ {{ review.rating }}</div>
+            </div>
+          </div>
+          <div class="review-content">{{ review.content }}</div>
+        </div>
+      {% empty %}
+        <div class="empty-state">
+          <h3>No reviews yet</h3>
+          <p>Be the first to share your thoughts about this novel</p>
+          {% if user.is_authenticated %}
+            <a href="{% url 'review_create' book.slug %}" class="button button-outline">Write a Review</a>
+          {% else %}
+            <a href="{% url 'login' %}" class="button button-outline">Sign in to review</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
 {% endblock %}

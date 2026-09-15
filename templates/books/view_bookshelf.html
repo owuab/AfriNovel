@@ -5,263 +5,352 @@
 
 {% block extra_css %}
 <style>
-  /* Bookshelf page specific styles */
-
-  .header {
-    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-5);
-    margin-bottom: var(--spacing-6);
+  .bookshelf-container {
+    padding: var(--spacing-8) var(--spacing-6);
+    max-width: 1400px;
+    margin: 0 auto;
   }
 
-  .header h1 {
-    font-size: var(--font-size-3xl);
-    letter-spacing: -0.05em;
-    margin-bottom: var(--spacing-2);
+  .bookshelf-header {
+    margin-bottom: var(--spacing-8);
+  }
+
+  .bookshelf-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
+    margin-bottom: var(--spacing-2);
   }
 
-  .header p {
+  .bookshelf-header p {
     color: var(--color-text-secondary);
     margin: 0;
   }
 
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--spacing-3);
-    margin-bottom: var(--spacing-4);
+  .bookshelf-tabs {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-6);
+    border-bottom: 1px solid var(--color-border);
   }
 
-  .stat-box {
-    background: var(--color-bg-tertiary);
+  .bookshelf-tab {
+    padding: var(--spacing-3) var(--spacing-6);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .bookshelf-tab:hover {
+    color: var(--color-text-primary);
+  }
+
+  .bookshelf-tab.active {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+  }
+
+  .bookshelf-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-8);
+  }
+
+  .stat-card {
+    background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-sm);
-    padding: var(--spacing-4);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-5);
     text-align: center;
   }
 
   .stat-number {
     font-size: var(--font-size-3xl);
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     color: var(--color-accent);
+    margin-bottom: var(--spacing-2);
   }
 
   .stat-label {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-xs);
-    margin-top: var(--spacing-2);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .filter-buttons {
-    display: flex;
-    gap: var(--spacing-2);
-    margin-bottom: var(--spacing-4);
-    flex-wrap: wrap;
-  }
-
-  .filter-btn {
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: var(--spacing-2) var(--spacing-4);
-    cursor: pointer;
-    color: var(--color-text-primary);
-    font-weight: 600;
-    transition: all var(--transition-base);
-    text-decoration: none;
-    display: inline-block;
-  }
-
-  .filter-btn.active {
-    background: var(--color-accent);
-    color: white;
-    border-color: var(--color-accent);
-  }
-
-  .filter-btn:hover {
-    border-color: var(--color-accent);
-  }
-
-  .book-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--spacing-4);
-  }
-
-  .book-card {
-    background: var(--color-bg-tertiary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-sm);
-    padding: var(--spacing-4);
-  }
-
-  .cover {
-    height: 200px;
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-3);
-  }
-
-  .title {
-    font-weight: 700;
-    font-size: var(--font-size-base);
-    margin-bottom: var(--spacing-2);
-    color: var(--color-text-primary);
-  }
-
-  .author {
-    color: var(--color-text-secondary);
+    color: var(--color-text-muted);
     font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  .status-badge {
-    display: inline-block;
-    background: rgba(122, 76, 61, 0.1);
+  .bookshelf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-6);
+  }
+
+  .bookshelf-item {
+    background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: var(--spacing-2) var(--spacing-3);
-    font-size: var(--font-size-xs);
-    color: var(--color-accent);
-    margin-bottom: var(--spacing-2);
-    font-weight: 600;
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-base);
   }
 
-  .progress {
-    background: var(--color-border);
-    height: 6px;
-    border-radius: 3px;
-    margin-bottom: var(--spacing-2);
+  .bookshelf-item:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .bookshelf-cover {
+    aspect-ratio: 2/3;
+    position: relative;
     overflow: hidden;
   }
 
-  .progress-bar {
-    background: var(--color-accent);
+  .bookshelf-cover img {
+    width: 100%;
     height: 100%;
-    border-radius: 3px;
+    object-fit: cover;
   }
 
-  .rating {
-    color: #d4a574;
-    font-size: var(--font-size-xs);
+  .bookshelf-cover[style] {
+    object-fit: none;
+  }
+
+  .bookshelf-cover[style]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--cover-color);
+  }
+
+  .bookshelf-info {
+    padding: var(--spacing-4);
+  }
+
+  .bookshelf-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
     margin-bottom: var(--spacing-2);
   }
 
-  .actions {
+  .bookshelf-author {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-2);
+  }
+
+  .bookshelf-meta {
+    display: flex;
+    gap: var(--spacing-3);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .bookshelf-progress {
+    background: var(--color-bg-tertiary);
+    border-radius: var(--border-radius-full);
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: var(--spacing-3);
+  }
+
+  .bookshelf-progress-bar {
+    background: var(--color-accent);
+    height: 100%;
+    border-radius: var(--border-radius-full);
+    transition: width var(--transition-base);
+  }
+
+  .bookshelf-actions {
     display: flex;
     gap: var(--spacing-2);
-    margin-top: var(--spacing-2);
   }
 
-  .btn {
-    background: var(--color-accent);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius-sm);
+  .continue-btn {
+    flex: 1;
     padding: var(--spacing-2) var(--spacing-3);
-    font-size: var(--font-size-xs);
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: var(--font-weight-semibold);
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: background var(--transition-fast);
+    text-align: center;
     text-decoration: none;
-    display: inline-block;
-    font-weight: 600;
   }
 
-  .btn:hover {
-    opacity: 0.9;
+  .continue-btn:hover {
+    background: var(--color-accent-dark);
   }
 
-  .btn-secondary {
-    background: var(--color-border);
-    color: var(--color-accent);
+  .remove-btn {
+    padding: var(--spacing-2) var(--spacing-3);
+    background: transparent;
+    color: var(--color-danger);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .remove-btn:hover {
+    background: var(--color-danger-light);
+    border-color: var(--color-danger);
   }
 
   .empty-state {
     text-align: center;
-    padding: var(--spacing-8);
+    padding: var(--spacing-12);
     color: var(--color-text-secondary);
+  }
+
+  .empty-state h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-3);
   }
 
   .empty-state a {
     color: var(--color-accent);
-    font-weight: 700;
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
   }
 
-  @media (max-width: 800px) {
-    .stats {
-      grid-template-columns: repeat(2, 1fr);
+  .empty-state a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .bookshelf-container {
+      padding: var(--spacing-6) var(--spacing-4);
+    }
+
+    .bookshelf-tabs {
+      overflow-x: auto;
+      padding-bottom: var(--spacing-2);
+    }
+
+    .bookshelf-tab {
+      white-space: nowrap;
+    }
+
+    .bookshelf-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: var(--spacing-4);
     }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="header">
+<div class="bookshelf-container">
+  <div class="bookshelf-header">
     <h1>My Bookshelf</h1>
-    <p>Track your reading journey across AfriNovel.</p>
+    <p>Track your reading journey across AfriNovel</p>
   </div>
 
-  <div class="stats">
-    <div class="stat-box">
+  <div class="bookshelf-tabs">
+    <button class="bookshelf-tab active" data-status="all">All</button>
+    <button class="bookshelf-tab" data-status="currently_reading">Currently Reading</button>
+    <button class="bookshelf-tab" data-status="want_to_read">Want to Read</button>
+    <button class="bookshelf-tab" data-status="read">Completed</button>
+  </div>
+
+  <div class="bookshelf-stats">
+    <div class="stat-card">
       <div class="stat-number">{{ reading_stats.total }}</div>
       <div class="stat-label">Total Books</div>
     </div>
-    <div class="stat-box">
+    <div class="stat-card">
       <div class="stat-number">{{ reading_stats.currently_reading }}</div>
       <div class="stat-label">Currently Reading</div>
     </div>
-    <div class="stat-box">
+    <div class="stat-card">
       <div class="stat-number">{{ reading_stats.want_to_read }}</div>
       <div class="stat-label">Want to Read</div>
     </div>
-    <div class="stat-box">
+    <div class="stat-card">
       <div class="stat-number">{{ reading_stats.read }}</div>
-      <div class="stat-label">Read</div>
+      <div class="stat-label">Completed</div>
     </div>
   </div>
 
-  <div class="filter-buttons">
-    <a href="{% url 'view_bookshelf' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
-    {% for value, label in status_choices %}
-      <a href="{% url 'view_bookshelf' %}?status={{ value }}" class="filter-btn {% if status_filter == value %}active{% endif %}">{{ label }}</a>
-    {% endfor %}
-  </div>
-
-  {% if bookshelf %}
-    <div class="book-grid">
-      {% for item in bookshelf %}
-        <div class="book-card">
-          <div class="cover" style="background: {{ item.book.cover_color }};"></div>
-          <div class="title">{{ item.book.title }}</div>
-          <div class="author">{{ item.book.author.name }}</div>
-          <span class="status-badge">{{ item.get_status_display }}</span>
+  <div class="bookshelf-grid" id="bookshelfGrid">
+    {% for item in bookshelf %}
+      <div class="bookshelf-item" data-status="{{ item.status }}">
+        <div class="bookshelf-cover">
+          {% if item.book.cover_image_url %}
+            <img src="{{ item.book.cover_image_url }}" alt="Cover of {{ item.book.title }}" loading="lazy">
+          {% else %}
+            <div style="--cover-color: {{ item.book.cover_color }};"></div>
+          {% endif %}
+        </div>
+        <div class="bookshelf-info">
+          <h3 class="bookshelf-title">{{ item.book.title }}</h3>
+          <div class="bookshelf-author">{{ item.book.author.name }}</div>
+          <div class="bookshelf-meta">
+            <span class="bookshelf-rating">★ {{ item.book.rating|floatformat:1 }}</span>
+            <span>{{ item.book.chapter_count }} chapters</span>
+          </div>
           {% if item.progress_percent > 0 %}
-            <div class="progress">
-              <div class="progress-bar" style="width: {{ item.progress_percent }}%;"></div>
+            <div class="bookshelf-progress">
+              <div class="bookshelf-progress-bar" style="width: {{ item.progress_percent }}%;"></div>
             </div>
-            <div style="color: var(--color-text-secondary); font-size: var(--font-size-xs);">{{ item.progress_percent }}% read</div>
+            <div style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-bottom: var(--spacing-3);">{{ item.progress_percent }}% read</div>
           {% endif %}
-          {% if item.rating %}
-            <div class="rating">★★★★★ {{ item.rating }}/5</div>
-          {% endif %}
-          <div class="actions">
-            <a href="{% url 'update_bookshelf' item.id %}" class="btn">Edit</a>
+          <div class="bookshelf-actions">
+            <a href="{% url 'uploaded_book_reader' item.book.slug %}" class="continue-btn">Continue Reading</a>
             <form method="post" action="{% url 'remove_from_bookshelf' item.id %}" style="display: inline;">
               {% csrf_token %}
-              <button type="submit" class="btn btn-secondary" onclick="return confirm('Remove from bookshelf?')">Remove</button>
+              <button type="submit" class="remove-btn" onclick="return confirm('Remove from bookshelf?')">Remove</button>
             </form>
           </div>
         </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="empty-state">
-      <p>Your bookshelf is empty. <a href="{% url 'search_books' %}">Search and add books</a> to get started!</p>
-    </div>
-  {% endif %}
+      </div>
+    {% empty %}
+      <div class="empty-state">
+        <h3>Your bookshelf is empty</h3>
+        <p>Discover novels and start building your collection</p>
+        <a href="{% url 'discover' %}">Explore Novels</a>
+      </div>
+    {% endfor %}
+  </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tabs = document.querySelectorAll('.bookshelf-tab');
+  const items = document.querySelectorAll('.bookshelf-item');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      const status = this.dataset.status;
+      
+      // Update active tab
+      tabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Filter items
+      items.forEach(item => {
+        if (status === 'all' || item.dataset.status === status) {
+          item.style.display = 'block';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  });
+});
+</script>
 {% endblock %}
