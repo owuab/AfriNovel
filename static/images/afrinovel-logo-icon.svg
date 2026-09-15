@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <!-- Book base -->
-  <path d="M12 44 L52 44 L56 48 L16 48 Z" fill="#1a1a1a"/>
-  <path d="M12 44 L16 48 L16 52 L12 48 Z" fill="#2a2a2a"/>
-  <path d="M52 44 L56 48 L56 52 L52 48 Z" fill="#2a2a2a"/>
+  <path d="M10 42 L54 42 L58 48 L14 48 Z" fill="#1a1a1a"/>
+  <path d="M10 42 L14 48 L14 54 L10 48 Z" fill="#2a2a2a"/>
+  <path d="M54 42 L58 48 L58 54 L54 48 Z" fill="#2a2a2a"/>
   
   <!-- Golden pages -->
-  <path d="M14 45 L50 45 L54 47 L18 47 Z" fill="#D4AF37"/>
-  <path d="M16 46 L48 46 L52 47 L20 47 Z" fill="#FFD700"/>
+  <path d="M12 44 L52 44 L56 46 L16 46 Z" fill="#D4AF37"/>
+  <path d="M14 45 L50 45 L54 46 L18 46 Z" fill="#FFD700"/>
   
   <!-- Blue globe -->
-  <circle cx="34" cy="28" r="14" fill="#4A90E2"/>
-  <circle cx="34" cy="28" r="12" fill="#357ABD"/>
+  <circle cx="32" cy="26" r="16" fill="#4A90E2"/>
+  <circle cx="32" cy="26" r="13" fill="#357ABD"/>
   
   <!-- Africa map on globe (simplified) -->
-  <path d="M34 16 L38 20 L42 18 L44 23 L40 28 L42 34 L36 36 L32 34 L29 28 L32 22 L29 20 Z" fill="#D4AF37"/>
+  <path d="M32 10 L38 18 L44 15 L46 22 L38 26 L42 34 L34 38 L28 34 L25 26 L32 18 L25 14 Z" fill="#D4AF37"/>
 </svg>

@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
   <!-- Book base -->
-  <path d="M96 352 L416 352 L448 384 L128 384 Z" fill="#1a1a1a"/>
-  <path d="M96 352 L128 384 L128 416 L96 384 Z" fill="#2a2a2a"/>
-  <path d="M416 352 L448 384 L448 416 L416 384 Z" fill="#2a2a2a"/>
+  <path d="M80 352 L432 352 L464 384 L112 384 Z" fill="#1a1a1a"/>
+  <path d="M80 352 L112 384 L112 416 L80 384 Z" fill="#2a2a2a"/>
+  <path d="M432 352 L464 384 L464 416 L432 384 Z" fill="#2a2a2a"/>
   
   <!-- Golden pages -->
-  <path d="M112 360 L400 360 L432 384 L144 384 Z" fill="#D4AF37"/>
-  <path d="M128 368 L384 368 L416 384 L160 384 Z" fill="#FFD700"/>
+  <path d="M96 360 L416 360 L448 384 L128 384 Z" fill="#D4AF37"/>
+  <path d="M112 368 L400 368 L432 384 L144 384 Z" fill="#FFD700"/>
   
   <!-- Blue globe -->
-  <circle cx="272" cy="224" r="112" fill="#4A90E2"/>
-  <circle cx="272" cy="224" r="96" fill="#357ABD"/>
+  <circle cx="272" cy="208" r="128" fill="#4A90E2"/>
+  <circle cx="272" cy="208" r="110" fill="#357ABD"/>
   
   <!-- Africa map on globe (simplified) -->
-  <path d="M272 128 L304 160 L336 144 L352 192 L320 224 L336 272 L288 288 L256 272 L240 224 L256 176 L240 160 Z" fill="#D4AF37"/>
+  <path d="M272 80 L320 144 L368 128 L384 192 L336 208 L368 272 L304 304	272 288 L256 208 L288 144 L256 128 Z" fill="#D4AF37"/>
 </svg>
