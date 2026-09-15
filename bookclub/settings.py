@@ -55,6 +55,8 @@ else:
     # Production cookie security
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
 
 
 # Application definition
@@ -195,6 +197,9 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+# URL handling
+APPEND_SLASH = True
 
 
 # Static files (CSS, JavaScript, Images)
