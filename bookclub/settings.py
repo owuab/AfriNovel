@@ -29,7 +29,11 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-k*pzw+z_3r(=8csf##*4qa-a4-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv('ALLOWED_HOSTS', '*').split(',')
+    if host.strip()
+]
 
 # CSRF Trusted Origins configuration
 if DEBUG:
@@ -48,7 +52,11 @@ else:
     # Production: use environment variable or fallback to ALLOWED_HOSTS
     csrf_origins_env = os.getenv('CSRF_TRUSTED_ORIGINS', '')
     if csrf_origins_env:
-        CSRF_TRUSTED_ORIGINS = csrf_origins_env.split(',')
+        CSRF_TRUSTED_ORIGINS = [
+            origin.strip()
+            for origin in csrf_origins_env.split(',')
+            if origin.strip()
+        ]
     else:
         # Fallback: convert ALLOWED_HOSTS to HTTPS origins
         CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host != '*']
@@ -57,13 +65,6 @@ else:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
-    
-    # Debug: log CSRF configuration
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.warning(f"CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
-    logger.warning(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
-    logger.warning(f"CSRF_COOKIE_SECURE: {CSRF_COOKIE_SECURE}")
 
 
 # Application definition
@@ -231,13 +232,9 @@ BOOK_PROVIDER_USER_AGENT = f'BookClub Legal Library/1.0 ({BOOK_PROVIDER_CONTACT_
 APSCHEDULER_DATETIME_FORMAT = 'N j, Y, f:s a'
 APSCHEDULER_RUN_NOW_TIMEOUT = 300
 
-SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true'
-
-# Debug: log SSL redirect setting
-import logging
-logger = logging.getLogger(__name__)
-logger.warning(f"SECURE_SSL_REDIRECT: {SECURE_SSL_REDIRECT}")
-logger.warning(f"DEBUG: {DEBUG}")
+SECURE_SSL_REDIRECT = (
+    os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true'
+)
 
 
 # Email
