@@ -1,1 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><path d="M18 12h32v25H18z" fill="#57B7D9"/><path d="m11 20 31-5 4 25-31 5z" fill="#F2C14E"/><path d="m8 28 31-5 4 25-31 5z" fill="#EC806B"/><path d="m16 35 31-5 3 16-31 5z" fill="#63B88C"/><path d="M17 39h31" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/><path d="M15 31h26" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" fill="none">
+  <!-- Book base -->
+  <path d="M40 55 L130 55 L140 60 L50 60 Z" fill="#1a1a1a"/>
+  <path d="M40 55 L50 60 L50 65 L40 60 Z" fill="#2a2a2a"/>
+  <path d="M130 55 L140 60 L140 65 L130 60 Z" fill="#2a2a2a"/>
+  
+  <!-- Golden pages -->
+  <path d="M42 56 L128 56 L138 59 L52 59 Z" fill="#D4AF37"/>
+  <path d="M45 57 L125 57 L135 58 L55 58 Z" fill="#FFD700"/>
+  
+  <!-- Blue globe -->
+  <circle cx="85" cy="35" r="18" fill="#4A90E2"/>
+  <circle cx="85" cy="35" r="16" fill="#357ABD"/>
+  
+  <!-- Africa map on globe (simplified) -->
+  <path d="M85 20 L90 25 L95 22 L98 28 L92 35 L95 42 L88 45 L82 42 L78 35 L82 28 L78 25 Z" fill="#D4AF37"/>
+  
+  <!-- Text "AfriNovel" -->
+  <text x="150" y="45" font-family="Arial, sans-serif" font-size="24" font-weight="bold">
+    <tspan fill="#1a1a1a">Afri</tspan><tspan fill="#D4AF37">Novel</tspan>
+  </text>
+  
+  <!-- Decorative line with diamond -->
+  <line x1="150" y1="55" x2="270" y2="55" stroke="#D4AF37" stroke-width="2"/>
+  <polygon points="210,52 214,55 210,58 206,55" fill="#D4AF37"/>
+</svg>

@@ -3,22 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}AfriNovel - A global reading community{% endblock %}">
-    <meta name="theme-color" content="#222">
+    <meta name="description" content="{% block meta_description %}AfriNovel - A premium African web-novel platform featuring the best in fantasy, romance, and African literature.{% endblock %}">
+    <meta name="theme-color" content="#0f1117">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}AfriNovel{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}AfriNovel - A premium African web-novel platform{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'images/afrinovel-og.jpg' %}{% endblock %}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="{% block twitter_title %}AfriNovel{% endblock %}">
+    <meta property="twitter:description" content="{% block twitter_description %}AfriNovel - A premium African web-novel platform{% endblock %}">
+    <meta property="twitter:image" content="{% block twitter_image %}{% static 'images/afrinovel-twitter.jpg' %}{% endblock %}">
     
     <title>{% block title %}AfriNovel{% endblock %}</title>
     
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
     <!-- Design System CSS -->
     <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
-    <link rel="stylesheet" href="{% static 'css/layout.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'css/layout.css' %}?v=4">
     
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
     
     <!-- Favicons -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>📚</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/afrinovel-logo-icon.svg' %}">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "AfriNovel",
+      "description": "A premium African web-novel platform featuring the best in fantasy, romance, and African literature."
+    }
+    </script>
+    {% block structured_data %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %}" ontouchstart="">
     
     <!-- Skip to main content link for accessibility -->
     <a href="#main" class="sr-only">Skip to main content</a>
@@ -30,7 +58,19 @@
             <div class="container">
                 <div class="nav-wrapper">
                     <div class="nav-brand">
-                        <a href="{% url 'home' %}"><img class="nav-brand-logo" src="{% static 'images/afrinovel-logo.svg' %}?v=2" alt=""><span>AfriNovel</span></a>
+                        <a href="{% url 'home' %}"><img class="nav-brand-logo" src="{% static 'images/afrinovel-logo.svg' %}?v=3" alt="AfriNovel Logo"><span>AfriNovel</span></a>
+                    </div>
+                    
+                    <div class="nav-search">
+                        <form class="search-bar" method="get" action="{% url 'search_books' %}">
+                            <input type="search" name="q" placeholder="Search novels..." autocomplete="off">
+                            <button type="submit" aria-label="Search">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="7" cy="7" r="5"></circle>
+                                    <path d="M11 11L14 14"></path>
+                                </svg>
+                            </button>
+                        </form>
                     </div>
                     
                     <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-controls="nav-menu">
@@ -40,15 +80,25 @@
                     </button>
                     
                     <div class="nav-menu" id="nav-menu">
-                        <a href="{% url 'discover' %}" class="nav-link">Discover</a>
-                        <a href="{% url 'rankings' %}" class="nav-link">Rankings</a>
-                        <a href="{% url 'categories' %}" class="nav-link">Categories</a>
+                        <div class="nav-mobile-search">
+                            <form class="search-bar" method="get" action="{% url 'search_books' %}">
+                                <input type="search" name="q" placeholder="Search novels..." autocomplete="off">
+                                <button type="submit" aria-label="Search">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="7" cy="7" r="5"></circle>
+                                        <path d="M11 11L14 14"></path>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                        <a href="{% url 'discover' %}" class="nav-link">Novels</a>
+                        <a href="{% url 'categories' %}" class="nav-link">Genres</a>
+                        <a href="{% url 'rankings' %}" class="nav-link">Ranking</a>
+                        <a href="{% url 'completed' %}" class="nav-link">Latest</a>
                         <a href="{% url 'completed' %}" class="nav-link">Completed</a>
                         
                         {% if user.is_authenticated %}
                             <a href="{% url 'view_bookshelf' %}" class="nav-link">Bookshelf</a>
-                            <a href="{% url 'reading_history' %}" class="nav-link">History</a>
-                            <a href="{% url 'publish_book' %}" class="nav-link">Publish a book</a>
                             <div class="nav-divider"></div>
                             <div class="nav-dropdown">
                                 <button class="nav-link nav-user" id="profile-dropdown-btn" aria-expanded="false" aria-haspopup="true">
@@ -61,13 +111,14 @@
                                 <div class="dropdown-menu" id="profile-dropdown-menu">
                                     <a href="{% url 'profile' %}" class="dropdown-item">View Profile</a>
                                     <a href="{% url 'profile_edit' %}" class="dropdown-item">Edit Profile</a>
+                                    <a href="{% url 'reading_history' %}" class="dropdown-item">Reading History</a>
                                     <div class="dropdown-divider"></div>
                                     <a href="{% url 'logout' %}" class="dropdown-item dropdown-logout">Sign Out</a>
                                 </div>
                             </div>
                         {% else %}
-                            <a href="{% url 'login' %}" class="nav-link">Sign In</a>
-                            <a href="{% url 'signup' %}" class="nav-link" style="background-color: #4b64ff; color: #fff;">Create Account</a>
+                            <a href="{% url 'login' %}" class="nav-link">Login</a>
+                            <a href="{% url 'signup' %}" class="nav-link nav-cta">Register</a>
                         {% endif %}
                     </div>
                 </div>
@@ -105,25 +156,36 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>About AfriNovel</h3>
-                    <p>A global community dedicated to celebrating books, authors, and the joy of reading.</p>
+                    <h3>AfriNovel</h3>
+                    <p>A premium African web-novel platform featuring the best in fantasy, romance, and African literature.</p>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>Quick Links</h3>
+                    <h3>Discover</h3>
                     <ul>
-                        <li><a href="{% url 'discover' %}">Discover Books</a></li>
-                        <li><a href="{% url 'discover' %}">Featured Authors</a></li>
-                        <li><a href="{% url 'discover' %}">Community</a></li>
+                        <li><a href="{% url 'discover' %}">All Novels</a></li>
+                        <li><a href="{% url 'categories' %}">Genres</a></li>
+                        <li><a href="{% url 'rankings' %}">Rankings</a></li>
+                        <li><a href="{% url 'completed' %}">Completed</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>Legal</h3>
+                    <h3>Community</h3>
                     <ul>
+                        <li><a href="{% url 'social_feed' %}">Social Feed</a></li>
+                        <li><a href="{% url 'reading_history' %}">Reading History</a></li>
+                        <li><a href="{% url 'my_reading_lists' %}">Reading Lists</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
                         <li><a href="#">Privacy Policy</a></li>
                         <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Contact Us</a></li>
                     </ul>
                 </div>
             </div>
@@ -139,7 +201,17 @@
     {% block extra_js %}{% endblock %}
     
     <!-- Global Scripts -->
+    <script src="{% static 'js/ajax.js' %}"></script>
+    <script src="{% static 'js/toast.js' %}"></script>
+    <script src="{% static 'js/navbar.js' %}"></script>
+    <script src="{% static 'js/carousel.js' %}"></script>
     <script src="{% static 'js/main.js' %}"></script>
+    
+    <!-- Reader-specific scripts (loaded only on reader pages) -->
+    {% if request.resolver_match.url_name == 'uploaded_book_reader' or request.resolver_match.url_name == 'catalogue_reader' %}
+    <script src="{% static 'js/reader-settings.js' %}"></script>
+    <script src="{% static 'js/reader-progress.js' %}"></script>
+    {% endif %}
     
     <script>
         // Profile dropdown functionality

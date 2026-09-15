@@ -1,12 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="120" fill="url(#paint0_linear_1_2)"/>
-  <path d="M154 148H356C379.196 148 398 166.804 398 190V306C398 329.196 379.196 348 356 348H154C130.804 348 112 329.196 112 306V190C112 166.804 130.804 148 154 148Z" stroke="white" stroke-width="20"/>
-  <path d="M180 188H332V284C332 306.091 314.091 324 292 324H220C197.909 324 180 306.091 180 284V188Z" fill="rgba(255,255,255,0.12)"/>
-  <path d="M198 212H314M198 248H314M198 284H278" stroke="white" stroke-width="18" stroke-linecap="round"/>
-  <defs>
-    <linearGradient id="paint0_linear_1_2" x1="72" y1="72" x2="456" y2="456" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#4F46E5"/>
-      <stop offset="1" stop-color="#8B5CF6"/>
-    </linearGradient>
-  </defs>
+  <!-- Book base -->
+  <path d="M96 352 L416 352 L448 384 L128 384 Z" fill="#1a1a1a"/>
+  <path d="M96 352 L128 384 L128 416 L96 384 Z" fill="#2a2a2a"/>
+  <path d="M416 352 L448 384 L448 416 L416 384 Z" fill="#2a2a2a"/>
+  
+  <!-- Golden pages -->
+  <path d="M112 360 L400 360 L432 384 L144 384 Z" fill="#D4AF37"/>
+  <path d="M128 368 L384 368 L416 384 L160 384 Z" fill="#FFD700"/>
+  
+  <!-- Blue globe -->
+  <circle cx="272" cy="224" r="112" fill="#4A90E2"/>
+  <circle cx="272" cy="224" r="96" fill="#357ABD"/>
+  
+  <!-- Africa map on globe (simplified) -->
+  <path d="M272 128 L304 160 L336 144 L352 192 L320 224 L336 272 L288 288 L256 272 L240 224 L256 176 L240 160 Z" fill="#D4AF37"/>
 </svg>
