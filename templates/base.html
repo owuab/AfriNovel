@@ -207,41 +207,21 @@
     <script src="{% static 'js/carousel.js' %}"></script>
     <script src="{% static 'js/main.js' %}"></script>
     
+    <script>
+        // Initialize navbar module
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Navbar !== 'undefined') {
+                new Navbar();
+            }
+        });
+    </script>
+    
     <!-- Reader-specific scripts (loaded only on reader pages) -->
     {% if request.resolver_match.url_name == 'uploaded_book_reader' or request.resolver_match.url_name == 'catalogue_reader' %}
     <script src="{% static 'js/reader-settings.js' %}"></script>
     <script src="{% static 'js/reader-progress.js' %}"></script>
     {% endif %}
     
-    <script>
-        // Profile dropdown functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const dropdownBtn = document.getElementById('profile-dropdown-btn');
-            const dropdownMenu = document.getElementById('profile-dropdown-menu');
-            
-            if (dropdownBtn && dropdownMenu) {
-                dropdownBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const isExpanded = dropdownBtn.getAttribute('aria-expanded') === 'true';
-                    dropdownBtn.setAttribute('aria-expanded', !isExpanded);
-                    dropdownMenu.classList.toggle('show');
-                });
-                
-                // Close dropdown when clicking outside
-                document.addEventListener('click', function(e) {
-                    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                        dropdownBtn.setAttribute('aria-expanded', 'false');
-                        dropdownMenu.classList.remove('show');
-                    }
-                });
-                
-                // Prevent dropdown from closing when clicking inside
-                dropdownMenu.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-            }
-        });
-    </script>
+
 </body>
 </html>
