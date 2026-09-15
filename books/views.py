@@ -9,7 +9,7 @@ from .forms import ProfileEditForm
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, JsonResponse
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Count, F, Q
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.shortcuts import get_object_or_404, redirect, render
@@ -303,6 +303,7 @@ def uploaded_book_reader(request, slug):
         'progress': None,
         'bookmarks': [],
         'reader_error': reader_error,
+        'chapter_number': 1,  # Default to chapter 1 for uploaded books
     })
 
 
@@ -898,43 +899,81 @@ def search_books(request):
 
 
 def discover(request):
-    """Search the server-side legal catalogue abstraction, with local persistence."""
+    """Discover and filter novels from the Book model."""
     query = request.GET.get('q', '').strip()
-    try:
-        page = max(int(request.GET.get('page', 1) or 1), 1)
-    except ValueError:
-        page = 1
-    filters = {key: request.GET.get(key, '').strip() for key in ('author', 'language', 'subject', 'isbn', 'publish_year')}
-    language_choices = [
-        ('eng', 'English'),
-        ('fra', 'French'),
-        ('zho', 'Chinese'),
-        ('spa', 'Spanish'),
-        ('deu', 'German'),
-        ('ita', 'Italian'),
-        ('por', 'Portuguese'),
-        ('jpn', 'Japanese'),
-        ('kor', 'Korean'),
-        ('ara', 'Arabic'),
-        ('hin', 'Hindi'),
-        ('rus', 'Russian'),
-    ]
-    results, total, provider_errors = [], 0, []
-    corrected_query = ''
+    
+    # Get filter parameters
+    genre_filter = request.GET.get('genre', '')
+    status_filter = request.GET.get('status', '')
+    sort_filter = request.GET.get('sort', 'trending')
+    min_rating = request.GET.get('min_rating', '')
+    
+    # Start with base queryset
+    books = Book.objects.filter(status=Book.PUBLISHED).select_related('author').prefetch_related('genres')
+    
+    # Apply search filter
     if query:
-        normalized, total, provider_errors = CatalogService.search(query, filters, page)
-        # Do not silently substitute results: only retry a known close title miss and disclose it.
-        corrections = {'things all apart': 'things fall apart'}
-        correction = corrections.get(query.casefold())
-        if not normalized and correction:
-            normalized, total, provider_errors = CatalogService.search(correction, filters, page)
-            corrected_query = correction
-        results = [CatalogService.persist(result) for result in normalized]
-        SearchHistory.objects.create(user=request.user if request.user.is_authenticated else None, query=query, result_count=len(results))
+        books = books.filter(
+            Q(title__icontains=query) |
+            Q(author__name__icontains=query) |
+            Q(summary__icontains=query)
+        )
+    
+    # Apply genre filter
+    if genre_filter:
+        books = books.filter(genres__slug=genre_filter)
+    
+    # Apply status filter
+    if status_filter:
+        books = books.filter(novel_status=status_filter)
+    
+    # Apply rating filter
+    if min_rating:
+        try:
+            books = books.filter(rating__gte=float(min_rating))
+        except ValueError:
+            pass
+    
+    # Apply sorting
+    if sort_filter == 'popular':
+        books = books.order_by('-view_count', '-rating')
+    elif sort_filter == 'newest':
+        books = books.order_by('-created_at')
+    elif sort_filter == 'rating':
+        books = books.order_by('-rating', '-view_count')
+    elif sort_filter == 'chapters':
+        books = books.annotate(chapter_count=Count('chapters')).order_by('-chapter_count')
+    else:  # trending (default)
+        books = books.filter(
+            created_at__gte=timezone.now() - timedelta(days=30)
+        ).order_by('-rating', '-view_count', '-created_at')
+    
+    # Get all genres for filter dropdown
+    genres = Genre.objects.all().annotate(book_count=Count('books')).order_by('name')
+    
+    # Pagination
+    paginator = Paginator(books, 24)
+    page_number = request.GET.get('page', 1)
+    try:
+        page = paginator.page(page_number)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
+    
+    # Create filters dict for template
+    filters = {
+        'genre': genre_filter,
+        'status': status_filter,
+        'sort': sort_filter,
+        'min_rating': min_rating,
+    }
+    
     return render(request, 'books/discover.html', {
-        'query': query, 'books': results, 'total': total, 'page': page,
-        'provider_errors': provider_errors, 'filters': filters, 'corrected_query': corrected_query,
-        'language_choices': language_choices,
+        'query': query,
+        'books': page,
+        'genres': genres,
+        'filters': filters,
     })
 
 
