@@ -209,6 +209,9 @@ def home(request):
     # Top ranked books
     top_ranked = Book.objects.filter(status=Book.PUBLISHED).select_related('author').prefetch_related('genres').order_by('-rating')[:5]
     
+    # Completed novels
+    completed_books = Book.objects.filter(status=Book.PUBLISHED, novel_status='completed').select_related('author').prefetch_related('genres').order_by('-rating')[:8]
+    
     # Recent reviews
     recent_reviews = Review.objects.select_related('user', 'book').order_by('-created_at')[:5]
     
@@ -233,8 +236,10 @@ def home(request):
     
     context = {
         'featured_book': featured_book,
+        'trending_books': popular_books,  # Alias for template compatibility
         'popular_books': popular_books,
         'recent_books': recent_books,
+        'completed_books': completed_books,
         'free_catalog_books': free_catalog_books,
         'asian_books': asian_books,
         'asian_subcategories': asian_subcategories,
