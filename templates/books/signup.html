@@ -1,2 +1,295 @@
+{% extends "base.html" %}
 {% load socialaccount %}
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create account | AfriNovel</title><style>:root{--paper:#f4efe5;--card:#fffdf8;--ink:#1c2926;--muted:#64706d;--line:#dcd3c4;--accent:#155e55;--danger:#9d2929}*{box-sizing:border-box}body{min-height:100vh;margin:0;padding:28px 18px;background:radial-gradient(circle at top right,#d9e6d7,transparent 45%),var(--paper);color:var(--ink);font:16px Georgia,serif;display:grid;place-items:center}.wrap{width:min(100%,470px)}.brand{text-align:center;font-weight:bold;font-size:1.35rem;letter-spacing:.08em;margin-bottom:24px}.mark{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 14px;background:var(--accent);border-radius:6px;color:#fff;font-size:1.45rem}.intro{text-align:center;margin-bottom:22px}.intro h1{font-size:2.3rem;letter-spacing:-.03em;margin:0 0 8px}.intro p{margin:0;color:var(--muted);line-height:1.5}.card{padding:25px;border:1px solid var(--line);border-radius:8px;background:var(--card);box-shadow:0 18px 45px #3a3a2812}.social{display:grid;gap:10px}.social-button{min-height:48px;width:100%;display:flex;align-items:center;justify-content:center;gap:11px;border:1px solid #cfc7ba;border-radius:5px;background:#fff;color:#202522;text-decoration:none;font:600 .92rem Arial,sans-serif}.social-button[aria-disabled=true]{opacity:.55;cursor:not-allowed}.provider-icon{width:20px;text-align:center;font-size:1.15rem;font-weight:bold}.google{color:#4285f4}.apple{color:#111}.microsoft{color:#0876d1}.divider{display:flex;align-items:center;gap:12px;margin:23px 0;color:var(--muted);font:700 .72rem Arial,sans-serif;letter-spacing:.1em}.divider:before,.divider:after{content:"";height:1px;background:var(--line);flex:1}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:7px;margin:14px 0}.field label{font:700 .82rem Arial,sans-serif}.field input{width:100%;height:47px;border:1px solid var(--line);border-radius:5px;padding:0 12px;background:#fff;font:16px Arial,sans-serif}.field input:focus{outline:3px solid #83b6ad;outline-offset:1px}.error{color:#9d2929;font:12px Arial,sans-serif}.submit{width:100%;border:0;border-radius:5px;min-height:48px;background:var(--accent);color:#fff;font:700 .92rem Arial,sans-serif;cursor:pointer;margin-top:8px}.footer{text-align:center;color:var(--muted);font:14px Arial,sans-serif;margin:20px 0 0}.footer a{color:var(--accent);font-weight:bold}@media(max-width:420px){body{padding:16px}.card{padding:20px}.row{grid-template-columns:1fr}}</style></head><body><main class="wrap"><div class="brand"><div class="mark">B</div>BOOK CLUB</div><section class="intro"><h1>Create Your Account</h1><p>Build a personal library for every chapter ahead.</p></section><section class="card"><div class="social">{% if social_providers.google %}<a class="social-button" href="{% provider_login_url 'google' process='login' %}"><span class="provider-icon google">G</span>Continue with Google</a>{% else %}<button class="social-button" type="button" aria-disabled="true"><span class="provider-icon google">G</span>Continue with Google</button>{% endif %}{% if social_providers.apple %}<a class="social-button" href="{% provider_login_url 'apple' process='login' %}"><span class="provider-icon apple">&#63743;</span>Continue with Apple</a>{% else %}<button class="social-button" type="button" aria-disabled="true"><span class="provider-icon apple">&#63743;</span>Continue with Apple</button>{% endif %}{% if social_providers.microsoft %}<a class="social-button" href="{% provider_login_url 'microsoft' process='login' %}"><span class="provider-icon microsoft">&#8862;</span>Continue with Microsoft</a>{% else %}<button class="social-button" type="button" aria-disabled="true"><span class="provider-icon microsoft">&#8862;</span>Continue with Microsoft</button>{% endif %}</div><div class="divider">OR</div><form method="post" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="error">{{ form.non_field_errors.0 }}</div>{% endif %}<div class="row"><div class="field"><label for="id_first_name">First name</label><input id="id_first_name" name="first_name" autocomplete="given-name" value="{{ form.first_name.value|default:'' }}"></div><div class="field"><label for="id_last_name">Last name</label><input id="id_last_name" name="last_name" autocomplete="family-name" value="{{ form.last_name.value|default:'' }}"></div></div><div class="field"><label for="id_username">Username</label><input id="id_username" name="username" autocomplete="username" required value="{{ form.username.value|default:'' }}">{% if form.username.errors %}<span class="error">{{ form.username.errors.0 }}</span>{% endif %}</div><div class="field"><label for="id_email">Email</label><input id="id_email" name="email" type="email" autocomplete="email" required value="{{ form.email.value|default:'' }}">{% if form.email.errors %}<span class="error">{{ form.email.errors.0 }}</span>{% endif %}</div><div class="field"><label for="id_password1">Password</label><input id="id_password1" name="password1" type="password" autocomplete="new-password" required>{% if form.password1.errors %}<span class="error">{{ form.password1.errors.0 }}</span>{% endif %}</div><div class="field"><label for="id_password2">Confirm password</label><input id="id_password2" name="password2" type="password" autocomplete="new-password" required>{% if form.password2.errors %}<span class="error">{{ form.password2.errors.0 }}</span>{% endif %}</div><button class="submit" type="submit">Create Account</button></form></section><p class="footer">Existing account? <a href="{% url 'login' %}">Sign In</a></p></main></body></html>
+
+{% block title %}Create Account | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .signup-page { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    min-height: calc(100vh - 72px); 
+    padding: var(--spacing-8); 
+    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
+  }
+  .signup-card { 
+    width: 100%; 
+    max-width: 420px; 
+  }
+  .signup-header { 
+    text-align: center; 
+    margin-bottom: var(--spacing-8); 
+  }
+  .signup-icon { 
+    font-size: 2.5rem; 
+    margin-bottom: var(--spacing-4); 
+  }
+  .signup-header h1 { 
+    margin: 0; 
+    font-size: 1.8rem; 
+    font-weight: 700; 
+    color: var(--color-text-primary); 
+    letter-spacing: -0.5px;
+  }
+  .signup-header p { 
+    margin: var(--spacing-2) 0 0; 
+    color: var(--color-text-secondary); 
+    font-size: 0.95rem;
+  }
+  .card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: var(--spacing-8);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  .divider { 
+    display: flex; 
+    align-items: center; 
+    gap: var(--spacing-4); 
+    margin: var(--spacing-6) 0; 
+    color: var(--color-text-muted); 
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    letter-spacing: 0.5px; 
+    text-transform: uppercase;
+  }
+  .divider::before, .divider::after { 
+    content: ""; 
+    height: 1px; 
+    background: var(--color-border); 
+    flex: 1; 
+  }
+  .social-buttons { 
+    display: flex; 
+    flex-direction: column; 
+    gap: var(--spacing-3); 
+  }
+  .social-button { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: var(--spacing-3); 
+    padding: 12px; 
+    border: 1px solid var(--color-border); 
+    border-radius: 6px; 
+    background: var(--color-bg-tertiary); 
+    color: var(--color-text-primary); 
+    text-decoration: none; 
+    font-weight: 600; 
+    font-size: 0.9rem;
+    cursor: pointer; 
+    transition: all var(--transition-fast); 
+  }
+  .social-button:hover:not([aria-disabled=true]) { 
+    border-color: var(--color-accent); 
+    background: var(--color-bg-secondary); 
+    transform: translateY(-1px);
+  }
+  .social-button[aria-disabled=true] { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+  }
+  .provider-icon { 
+    width: 20px; 
+    height: 20px; 
+    flex: 0 0 20px; 
+  }
+  .provider-icon svg { 
+    width: 100%; 
+    height: 100%; 
+    display: block; 
+  }
+  .utility { 
+    margin: var(--spacing-4) 0 0; 
+    text-align: right; 
+  }
+  .utility a { 
+    font-weight: 600; 
+    color: var(--color-accent); 
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+  .utility a:hover {
+    color: var(--color-accent-light);
+  }
+  .signup-footer { 
+    text-align: center; 
+    margin-top: var(--spacing-8); 
+    font-size: 0.85rem; 
+    color: var(--color-text-secondary); 
+  }
+  .signup-footer a { 
+    font-weight: 600; 
+    color: var(--color-accent); 
+    text-decoration: none;
+  }
+  .signup-footer a:hover {
+    color: var(--color-accent-light);
+  }
+  .config-note { 
+    font-size: 0.75rem; 
+    color: var(--color-text-muted); 
+    margin-top: var(--spacing-6); 
+    text-align: center; 
+  }
+  
+  .form-group label {
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  
+  .form-group input {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+  
+  .form-group input:focus {
+    border-color: var(--color-accent);
+  }
+  
+  .button {
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+    border: none;
+    font-weight: 600;
+    border-radius: 6px;
+  }
+  
+  .button:hover {
+    background: var(--color-accent-dark);
+  }
+</style>
+{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="signup-page">
+  <div class="signup-card">
+    <div class="signup-header">
+      <div class="signup-icon">📚</div>
+      <h1>Create Account</h1>
+      <p>Join AfriNovel and start your reading journey</p>
+    </div>
+
+    <div class="card">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="message message-{{ message.tags }}">
+            <div class="message-icon">ℹ</div>
+            <div class="message-content">{{ message }}</div>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="message message-error" role="alert">
+            <div class="message-icon">✕</div>
+            <div class="message-content">{{ form.non_field_errors.0 }}</div>
+          </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="id_username">Username</label>
+          <input id="id_username" name="username" type="text" autocomplete="username" required value="{{ form.username.value|default:'' }}">
+          {% if form.username.errors %}
+            <div class="form-error">{{ form.username.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="id_email">Email</label>
+          <input id="id_email" name="email" type="email" autocomplete="email" required value="{{ form.email.value|default:'' }}">
+          {% if form.email.errors %}
+            <div class="form-error">{{ form.email.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="id_password1">Password</label>
+          <input id="id_password1" name="password1" type="password" autocomplete="new-password" required>
+          {% if form.password1.errors %}
+            <div class="form-error">{{ form.password1.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="id_password2">Confirm Password</label>
+          <input id="id_password2" name="password2" type="password" autocomplete="new-password" required>
+          {% if form.password2.errors %}
+            <div class="form-error">{{ form.password2.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="button" style="width: 100%; margin-top: var(--spacing-4);">Create Account</button>
+      </form>
+
+      <div class="divider">OR</div>
+
+      <div class="social-buttons">
+        {% if social_providers.google %}
+          <a class="social-button" href="{% provider_login_url 'google' process='login' %}" aria-label="Continue with Google">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M21.35 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.51h3.15c1.84-1.7 2.9-4.21 2.9-7.28Z"/><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.24L15.3 17c-.9.6-2.05.96-3.3.96-2.54 0-4.69-1.71-5.46-4.01H3.3v2.59A9.75 9.75 0 0 0 12 21.75Z"/><path fill="#FBBC05" d="M6.54 13.95A5.85 5.85 0 0 1 6.24 12c0-.68.12-1.34.3-1.95V7.46H3.3A9.75 9.75 0 0 0 2.25 12c0 1.58.38 3.07 1.05 4.54l3.24-2.59Z"/><path fill="#EA4335" d="M12 6.04c1.36 0 2.58.47 3.54 1.38l2.66-2.66C16.83 3.48 14.63 2.25 12 2.25A9.75 9.75 0 0 0 3.3 7.46l3.24 2.59C7.31 7.75 9.46 6.04 12 6.04Z"/></svg>
+            </span>
+            Continue with Google
+          </a>
+        {% else %}
+          <button class="social-button" type="button" aria-disabled="true" title="Google sign-in is not configured">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M21.35 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.51h3.15c1.84-1.7 2.9-4.21 2.9-7.28Z"/><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.24L15.3 17c-.9.6-2.05.96-3.3.96-2.54 0-4.69-1.71-5.46-4.01H3.3v2.59A9.75 9.75 0 0 0 12 21.75Z"/><path fill="#FBBC05" d="M6.54 13.95A5.85 5.85 0 0 1 6.24 12c0-.68.12-1.34.3-1.95V7.46H3.3A9.75 9.75 0 0 0 2.25 12c0 1.58.38 3.07 1.05 4.54l3.24-2.59Z"/><path fill="#EA4335" d="M12 6.04c1.36 0 2.58.47 3.54 1.38l2.66-2.66C16.83 3.48 14.63 2.25 12 2.25A9.75 9.75 0 0 0 3.3 7.46l3.24 2.59C7.31 7.75 9.46 6.04 12 6.04Z"/></svg>
+            </span>
+            Continue with Google
+          </button>
+        {% endif %}
+
+        {% if social_providers.apple %}
+          <a class="social-button" href="{% provider_login_url 'apple' process='login' %}" aria-label="Continue with Apple">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.54c-.03-2.39 1.95-3.55 2.04-3.61-1.11-1.62-2.83-1.84-3.44-1.86-1.45-.15-2.86.87-3.6.87-.76 0-1.91-.86-3.14-.84-1.59.02-3.08.95-3.9 2.41-1.7 2.94-.43 7.25 1.2 9.63.82 1.17 1.77 2.47 3.02 2.42 1.23-.05 1.69-.78 3.18-.78 1.45 0 1.87.78 3.2.75 1.31-.02 2.14-1.18 2.93-2.37.95-1.34 1.33-2.67 1.34-2.74-.03-.01-2.55-.97-2.83-3.88ZM14.65 5.5c.66-.83 1.11-1.96.98-3.1-.96.04-2.16.66-2.85 1.47-.61.71-1.15 1.88-1 2.98 1.08.08 2.19-.55 2.87-1.35Z"/></svg>
+            </span>
+            Continue with Apple
+          </a>
+        {% else %}
+          <button class="social-button" type="button" aria-disabled="true" title="Apple sign-in is not configured">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.54c-.03-2.39 1.95-3.55 2.04-3.61-1.11-1.62-2.83-1.84-3.44-1.86-1.45-.15-2.86.87-3.6.87-.76 0-1.91-.86-3.14-.84-1.59.02-3.08.95-3.9 2.41-1.7 2.94-.43 7.25 1.2 9.63.82 1.17 1.77 2.47 3.02 2.42 1.23-.05 1.69-.78 3.18-.78 1.45 0 1.87.78 3.2.75 1.31-.02 2.14-1.18 2.93-2.37.95-1.34 1.33-2.67 1.34-2.74-.03-.01-2.55-.97-2.83-3.88ZM14.65 5.5c.66-.83 1.11-1.96.98-3.1-.96.04-2.16.66-2.85 1.47-.61.71-1.15 1.88-1 2.98 1.08.08 2.19-.55 2.87-1.35Z"/></svg>
+            </span>
+            Continue with Apple
+          </button>
+        {% endif %}
+
+        {% if social_providers.microsoft %}
+          <a class="social-button" href="{% provider_login_url 'microsoft' process='login' %}" aria-label="Continue with Microsoft">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path fill="#F25022" d="M2 2h9.5v9.5H2z"/><path fill="#7FBA00" d="M12.5 2H22v9.5h-9.5z"/><path fill="#00A4EF" d="M2 12.5h9.5V22H2z"/><path fill="#FFB900" d="M12.5 12.5H22V22h-9.5z"/></svg>
+            </span>
+            Continue with Microsoft
+          </a>
+        {% else %}
+          <button class="social-button" type="button" aria-disabled="true" title="Microsoft sign-in is not configured">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path fill="#F25022" d="M2 2h9.5v9.5H2z"/><path fill="#7FBA00" d="M12.5 2H22v9.5h-9.5z"/><path fill="#00A4EF" d="M2 12.5h9.5V22H2z"/><path fill="#FFB900" d="M12.5 12.5H22V22h-9.5z"/></svg>
+            </span>
+            Continue with Microsoft
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <p class="signup-footer">Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+    {% if not social_providers.google and not social_providers.apple and not social_providers.microsoft %}
+      <p class="config-note">Social sign-in will become available when a provider is configured securely by AfriNovel.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}

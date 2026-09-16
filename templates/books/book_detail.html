@@ -42,14 +42,14 @@
 <style>
   .novel-detail-container {
     padding: var(--spacing-8) var(--spacing-6);
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
   }
 
   .novel-header {
     position: relative;
     background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
-    border-radius: var(--border-radius-xl);
+    border-radius: 8px;
     padding: var(--spacing-10);
     margin-bottom: var(--spacing-8);
     overflow: hidden;
@@ -62,13 +62,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at 30% 50%, rgba(216, 155, 53, 0.1) 0%, transparent 60%);
+    background: radial-gradient(circle at 30% 50%, rgba(233, 69, 96, 0.08) 0%, transparent 60%);
     pointer-events: none;
   }
 
   .novel-header-content {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 260px 1fr;
     gap: var(--spacing-8);
     position: relative;
     z-index: 1;
@@ -76,11 +76,16 @@
 
   .novel-cover {
     width: 100%;
-    max-width: 300px;
+    max-width: 260px;
     aspect-ratio: 2/3;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-2xl);
+    border-radius: 8px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     object-fit: cover;
+    transition: transform var(--transition-base);
+  }
+
+  .novel-cover:hover {
+    transform: scale(1.02);
   }
 
   .novel-cover[style] {
@@ -99,54 +104,57 @@
   }
 
   .novel-badge {
-    padding: var(--spacing-1) var(--spacing-3);
-    border-radius: var(--border-radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
   .badge-ongoing {
-    background: var(--color-success-light);
-    color: var(--color-success);
+    background: rgba(0, 217, 165, 0.9);
+    color: #fff;
   }
 
   .badge-completed {
-    background: var(--color-info-light);
-    color: var(--color-info);
+    background: rgba(83, 82, 237, 0.9);
+    color: #fff;
   }
 
   .badge-hiatus {
-    background: var(--color-warning-light);
-    color: var(--color-warning);
+    background: rgba(255, 165, 2, 0.9);
+    color: #fff;
   }
 
   .novel-title {
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: var(--font-weight-bold);
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 700;
     color: var(--color-text-primary);
     margin-bottom: var(--spacing-2);
-    line-height: 1.1;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
   }
 
   .novel-author {
-    font-size: var(--font-size-lg);
+    font-size: 1.1rem;
     color: var(--color-text-secondary);
     margin-bottom: var(--spacing-3);
+    font-weight: 500;
   }
 
   .novel-meta {
     display: flex;
     gap: var(--spacing-4);
     color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
+    font-size: 0.85rem;
     margin-bottom: var(--spacing-3);
+    flex-wrap: wrap;
   }
 
   .novel-rating {
     color: var(--color-rating);
-    font-weight: var(--font-weight-semibold);
+    font-weight: 600;
   }
 
   .novel-genres {
@@ -157,14 +165,15 @@
   }
 
   .genre-tag {
-    padding: var(--spacing-2) var(--spacing-3);
+    padding: 6px 12px;
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-full);
+    border-radius: 4px;
     color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: 0.85rem;
     text-decoration: none;
     transition: all var(--transition-fast);
+    font-weight: 500;
   }
 
   .genre-tag:hover {
@@ -177,27 +186,30 @@
     display: flex;
     gap: var(--spacing-3);
     margin-top: auto;
+    flex-wrap: wrap;
   }
 
   .content-section {
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-lg);
+    border-radius: 8px;
     padding: var(--spacing-8);
     margin-bottom: var(--spacing-8);
   }
 
   .section-title {
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-bold);
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--color-text-primary);
     margin-bottom: var(--spacing-6);
+    letter-spacing: -0.5px;
   }
 
   .synopsis {
     color: var(--color-text-secondary);
-    line-height: var(--line-height-relaxed);
+    line-height: 1.6;
     max-width: 800px;
+    font-size: 0.95rem;
   }
 
   .synopsis p {
@@ -214,7 +226,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--spacing-4);
+    padding: 12px;
     border-bottom: 1px solid var(--color-border);
     transition: background var(--transition-fast);
   }
@@ -229,15 +241,17 @@
 
   .chapter-number {
     color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
+    font-size: 0.85rem;
     margin-right: var(--spacing-3);
+    font-weight: 500;
   }
 
   .chapter-title {
     flex: 1;
     color: var(--color-text-primary);
     text-decoration: none;
-    font-weight: var(--font-weight-medium);
+    font-weight: 500;
+    font-size: 0.9rem;
   }
 
   .chapter-title:hover {
@@ -246,7 +260,7 @@
 
   .chapter-date {
     color: var(--color-text-muted);
-    font-size: var(--font-size-xs);
+    font-size: 0.75rem;
   }
 
   .review-grid {
@@ -257,7 +271,7 @@
   .review-card {
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md);
+    border-radius: 6px;
     padding: var(--spacing-5);
   }
 
@@ -269,25 +283,27 @@
   }
 
   .review-avatar {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: var(--color-accent);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--color-text-inverse);
-    font-weight: var(--font-weight-semibold);
+    font-weight: 600;
+    font-size: 0.9rem;
   }
 
   .review-rating {
     color: var(--color-rating);
-    font-weight: var(--font-weight-semibold);
+    font-weight: 600;
   }
 
   .review-content {
     color: var(--color-text-secondary);
-    line-height: var(--line-height-relaxed);
+    line-height: 1.6;
+    font-size: 0.9rem;
   }
 
   @media (max-width: 768px) {

@@ -15,6 +15,12 @@ function initializeUI() {
   // Initialize accessibility features
   initializeAccessibility();
   
+  // Initialize enhanced hover effects
+  initializeHoverEffects();
+  
+  // Initialize smooth scroll behavior
+  initializeSmoothScroll();
+  
   // Navigation is now handled by navbar.js module
   // Carousel is now handled by carousel.js module
 }
@@ -122,6 +128,74 @@ function validateInput(input) {
 }
 
 /**
+ * Enhanced Hover Effects
+ */
+function initializeHoverEffects() {
+  // Enhanced book card hover effects
+  const bookCards = document.querySelectorAll('.book-card-premium');
+  
+  bookCards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      // Add subtle glow effect
+      this.style.boxShadow = '0 8px 25px rgba(233, 69, 96, 0.2)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      // Remove glow effect
+      this.style.boxShadow = '';
+    });
+  });
+  
+  // Enhanced button hover effects
+  const buttons = document.querySelectorAll('.button, .action-button');
+  
+  buttons.forEach(button => {
+    button.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-2px)';
+    });
+    
+    button.addEventListener('mouseleave', function() {
+      this.style.transform = '';
+    });
+  });
+  
+  // Enhanced genre card hover effects
+  const genreCards = document.querySelectorAll('.genre-card');
+  
+  genreCards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-4px) scale(1.02)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = '';
+    });
+  });
+}
+
+/**
+ * Smooth Scroll Behavior
+ */
+function initializeSmoothScroll() {
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href === '#') return;
+      
+      const target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+}
+
+/**
  * Accessibility Enhancements
  */
 function initializeAccessibility() {
@@ -133,6 +207,12 @@ function initializeAccessibility() {
       if (navMenu) {
         navMenu.classList.remove('active');
       }
+      
+      // Close dropdowns on escape
+      const dropdowns = document.querySelectorAll('.dropdown-menu.show, .nav-search-dropdown.show');
+      dropdowns.forEach(dropdown => {
+        dropdown.classList.remove('show');
+      });
     }
   });
   
@@ -190,5 +270,7 @@ if (typeof module !== 'undefined' && module.exports) {
     initializeMessages,
     initializeForms,
     initializeAccessibility,
+    initializeHoverEffects,
+    initializeSmoothScroll,
   };
 }

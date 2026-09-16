@@ -11,7 +11,7 @@
 
   .hero-carousel {
     position: relative;
-    min-height: 500px;
+    min-height: 450px;
     background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
     overflow: hidden;
   }
@@ -23,7 +23,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at 30% 50%, rgba(216, 155, 53, 0.15) 0%, transparent 60%);
+    background: radial-gradient(circle at 30% 50%, rgba(233, 69, 96, 0.12) 0%, transparent 60%);
     pointer-events: none;
   }
 
@@ -46,8 +46,8 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--spacing-8);
     align-items: center;
-    padding: var(--spacing-12) var(--spacing-6);
-    max-width: 1400px;
+    padding: var(--spacing-10) var(--spacing-6);
+    max-width: 1200px;
     margin: 0 auto;
     position: relative;
     z-index: 1;
@@ -57,53 +57,58 @@
     display: inline-block;
     background: var(--color-accent);
     color: var(--color-text-inverse);
-    padding: var(--spacing-2) var(--spacing-3);
-    border-radius: var(--border-radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-bold);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: var(--spacing-4);
   }
 
   .hero-book-info h1 {
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: var(--font-weight-bold);
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 700;
     color: var(--color-text-primary);
     margin-bottom: var(--spacing-3);
-    line-height: 1.1;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
   }
 
   .hero-book-info .author {
-    font-size: var(--font-size-lg);
+    font-size: 1.1rem;
     color: var(--color-text-secondary);
     margin-bottom: var(--spacing-3);
+    font-weight: 500;
   }
 
   .hero-book-info .description {
     color: var(--color-text-secondary);
-    line-height: var(--line-height-relaxed);
+    line-height: 1.6;
     margin-bottom: var(--spacing-4);
-    max-width: 600px;
+    max-width: 500px;
+    font-size: 0.95rem;
   }
 
   .hero-book-info .meta {
     display: flex;
     gap: var(--spacing-4);
     color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
+    font-size: 0.85rem;
     margin-bottom: var(--spacing-4);
+    flex-wrap: wrap;
   }
 
   .hero-book-info .rating {
     color: var(--color-rating);
-    font-weight: var(--font-weight-semibold);
+    font-weight: 600;
   }
 
   .hero-actions {
     display: flex;
     gap: var(--spacing-3);
     margin-top: var(--spacing-6);
+    flex-wrap: wrap;
   }
 
   .hero-controls {
@@ -116,8 +121,8 @@
   }
 
   .hero-control-btn {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border);
@@ -146,8 +151,8 @@
   }
 
   .hero-indicator {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--color-border);
     cursor: pointer;
@@ -160,8 +165,8 @@
   }
 
   .premium-section {
-    padding: var(--spacing-12) var(--spacing-6);
-    max-width: 1400px;
+    padding: var(--spacing-10) var(--spacing-6);
+    max-width: 1200px;
     margin: 0 auto;
   }
 
@@ -173,15 +178,17 @@
   }
 
   .section-header h2 {
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-bold);
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--color-text-primary);
     margin: 0;
+    letter-spacing: -0.5px;
   }
 
   .section-header a {
     color: var(--color-accent);
-    font-weight: var(--font-weight-semibold);
+    font-weight: 600;
+    font-size: 0.9rem;
     text-decoration: none;
     transition: color var(--transition-fast);
   }
@@ -192,14 +199,14 @@
 
   .genre-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: var(--spacing-3);
   }
 
   .genre-card {
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-lg);
+    border-radius: 8px;
     padding: var(--spacing-4);
     text-align: center;
     text-decoration: none;
@@ -208,19 +215,20 @@
 
   .genre-card:hover {
     border-color: var(--color-accent);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
   .genre-card h3 {
     margin: 0;
     color: var(--color-text-primary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
+    font-size: 0.9rem;
+    font-weight: 600;
   }
 
   .genre-card .count {
     color: var(--color-text-muted);
-    font-size: var(--font-size-xs);
+    font-size: 0.75rem;
     margin-top: var(--spacing-1);
   }
 
@@ -250,7 +258,7 @@
 
   @media (max-width: 768px) {
     .hero-carousel {
-      min-height: 400px;
+      min-height: 380px;
     }
 
     .hero-content {
@@ -258,7 +266,7 @@
     }
 
     .hero-book-info h1 {
-      font-size: 2rem;
+      font-size: 1.8rem;
     }
 
     .hero-actions {

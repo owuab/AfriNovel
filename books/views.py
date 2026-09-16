@@ -280,8 +280,8 @@ def book_detail(request, slug):
     return render(request, 'books/book_detail.html', context)
 
 
-@login_required
 def uploaded_book_reader(request, slug):
+    """Reader for uploaded books - accessible to guests and authenticated users"""
     book = get_object_or_404(
         Book.objects.select_related('author'),
         slug=slug,
@@ -303,11 +303,23 @@ def uploaded_book_reader(request, slug):
     except (ProviderUnavailable, ValueError, zipfile.BadZipFile) as error:
         sections = []
         reader_error = str(error)
+    
+    # Handle guest vs authenticated user
+    progress = None
+    bookmarks = []
+    if request.user.is_authenticated:
+        # Get user-specific reading progress and bookmarks
+        try:
+            progress = ReadingProgress.objects.filter(user=request.user, book=book).first()
+        except ReadingProgress.DoesNotExist:
+            progress = None
+        bookmarks = UserBookshelf.objects.filter(user=request.user, book=book, is_bookmarked=True)
+    
     return render(request, 'books/reader.html', {
         'book': book,
         'sections': sections,
-        'progress': None,
-        'bookmarks': [],
+        'progress': progress,
+        'bookmarks': bookmarks,
         'reader_error': reader_error,
         'chapter_number': 1,  # Default to chapter 1 for uploaded books
     })
