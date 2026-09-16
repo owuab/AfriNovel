@@ -105,7 +105,7 @@
   
   /* Wuxiaworld-inspired specific dimensions */
   --container-width: 1200px;
-  --book-card-width: 160px;
+  --book-card-width: 180px;
   --book-cover-ratio: 2/3;
   --button-height: 44px;
   --input-height: 44px;
@@ -874,7 +874,7 @@ tbody tr:last-child td {
 
   /* Mobile book card adjustment */
   :root {
-    --book-card-width: 140px;
+    --book-card-width: 150px;
   }
 }
 
