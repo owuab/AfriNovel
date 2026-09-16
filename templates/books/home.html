@@ -359,7 +359,7 @@
       <a href="{% url 'rankings' %}">View all →</a>
     </div>
     <div class="book-carousel">
-      {% for book in trending_books %}
+      {% for book in popular_books %}
         <article class="book-card-premium">
           <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
             {% if book.cover_image_url %}
@@ -427,7 +427,7 @@
       <a href="{% url 'rankings' %}">View all →</a>
     </div>
     <div class="book-carousel">
-      {% for book in popular_books %}
+      {% for book in top_ranked %}
         <article class="book-card-premium">
           <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
             {% if book.cover_image_url %}
