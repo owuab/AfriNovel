@@ -53,7 +53,7 @@
         <h1>Discover Your Next Great Read</h1>
         <p>Explore thousands of books across every genre and connect with a global community of readers.</p>
         <div class="hero-actions">
-          <a href="{% url 'discover' %}" class="btn btn-primary">Start Exploring</a>
+          <a href="{% url 'novels' %}" class="btn btn-primary">Start Exploring</a>
           <a href="{% url 'categories' %}" class="btn btn-outline">Browse Categories</a>
         </div>
       </div>
@@ -141,7 +141,7 @@
   <div class="container">
     <div class="section-header">
       <h2 id="asian-books-heading">Asian Books</h2>
-      <a href="{% url 'discover' %}?category=asian" class="view-all">Explore All &rarr;</a>
+      <a href="{% url 'novels' %}?category=asian" class="view-all">Explore All &rarr;</a>
     </div>
     <div class="genre-grid" aria-label="Asian book subcategories">
       {% for value, label in asian_subcategories %}
@@ -163,7 +163,7 @@
   <div class="container">
     <div class="section-header">
       <h2>Recently Added</h2>
-      <a href="{% url 'discover' %}" class="view-all">View All →</a>
+      <a href="{% url 'novels' %}" class="view-all">View All →</a>
     </div>
     
     <div class="book-grid">

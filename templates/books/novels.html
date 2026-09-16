@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Novels | AfriNovel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .novels-container {
+    padding: var(--spacing-8) var(--spacing-6);
+    max-width: var(--container-width);
+    margin: 0 auto;
+  }
+
+  .novels-header {
+    margin-bottom: var(--spacing-8);
+  }
+
+  .novels-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .novels-header p {
+    color: var(--color-text-secondary);
+    max-width: 600px;
+    margin-bottom: var(--spacing-6);
+  }
+
+  .catalogue-controls {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-6);
+    margin-bottom: var(--spacing-8);
+  }
+
+  .controls-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-4);
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+  }
+
+  .controls-header h2 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+  }
+
+  .search-bar {
+    max-width: 400px;
+    width: 100%;
+    position: relative;
+  }
+
+  .search-bar input {
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    transition: border-color var(--transition-fast);
+  }
+
+  .search-bar input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  .search-bar input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--spacing-4);
+    margin-top: var(--spacing-4);
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .filter-group label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+  }
+
+  .filter-group select {
+    width: 100%;
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+  }
+
+  .filter-group select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  .results-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-6);
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+  }
+
+  .results-info h2 {
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+  }
+
+  .results-count {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .novels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--spacing-5);
+    min-height: 400px;
+  }
+
+  .novel-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all var(--transition-base);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .novel-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--color-accent);
+  }
+
+  .novel-card-cover {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    background: var(--color-bg-tertiary);
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .novel-card-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-base);
+  }
+
+  .novel-card-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-tertiary);
+  }
+
+  .novel-card:hover .novel-card-cover img {
+    transform: scale(1.05);
+  }
+
+  .novel-card-status {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    z-index: 2;
+  }
+
+  .novel-card-status.ongoing {
+    background: rgba(0, 217, 165, 0.9);
+  }
+
+  .novel-card-status.completed {
+    background: rgba(83, 82, 237, 0.9);
+  }
+
+  .novel-card-status.hiatus {
+    background: rgba(255, 165, 2, 0.9);
+  }
+
+  .novel-card-content {
+    padding: var(--spacing-3);
+    background: var(--color-bg-card);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 80px;
+  }
+
+  .novel-card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-1);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 2.2em;
+  }
+
+  .novel-card-author {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-1);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .novel-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    margin-top: auto;
+    flex-wrap: wrap;
+  }
+
+  .novel-card-rating {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--color-rating);
+    font-weight: 600;
+  }
+
+  .novel-card-genres {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: var(--spacing-1);
+  }
+
+  .novel-card-genre {
+    font-size: 0.65rem;
+    color: var(--color-accent);
+    background: rgba(233, 69, 96, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  /* Skeleton loading state */
+  .skeleton-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .skeleton-cover {
+    aspect-ratio: 2/3;
+    background: linear-gradient(90deg, var(--color-bg-secondary) 0%, #fff 50%, var(--color-bg-secondary) 100%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+  }
+
+  .skeleton-content {
+    padding: var(--spacing-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .skeleton-title {
+    height: 2.2em;
+    background: linear-gradient(90deg, var(--color-bg-secondary) 0%, #fff 50%, var(--color-bg-secondary) 100%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  .skeleton-meta {
+    height: 1em;
+    background: linear-gradient(90deg, var(--color-bg-secondary) 0%, #fff 50%, var(--color-bg-secondary) 100%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-12);
+    color: var(--color-text-secondary);
+    grid-column: 1 / -1;
+  }
+
+  .empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-4);
+  }
+
+  .empty-state h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-3);
+  }
+
+  /* Error state */
+  .error-state {
+    text-align: center;
+    padding: var(--spacing-12);
+    color: var(--color-text-secondary);
+    grid-column: 1 / -1;
+  }
+
+  .error-state h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-danger);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .retry-button {
+    margin-top: var(--spacing-4);
+    padding: var(--spacing-2) var(--spacing-4);
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: var(--font-weight-semibold);
+    transition: background var(--transition-fast);
+  }
+
+  .retry-button:hover {
+    background: var(--color-accent-dark);
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    margin: var(--spacing-8) 0;
+    flex-wrap: wrap;
+  }
+
+  .pagination button,
+  .pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: var(--spacing-2) var(--spacing-3);
+    border: var(--border-width-default) solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+  }
+
+  .pagination button:hover:not(:disabled) {
+    background-color: var(--color-accent);
+    color: var(--color-text-inverse);
+    border-color: var(--color-accent);
+  }
+
+  .pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .pagination .active {
+    background-color: var(--color-accent);
+    color: var(--color-text-inverse);
+    border-color: var(--color-accent);
+  }
+
+  @media (max-width: 768px) {
+    .novels-container {
+      padding: var(--spacing-6) var(--spacing-4);
+    }
+
+    .controls-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .search-bar {
+      max-width: 100%;
+    }
+
+    .filters-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .novels-grid {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: var(--spacing-4);
+    }
+
+    .results-info {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .novels-grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: var(--spacing-3);
+    }
+
+    .novel-card-title {
+      font-size: 0.8rem;
+    }
+
+    .novel-card-author {
+      font-size: 0.7rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="novels-container">
+  <header class="novels-header">
+    <h1>Novels</h1>
+    <p>Explore our complete collection of novels across all genres</p>
+  </header>
+
+  <section class="catalogue-controls">
+    <div class="controls-header">
+      <h2>Browse Novels</h2>
+      <div class="search-bar">
+        <input type="search" id="search-input" placeholder="Search novels, authors..." autocomplete="off">
+      </div>
+    </div>
+    
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label for="genre-filter">Genre</label>
+        <select id="genre-filter">
+          <option value="">All Genres</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="status-filter">Status</label>
+        <select id="status-filter">
+          <option value="">All Status</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
+          <option value="hiatus">Hiatus</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="sort-filter">Sort By</label>
+        <select id="sort-filter">
+          <option value="trending">Trending</option>
+          <option value="popular">Most Popular</option>
+          <option value="newest">Newest</option>
+          <option value="rating">Highest Rated</option>
+          <option value="chapters">Most Chapters</option>
+          <option value="title_asc">Title A-Z</option>
+          <option value="title_desc">Title Z-A</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <div class="results-info">
+    <h2 id="results-title">All Novels</h2>
+    <span class="results-count" id="results-count">Loading...</span>
+  </div>
+
+  <div class="novels-grid" id="novels-grid">
+    <!-- Skeleton loading state -->
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </div>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<script src="{% static 'js/novels.js' %}"></script>
+{% endblock %}

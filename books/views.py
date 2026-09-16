@@ -1678,3 +1678,122 @@ def reading_history(request):
         'history': page,
     }
     return render(request, 'books/reading_history.html', context)
+
+
+def novels(request):
+    """Novels catalogue page - JavaScript-rendered frontend"""
+    context = {
+        'page_title': 'Novels',
+    }
+    return render(request, 'books/novels.html', context)
+
+
+@require_http_methods(['GET'])
+def novels_api(request):
+    """API endpoint for novels catalogue with filtering, search, and pagination"""
+    try:
+        # Get query parameters
+        page = max(int(request.GET.get('page', 1) or 1), 1)
+        page_size = min(int(request.GET.get('page_size', 24) or 24), 100)  # Max 100 per page
+        search_query = request.GET.get('search', '').strip()
+        genre_filter = request.GET.get('genre', '')
+        status_filter = request.GET.get('status', '')
+        sort_by = request.GET.get('sort', 'trending')
+        
+        # Base queryset
+        books = Book.objects.filter(status=Book.PUBLISHED).select_related('author').prefetch_related('genres')
+        
+        # Apply search filter
+        if search_query:
+            books = books.filter(
+                Q(title__icontains=search_query) |
+                Q(author__name__icontains=search_query) |
+                Q(summary__icontains=search_query)
+            )
+        
+        # Apply genre filter
+        if genre_filter:
+            books = books.filter(genres__slug=genre_filter)
+        
+        # Apply status filter
+        if status_filter:
+            books = books.filter(novel_status=status_filter)
+        
+        # Apply sorting
+        if sort_by == 'popular':
+            books = books.order_by('-view_count', '-rating')
+        elif sort_by == 'newest':
+            books = books.order_by('-created_at')
+        elif sort_by == 'rating':
+            books = books.order_by('-rating', '-view_count')
+        elif sort_by == 'chapters':
+            books = books.annotate(chapter_count=Count('chapters')).order_by('-chapter_count')
+        elif sort_by == 'title_asc':
+            books = books.order_by('title')
+        elif sort_by == 'title_desc':
+            books = books.order_by('-title')
+        else:  # trending (default)
+            books = books.filter(
+                created_at__gte=timezone.now() - timedelta(days=30)
+            ).order_by('-rating', '-view_count', '-created_at')
+        
+        # Get total count before pagination
+        total_count = books.count()
+        
+        # Pagination
+        paginator = Paginator(books, page_size)
+        try:
+            page_obj = paginator.page(page)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+        
+        # Serialize books
+        books_data = []
+        for book in page_obj.object_list:
+            book_data = {
+                'id': book.id,
+                'title': book.title,
+                'slug': book.slug,
+                'author': book.author.name,
+                'translator': book.translator if book.translator else None,
+                'cover_url': book.cover_image_url,
+                'cover_color': book.cover_color,
+                'rating': float(book.rating) if book.rating else 0.0,
+                'novel_status': book.novel_status,
+                'chapter_count': book.chapter_count,
+                'view_count': book.view_count,
+                'created_at': book.created_at.isoformat(),
+                'updated_at': book.updated_at.isoformat(),
+                'genres': [{'name': genre.name, 'slug': genre.slug} for genre in book.genres.all()],
+                'url': request.build_absolute_uri(book.get_absolute_url()),
+            }
+            books_data.append(book_data)
+        
+        # Get available genres for filters
+        genres = Genre.objects.all().annotate(book_count=Count('books')).order_by('name')
+        genres_data = [{'name': genre.name, 'slug': genre.slug, 'book_count': genre.book_count} for genre in genres]
+        
+        return JsonResponse({
+            'results': books_data,
+            'total': total_count,
+            'page': page_obj.number,
+            'page_size': page_size,
+            'total_pages': paginator.num_pages,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+            'genres': genres_data,
+            'filters': {
+                'search': search_query,
+                'genre': genre_filter,
+                'status': status_filter,
+                'sort': sort_by,
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': 'An error occurred while fetching novels',
+            'detail': str(e)
+        }, status=500)
