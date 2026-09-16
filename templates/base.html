@@ -61,18 +61,6 @@
                         <a href="{% url 'home' %}"><img class="nav-brand-logo" src="{% static 'images/afrinovel-logo.svg' %}?v=4" alt="AfriNovel Logo"><span>AfriNovel</span></a>
                     </div>
                     
-                    <div class="nav-search">
-                        <form class="search-bar" method="get" action="{% url 'search_books' %}">
-                            <input type="search" name="q" placeholder="Search novels..." autocomplete="off">
-                            <button type="submit" aria-label="Search">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="7" cy="7" r="5"></circle>
-                                    <path d="M11 11L14 14"></path>
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
-                    
                     <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-controls="nav-menu">
                         <span></span>
                         <span></span>
@@ -80,17 +68,6 @@
                     </button>
                     
                     <div class="nav-menu" id="nav-menu">
-                        <div class="nav-mobile-search">
-                            <form class="search-bar" method="get" action="{% url 'search_books' %}">
-                                <input type="search" name="q" placeholder="Search novels..." autocomplete="off">
-                                <button type="submit" aria-label="Search">
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="7" cy="7" r="5"></circle>
-                                        <path d="M11 11L14 14"></path>
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
                         <a href="{% url 'discover' %}" class="nav-link">Novels</a>
                         <a href="{% url 'categories' %}" class="nav-link">Genres</a>
                         <a href="{% url 'rankings' %}" class="nav-link">Ranking</a>
@@ -120,6 +97,26 @@
                             <a href="{% url 'login' %}" class="nav-link">Login</a>
                             <a href="{% url 'signup' %}" class="nav-link nav-cta">Register</a>
                         {% endif %}
+                        
+                        <div class="nav-search-wrapper">
+                            <button class="nav-search-toggle" id="search-toggle" aria-label="Toggle search">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="8" cy="8" r="6"></circle>
+                                    <path d="M13 13L18 18"></path>
+                                </svg>
+                            </button>
+                            <div class="nav-search-dropdown" id="search-dropdown">
+                                <form class="search-bar" method="get" action="{% url 'search_books' %}">
+                                    <input type="search" name="q" placeholder="Search novels..." autocomplete="off">
+                                    <button type="submit" aria-label="Search">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="7" cy="7" r="5"></circle>
+                                            <path d="M11 11L14 14"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
