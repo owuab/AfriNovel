@@ -5,162 +5,183 @@
 
 {% block extra_css %}
 <style>
-  .signup-page { 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    min-height: calc(100vh - 72px); 
-    padding: var(--spacing-8); 
+  .signup-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 72px);
+    padding: var(--spacing-8);
     background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
   }
-  .signup-card { 
-    width: 100%; 
-    max-width: 420px; 
+  .signup-card {
+    width: 100%;
+    max-width: 420px;
   }
-  .signup-header { 
-    text-align: center; 
-    margin-bottom: var(--spacing-8); 
+  .signup-header {
+    text-align: center;
+    margin-bottom: var(--spacing-8);
   }
-  .signup-icon { 
-    font-size: 2.5rem; 
-    margin-bottom: var(--spacing-4); 
+  .signup-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-4);
   }
-  .signup-header h1 { 
-    margin: 0; 
-    font-size: 1.8rem; 
-    font-weight: 700; 
-    color: var(--color-text-primary); 
+  .signup-header h1 {
+    margin: 0;
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
     letter-spacing: -0.5px;
   }
-  .signup-header p { 
-    margin: var(--spacing-2) 0 0; 
-    color: var(--color-text-secondary); 
-    font-size: 0.95rem;
+  .signup-header p {
+    margin: var(--spacing-3) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
   }
-  .card {
+  .auth-card {
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--border-radius-lg);
     padding: var(--spacing-8);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-xl);
   }
-  .divider { 
-    display: flex; 
-    align-items: center; 
-    gap: var(--spacing-4); 
-    margin: var(--spacing-6) 0; 
-    color: var(--color-text-muted); 
-    font-size: 0.8rem; 
-    font-weight: 600; 
-    letter-spacing: 0.5px; 
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    margin: var(--spacing-6) 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.5px;
     text-transform: uppercase;
   }
-  .divider::before, .divider::after { 
-    content: ""; 
-    height: 1px; 
-    background: var(--color-border); 
-    flex: 1; 
+  .divider::before, .divider::after {
+    content: "";
+    height: 1px;
+    background: var(--color-border);
+    flex: 1;
   }
-  .social-buttons { 
-    display: flex; 
-    flex-direction: column; 
-    gap: var(--spacing-3); 
+  .social-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
   }
-  .social-button { 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    gap: var(--spacing-3); 
-    padding: 12px; 
-    border: 1px solid var(--color-border); 
-    border-radius: 6px; 
-    background: var(--color-bg-tertiary); 
-    color: var(--color-text-primary); 
-    text-decoration: none; 
-    font-weight: 600; 
-    font-size: 0.9rem;
-    cursor: pointer; 
-    transition: all var(--transition-fast); 
+  .social-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-3);
+    height: var(--button-height);
+    padding: var(--spacing-3) var(--spacing-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
   }
-  .social-button:hover:not([aria-disabled=true]) { 
-    border-color: var(--color-accent); 
-    background: var(--color-bg-secondary); 
+  .social-button:hover:not([aria-disabled=true]) {
+    border-color: var(--color-accent);
+    background: var(--color-bg-secondary);
     transform: translateY(-1px);
   }
-  .social-button[aria-disabled=true] { 
-    opacity: 0.5; 
-    cursor: not-allowed; 
+  .social-button[aria-disabled=true] {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
-  .provider-icon { 
-    width: 20px; 
-    height: 20px; 
-    flex: 0 0 20px; 
+  .provider-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
   }
-  .provider-icon svg { 
-    width: 100%; 
-    height: 100%; 
-    display: block; 
+  .provider-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
   }
-  .utility { 
-    margin: var(--spacing-4) 0 0; 
-    text-align: right; 
+  .utility {
+    margin: var(--spacing-4) 0 0;
+    text-align: right;
   }
-  .utility a { 
-    font-weight: 600; 
-    color: var(--color-accent); 
-    font-size: 0.85rem;
+  .utility a {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-accent);
+    font-size: var(--font-size-sm);
     text-decoration: none;
   }
   .utility a:hover {
     color: var(--color-accent-light);
   }
-  .signup-footer { 
-    text-align: center; 
-    margin-top: var(--spacing-8); 
-    font-size: 0.85rem; 
-    color: var(--color-text-secondary); 
+  .signup-footer {
+    text-align: center;
+    margin-top: var(--spacing-8);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
   }
-  .signup-footer a { 
-    font-weight: 600; 
-    color: var(--color-accent); 
+  .signup-footer a {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-accent);
     text-decoration: none;
   }
   .signup-footer a:hover {
     color: var(--color-accent-light);
   }
-  .config-note { 
-    font-size: 0.75rem; 
-    color: var(--color-text-muted); 
-    margin-top: var(--spacing-6); 
-    text-align: center; 
+  .config-note {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin-top: var(--spacing-6);
+    text-align: center;
   }
-  
+
+  .form-group {
+    margin-bottom: var(--spacing-5);
+  }
+
   .form-group label {
     color: var(--color-text-primary);
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-2);
   }
-  
+
   .form-group input {
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border);
     color: var(--color-text-primary);
   }
-  
+
   .form-group input:focus {
     border-color: var(--color-accent);
   }
-  
+
   .button {
     background: var(--color-accent);
     color: var(--color-text-inverse);
     border: none;
-    font-weight: 600;
-    border-radius: 6px;
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--border-radius-md);
+    width: 100%;
   }
-  
+
   .button:hover {
     background: var(--color-accent-dark);
+  }
+
+  @media (max-width: 768px) {
+    .signup-page {
+      padding: var(--spacing-6) var(--spacing-4);
+    }
+
+    .auth-card {
+      padding: var(--spacing-6);
+    }
+
+    .signup-header h1 {
+      font-size: var(--font-size-2xl);
+    }
   }
 </style>
 {% endblock %}
@@ -176,7 +197,7 @@
       <p>Join AfriNovel and start your reading journey</p>
     </div>
 
-    <div class="card">
+    <div class="auth-card">
       {% if messages %}
         {% for message in messages %}
           <div class="message message-{{ message.tags }}">

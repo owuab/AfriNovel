@@ -56,14 +56,15 @@
   --font-family-serif: "Merriweather", "Georgia", "Garamond", serif;
   --font-family-mono: "JetBrains Mono", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Menlo, Courier, monospace;
   
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
+  /* Wuxiaworld-inspired typography scale */
+  --font-size-xs: 0.7rem;
+  --font-size-sm: 0.8rem;
+  --font-size-base: 0.9rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.1rem;
+  --font-size-2xl: 1.25rem;
+  --font-size-3xl: 1.5rem;
+  --font-size-4xl: 1.75rem;
   
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -101,6 +102,13 @@
   --size-4xl: 56rem;
   --size-5xl: 64rem;
   --size-6xl: 72rem;
+  
+  /* Wuxiaworld-inspired specific dimensions */
+  --container-width: 1200px;
+  --book-card-width: 160px;
+  --book-cover-ratio: 2/3;
+  --button-height: 44px;
+  --input-height: 44px;
   
   /* ==================== BORDERS & RADIUS ==================== */
   --border-width-thin: 1px;
@@ -176,18 +184,22 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {
   font-size: var(--font-size-4xl);
+  letter-spacing: -0.5px;
 }
 
 h2 {
   font-size: var(--font-size-3xl);
+  letter-spacing: -0.3px;
 }
 
 h3 {
   font-size: var(--font-size-2xl);
+  letter-spacing: -0.2px;
 }
 
 h4 {
   font-size: var(--font-size-xl);
+  letter-spacing: -0.1px;
 }
 
 h5, h6 {
@@ -238,6 +250,7 @@ input[type="button"] {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-2);
+  height: var(--button-height);
   padding: var(--spacing-3) var(--spacing-6);
   font-family: var(--font-family-base);
   font-size: var(--font-size-sm);
@@ -355,12 +368,13 @@ button.danger:hover {
 .button-sm {
   padding: var(--spacing-2) var(--spacing-4);
   font-size: var(--font-size-xs);
+  height: 36px;
 }
 
 .button-lg {
   padding: var(--spacing-4) var(--spacing-8);
   font-size: var(--font-size-base);
-  min-height: 48px;
+  height: 52px;
 }
 
 /* ==================== FORMS ==================== */
@@ -411,6 +425,7 @@ input,
 textarea,
 select {
   width: 100%;
+  height: var(--input-height);
   padding: var(--spacing-3) var(--spacing-4);
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
@@ -689,35 +704,36 @@ tbody tr:last-child td {
   margin-left: auto;
   padding-right: var(--spacing-6);
   padding-left: var(--spacing-6);
+  max-width: var(--container-width);
 }
 
 @media (min-width: 576px) {
   .container {
-    max-width: 540px;
+    max-width: var(--container-width);
   }
 }
 
 @media (min-width: 768px) {
   .container {
-    max-width: 720px;
+    max-width: var(--container-width);
   }
 }
 
 @media (min-width: 992px) {
   .container {
-    max-width: 960px;
+    max-width: var(--container-width);
   }
 }
 
 @media (min-width: 1200px) {
   .container {
-    max-width: 1140px;
+    max-width: var(--container-width);
   }
 }
 
 @media (min-width: 1400px) {
   .container {
-    max-width: 1320px;
+    max-width: var(--container-width);
   }
 }
 
@@ -827,15 +843,15 @@ tbody tr:last-child td {
   h1 {
     font-size: var(--font-size-2xl);
   }
-  
+
   h2 {
     font-size: var(--font-size-xl);
   }
-  
+
   h3 {
     font-size: var(--font-size-lg);
   }
-  
+
   .container {
     padding-right: var(--spacing-4);
     padding-left: var(--spacing-4);
@@ -854,6 +870,11 @@ tbody tr:last-child td {
   input[type="reset"],
   input[type="button"] {
     min-height: 44px;
+  }
+
+  /* Mobile book card adjustment */
+  :root {
+    --book-card-width: 140px;
   }
 }
 

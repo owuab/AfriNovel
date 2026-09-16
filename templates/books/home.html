@@ -47,7 +47,7 @@
     gap: var(--spacing-8);
     align-items: center;
     padding: var(--spacing-10) var(--spacing-6);
-    max-width: 1200px;
+    max-width: var(--container-width);
     margin: 0 auto;
     position: relative;
     z-index: 1;
@@ -166,7 +166,7 @@
 
   .premium-section {
     padding: var(--spacing-10) var(--spacing-6);
-    max-width: 1200px;
+    max-width: var(--container-width);
     margin: 0 auto;
   }
 
@@ -316,7 +316,7 @@
           </div>
         </div>
         {% if featured_book.cover_image_url %}
-          <img class="hero-book-cover" src="{{ featured_book.cover_image_url }}" alt="Cover of {{ featured_book.title }}">
+          <img class="hero-book-cover" src="{{ featured_book.cover_image_url }}" alt="Cover of {{ featured_book.title }}" loading="lazy">
         {% else %}
           <div class="hero-book-cover hero-book-cover-bg" style="background: {{ featured_book.cover_color }};"></div>
         {% endif %}
@@ -368,28 +368,7 @@
     </div>
     <div class="book-carousel">
       {% for book in trending_books %}
-        <article class="book-card-premium">
-          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
-            {% if book.cover_image_url %}
-              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
-            {% else %}
-              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
-            {% endif %}
-            {% if book.novel_status == 'ongoing' %}
-              <span class="book-status status-ongoing">Ongoing</span>
-            {% elif book.novel_status == 'completed' %}
-              <span class="book-status status-completed">Completed</span>
-            {% endif %}
-          </a>
-          <div class="book-content">
-            <h3 class="book-title">{{ book.title }}</h3>
-            <div class="book-author">{{ book.author.name }}</div>
-            <div class="book-meta">
-              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
-              <span>{{ book.chapter_count }} chapters</span>
-            </div>
-          </div>
-        </article>
+        {% include "components/book_card.html" with book=book show_rating=True %}
       {% empty %}
         <div class="empty-state">No trending novels yet</div>
       {% endfor %}
@@ -404,24 +383,7 @@
     </div>
     <div class="book-carousel">
       {% for book in recent_books %}
-        <article class="book-card-premium">
-          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
-            {% if book.cover_image_url %}
-              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
-            {% else %}
-              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
-            {% endif %}
-            <span class="book-status status-ongoing">New</span>
-          </a>
-          <div class="book-content">
-            <h3 class="book-title">{{ book.title }}</h3>
-            <div class="book-author">{{ book.author.name }}</div>
-            <div class="book-meta">
-              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
-              <span>{{ book.chapter_count }} chapters</span>
-            </div>
-          </div>
-        </article>
+        {% include "components/book_card.html" with book=book show_rating=True show_badge=True badge_text="New" %}
       {% empty %}
         <div class="empty-state">No recent novels</div>
       {% endfor %}
@@ -436,23 +398,7 @@
     </div>
     <div class="book-carousel">
       {% for book in popular_books %}
-        <article class="book-card-premium">
-          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
-            {% if book.cover_image_url %}
-              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
-            {% else %}
-              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
-            {% endif %}
-          </a>
-          <div class="book-content">
-            <h3 class="book-title">{{ book.title }}</h3>
-            <div class="book-author">{{ book.author.name }}</div>
-            <div class="book-meta">
-              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
-              <span>{{ book.chapter_count }} chapters</span>
-            </div>
-          </div>
-        </article>
+        {% include "components/book_card.html" with book=book show_rating=True %}
       {% empty %}
         <div class="empty-state">No popular novels yet</div>
       {% endfor %}
@@ -467,24 +413,7 @@
     </div>
     <div class="book-carousel">
       {% for book in completed_books %}
-        <article class="book-card-premium">
-          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
-            {% if book.cover_image_url %}
-              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
-            {% else %}
-              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
-            {% endif %}
-            <span class="book-status status-completed">Completed</span>
-          </a>
-          <div class="book-content">
-            <h3 class="book-title">{{ book.title }}</h3>
-            <div class="book-author">{{ book.author.name }}</div>
-            <div class="book-meta">
-              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
-              <span>{{ book.chapter_count }} chapters</span>
-            </div>
-          </div>
-        </article>
+        {% include "components/book_card.html" with book=book show_rating=True %}
       {% empty %}
         <div class="empty-state">No completed novels yet</div>
       {% endfor %}
@@ -500,24 +429,7 @@
     </div>
     <div class="book-carousel">
       {% for book in recommended_books %}
-        <article class="book-card-premium">
-          <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
-            {% if book.cover_image_url %}
-              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
-            {% else %}
-              <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
-            {% endif %}
-            <span class="book-status status-ongoing">Recommended</span>
-          </a>
-          <div class="book-content">
-            <h3 class="book-title">{{ book.title }}</h3>
-            <div class="book-author">{{ book.author.name }}</div>
-            <div class="book-meta">
-              <span class="book-rating">★ {{ book.rating|floatformat:1 }}</span>
-              <span>{{ book.chapter_count }} chapters</span>
-            </div>
-          </div>
-        </article>
+        {% include "components/book_card.html" with book=book show_rating=True show_badge=True badge_text="Recommended" %}
       {% empty %}
         <div class="empty-state">No recommendations yet. Start reading to get personalized suggestions!</div>
       {% endfor %}
