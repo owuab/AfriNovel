@@ -7,7 +7,7 @@
 <style>
   .discover-container {
     padding: var(--spacing-8) var(--spacing-6);
-    max-width: 1400px;
+    max-width: var(--container-width);
     margin: 0 auto;
   }
 
@@ -100,8 +100,8 @@
 
   .books-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--spacing-6);
+    grid-template-columns: repeat(auto-fill, minmax(var(--book-card-width), 1fr));
+    gap: var(--spacing-4);
   }
 
   .empty-state {
@@ -127,8 +127,8 @@
     }
 
     .books-grid {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: var(--spacing-4);
+      grid-template-columns: repeat(auto-fill, minmax(var(--book-card-width), 1fr));
+      gap: var(--spacing-3);
     }
 
     .filters-header {
