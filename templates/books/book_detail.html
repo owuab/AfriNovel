@@ -376,10 +376,10 @@
         </div>
         
         <div class="novel-actions">
-          {% if can_read_in_app and catalog_book %}
-            <a href="{% url 'catalogue_reader' catalog_book.pk %}" class="button button-lg">Start Reading</a>
-          {% elif first_chapter %}
+          {% if first_chapter %}
             <a href="{% url 'chapter_detail' book.slug first_chapter.chapter_number %}" class="button button-lg">Start Reading</a>
+          {% elif can_read_in_app and catalog_book %}
+            <a href="{% url 'catalogue_reader' catalog_book.pk %}" class="button button-lg">Start Reading</a>
           {% elif has_uploaded_reader %}
             <a href="{% url 'uploaded_book_reader' book.slug %}" class="button button-lg">Start Reading</a>
           {% else %}

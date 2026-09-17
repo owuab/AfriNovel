@@ -310,11 +310,7 @@
             <div style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-bottom: var(--spacing-3);">{{ item.progress_percent }}% read</div>
           {% endif %}
           <div class="bookshelf-actions">
-            {% if item.book.chapters.count > 0 %}
-              <a href="{% url 'chapter_detail' item.book.slug item.book.chapters.first.chapter_number %}" class="continue-btn">Continue Reading</a>
-            {% else %}
-              <a href="{% url 'uploaded_book_reader' item.book.slug %}" class="continue-btn">Continue Reading</a>
-            {% endif %}
+            <a href="{{ item.book.get_reader_url }}" class="continue-btn">Continue Reading</a>
             <form method="post" action="{% url 'remove_from_bookshelf' item.id %}" style="display: inline;">
               {% csrf_token %}
               <button type="submit" class="remove-btn" onclick="return confirm('Remove from bookshelf?')">Remove</button>

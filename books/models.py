@@ -148,7 +148,13 @@ class Book(models.Model):
     
     def get_reader_url(self):
         """Return the appropriate reader URL for this book (wuxiaworld-style direct reading)"""
-        if self.catalog_book and self.catalog_book.can_read_in_app:
+        # Prioritize chapter detail system for books with chapters
+        if self.chapters.exists():
+            first_chapter = self.chapters.first()
+            if first_chapter:
+                return reverse('chapter_detail', args=[self.slug, first_chapter.chapter_number])
+        # Fall back to other reader systems
+        elif self.catalog_book and self.catalog_book.can_read_in_app:
             return reverse('catalogue_reader', args=[self.catalog_book.pk])
         elif self.uploads.filter(kind='manuscript').exists():
             return reverse('uploaded_book_reader', args=[self.slug])
