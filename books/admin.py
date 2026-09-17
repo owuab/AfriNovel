@@ -31,20 +31,31 @@ class BookClubAdminSite(admin.AdminSite):
         from django.db.models import Avg
 
         context = extra_context or {}
-        published_books = Book.objects.filter(status=Book.PUBLISHED)
-        active_readers = User.objects.filter(
-            Q(catalogue_progress__isnull=False) | Q(bookshelf__isnull=False)
-        ).distinct().count()
-        average_rating = published_books.filter(
-            catalog_book__isnull=True,
-            rating__gt=0,
-        ).aggregate(avg=Avg('rating'))['avg'] or 0
-        context['login_metrics'] = {
-            'published_books': published_books.count(),
-            'active_readers': active_readers,
-            'average_rating': round(float(average_rating), 1),
-            'catalogue_books': CatalogBook.objects.filter(disabled=False).count(),
-        }
+        
+        try:
+            published_books = Book.objects.filter(status=Book.PUBLISHED)
+            active_readers = User.objects.filter(
+                Q(catalogue_progress__isnull=False) | Q(bookshelf__isnull=False)
+            ).distinct().count()
+            average_rating = published_books.filter(
+                catalog_book__isnull=True,
+                rating__gt=0,
+            ).aggregate(avg=Avg('rating'))['avg'] or 0
+            context['login_metrics'] = {
+                'published_books': published_books.count(),
+                'active_readers': active_readers,
+                'average_rating': round(float(average_rating), 1),
+                'catalogue_books': CatalogBook.objects.filter(disabled=False).count(),
+            }
+        except Exception:
+            # If database queries fail, provide default metrics
+            context['login_metrics'] = {
+                'published_books': 0,
+                'active_readers': 0,
+                'average_rating': 0.0,
+                'catalogue_books': 0,
+            }
+        
         return super().login(request, extra_context=context)
     
     def get_urls(self):
@@ -74,8 +85,12 @@ class BookClubAdminSite(admin.AdminSite):
         if extra_context is None:
             extra_context = {}
         
-        # Add dashboard stats to context
-        extra_context['dashboard_stats'] = get_dashboard_stats()
+        try:
+            # Add dashboard stats to context
+            extra_context['dashboard_stats'] = get_dashboard_stats()
+        except Exception:
+            # If dashboard stats fail, provide empty stats
+            extra_context['dashboard_stats'] = {}
         
         return super().index(request, extra_context)
 
