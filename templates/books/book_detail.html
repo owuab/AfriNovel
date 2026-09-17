@@ -345,7 +345,7 @@
         {% if book.cover_image_url %}
           <img class="novel-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
         {% else %}
-          <div class="novel-cover" style="background: {{ book.cover_color }};"></div>
+          <div class="novel-cover" style="background: {{ book.cover_color }} ;"></div>
         {% endif %}
       </div>
       
@@ -378,6 +378,8 @@
         <div class="novel-actions">
           {% if can_read_in_app and catalog_book %}
             <a href="{% url 'catalogue_reader' catalog_book.pk %}" class="button button-lg">Start Reading</a>
+          {% elif first_chapter %}
+            <a href="{% url 'chapter_detail' book.slug first_chapter.chapter_number %}" class="button button-lg">Start Reading</a>
           {% elif has_uploaded_reader %}
             <a href="{% url 'uploaded_book_reader' book.slug %}" class="button button-lg">Start Reading</a>
           {% else %}
@@ -417,7 +419,7 @@
         {% for chapter in book.chapters.all|slice:":10" %}
           <li class="chapter-item">
             <span class="chapter-number">Chapter {{ chapter.chapter_number }}</span>
-            <a href="{% url 'uploaded_book_reader' book.slug %}" class="chapter-title">{{ chapter.title }}</a>
+            <a href="{% url 'chapter_detail' book.slug chapter.chapter_number %}" class="chapter-title">{{ chapter.title }}</a>
             <span class="chapter-date">{{ chapter.published_at|date:"M d, Y"|default:"N/A" }}</span>
           </li>
         {% endfor %}

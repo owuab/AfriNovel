@@ -1,7 +1,7 @@
 {% load static %}
 
 <article class="book-card-premium">
-  <a href="{{ book.get_absolute_url }}" class="book-cover-wrapper">
+  <a href="{{ book.get_reader_url }}" class="book-cover-wrapper">
     {% if book.cover_image_url %}
       <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy" decoding="async" width="130" height="195">
     {% else %}
@@ -17,7 +17,7 @@
   </a>
   <div class="book-content">
     <h3 class="book-title">
-      <a href="{{ book.get_absolute_url }}">{{ book.title }}</a>
+      <a href="{{ book.get_reader_url }}">{{ book.title }}</a>
     </h3>
     <div class="book-author">{{ book.author.name }}</div>
     <div class="book-meta">
@@ -28,7 +28,7 @@
     </div>
     {% if show_action %}
       <div class="book-action">
-        <a href="{{ book.get_absolute_url }}" class="action-button">{{ action_text|default:'Read' }}</a>
+        <a href="{{ book.get_reader_url }}" class="action-button">{{ action_text|default:'Read' }}</a>
       </div>
     {% endif %}
   </div>

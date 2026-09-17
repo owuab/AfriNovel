@@ -25,7 +25,7 @@ from .models import (
     Highlight, ReadingList, ReadingNote, ReadingProgress, Review, ReviewComment,
     SearchHistory, UserBookshelf, AuthenticationEvent,
     Notification, PostComment, PostLike, BookUpload,
-    PostRepost, SavedPost, SocialPost, UserBlock, UserFollow, UserMute, UserProfile,
+    PostRepost, SavedPost, SocialPost, UserBlock, UserFollow, UserMute, UserProfile, Chapter,
 )
 from .admin_models import BookApprovalStatus
 from .admin_utilities import AdminNotificationManager
@@ -279,6 +279,7 @@ def book_detail(request, slug):
             and book.approval_status.status == BookApprovalStatus.APPROVED
         ),
         'can_read_in_app': catalog_book and catalog_book.can_read_in_app if catalog_book else False,
+        'first_chapter': book.chapters.first(),
     }
     return render(request, 'books/book_detail.html', context)
 
@@ -326,6 +327,62 @@ def uploaded_book_reader(request, slug):
         'reader_error': reader_error,
         'chapter_number': 1,  # Default to chapter 1 for uploaded books
     })
+
+
+def chapter_detail(request, slug, chapter_number):
+    """Display individual chapter content - direct reading experience like wuxiaworld"""
+    book = get_object_or_404(
+        Book.objects.select_related('author').prefetch_related('chapters'),
+        slug=slug,
+        status=Book.PUBLISHED,
+    )
+    
+    chapter = get_object_or_404(
+        Chapter,
+        book=book,
+        chapter_number=chapter_number,
+    )
+    
+    # Get previous and next chapters
+    previous_chapter = Chapter.objects.filter(
+        book=book,
+        chapter_number__lt=chapter_number
+    ).order_by('-chapter_number').first()
+    
+    next_chapter = Chapter.objects.filter(
+        book=book,
+        chapter_number__gt=chapter_number
+    ).order_by('chapter_number').first()
+    
+    # Get all chapters for the chapter list
+    all_chapters = book.chapters.all().order_by('chapter_number')
+    
+    # Increment chapter view count
+    Chapter.objects.filter(pk=chapter.pk).update(view_count=F('view_count') + 1)
+    chapter.refresh_from_db(fields=['view_count'])
+    
+    # Handle reading progress for authenticated users
+    if request.user.is_authenticated:
+        ReadingProgress.objects.update_or_create(
+            user=request.user,
+            book=book,
+            defaults={
+                'chapter_number': chapter_number,
+                'progress_percentage': 0,
+            }
+        )
+    
+    context = {
+        'book': book,
+        'chapter': chapter,
+        'chapter_number': chapter_number,
+        'content': chapter.content,
+        'previous_chapter': previous_chapter,
+        'next_chapter': next_chapter,
+        'all_chapters': all_chapters,
+    }
+    
+    return render(request, 'books/chapter_detail.html', context)
 
 
 def reader_dashboard(request):

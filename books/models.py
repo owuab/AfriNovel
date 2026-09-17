@@ -145,6 +145,15 @@ class Book(models.Model):
 
     def get_absolute_url(self):
         return reverse('book_detail', args=[self.slug])
+    
+    def get_reader_url(self):
+        """Return the appropriate reader URL for this book (wuxiaworld-style direct reading)"""
+        if self.catalog_book and self.catalog_book.can_read_in_app:
+            return reverse('catalogue_reader', args=[self.catalog_book.pk])
+        elif self.uploads.filter(kind='manuscript').exists():
+            return reverse('uploaded_book_reader', args=[self.slug])
+        else:
+            return reverse('book_detail', args=[self.slug])
 
     @property
     def cover_image_url(self):
