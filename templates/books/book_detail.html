@@ -343,7 +343,7 @@
     <div class="novel-header-content">
       <div class="novel-cover-wrapper">
         {% if book.cover_image_url %}
-          <img class="novel-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">
+          <img class="novel-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
         {% else %}
           <div class="novel-cover" style="background: {{ book.cover_color }};"></div>
         {% endif %}
@@ -376,7 +376,13 @@
         </div>
         
         <div class="novel-actions">
-          <a href="{% url 'uploaded_book_reader' book.slug %}" class="button button-lg">Start Reading</a>
+          {% if can_read_in_app and catalog_book %}
+            <a href="{% url 'catalogue_reader' catalog_book.pk %}" class="button button-lg">Start Reading</a>
+          {% elif has_uploaded_reader %}
+            <a href="{% url 'uploaded_book_reader' book.slug %}" class="button button-lg">Start Reading</a>
+          {% else %}
+            <button class="button button-lg" disabled>Not Available</button>
+          {% endif %}
           {% if user.is_authenticated %}
             <form method="post" action="{% url 'add_to_bookshelf' book.slug %}" style="display: inline;">
               {% csrf_token %}
@@ -401,15 +407,23 @@
   <section class="content-section">
     <h2 class="section-title">Latest Chapters</h2>
     <ul class="chapter-list">
-      {% for chapter in book.chapters.all|slice:":10" %}
+      {% if can_read_in_app and catalog_book %}
         <li class="chapter-item">
-          <span class="chapter-number">Chapter {{ chapter.chapter_number }}</span>
-          <a href="{% url 'uploaded_book_reader' book.slug %}" class="chapter-title">{{ chapter.title }}</a>
-          <span class="chapter-date">{{ chapter.published_at|date:"M d, Y"|default:"N/A" }}</span>
+          <span class="chapter-number">Full Text</span>
+          <a href="{% url 'catalogue_reader' catalog_book.pk %}" class="chapter-title">Read Complete Novel</a>
+          <span class="chapter-date">Available Now</span>
         </li>
-      {% empty %}
+      {% elif book.chapters.exists %}
+        {% for chapter in book.chapters.all|slice:":10" %}
+          <li class="chapter-item">
+            <span class="chapter-number">Chapter {{ chapter.chapter_number }}</span>
+            <a href="{% url 'uploaded_book_reader' book.slug %}" class="chapter-title">{{ chapter.title }}</a>
+            <span class="chapter-date">{{ chapter.published_at|date:"M d, Y"|default:"N/A" }}</span>
+          </li>
+        {% endfor %}
+      {% else %}
         <li class="chapter-item">No chapters available yet</li>
-      {% endfor %}
+      {% endif %}
     </ul>
     {% if book.chapters.count > 10 %}
     <div style="text-align: center; margin-top: var(--spacing-4);">

@@ -264,18 +264,21 @@ def book_detail(request, slug):
         ).first()
         if catalog_book:
             Book.objects.filter(pk=book.pk).update(catalog_book=catalog_book)
-    if catalog_book and catalog_book.can_read_in_app:
-        return redirect('catalogue_reader', book_id=catalog_book.pk)
+    
+    # Increment view count
     Book.objects.filter(pk=book.pk).update(view_count=F('view_count') + 1)
     book.refresh_from_db(fields=['view_count'])
+    
     context = {
         'book': book,
+        'catalog_book': catalog_book,
         'reviews': book.reviews.select_related('user')[:10],
         'has_uploaded_reader': (
             book.uploads.filter(kind=BookUpload.MANUSCRIPT).exists()
             and hasattr(book, 'approval_status')
             and book.approval_status.status == BookApprovalStatus.APPROVED
         ),
+        'can_read_in_app': catalog_book and catalog_book.can_read_in_app if catalog_book else False,
     }
     return render(request, 'books/book_detail.html', context)
 
