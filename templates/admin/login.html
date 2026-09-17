@@ -60,25 +60,25 @@
 
     <div class="auth-visual">
       <div class="signal-card signal-card-primary">
-        <div class="signal-label">Published books</div>
-        <div class="signal-value">{{ login_metrics.published_books|default:0 }}</div>
-        <div class="signal-trend">Current published catalogue</div>
+        <div class="signal-label">Admin Access</div>
+        <div class="signal-value">Secure</div>
+        <div class="signal-trend">Protected administrative interface</div>
       </div>
 
       <div class="signal-card signal-card-secondary">
-        <div class="signal-label">Active readers</div>
-        <div class="signal-value">{{ login_metrics.active_readers|default:0 }}</div>
-        <div class="signal-trend">Readers with saved or reading activity</div>
+        <div class="signal-label">Platform Status</div>
+        <div class="signal-value">Online</div>
+        <div class="signal-trend">All systems operational</div>
       </div>
 
       <div class="signal-grid">
         <div class="mini-stat">
-          <span>Catalogue records</span>
-          <strong>{{ login_metrics.catalogue_books|default:0 }}</strong>
+          <span>Admin Panel</span>
+          <strong>Ready</strong>
         </div>
         <div class="mini-stat">
-          <span>Avg rating</span>
-          <strong>{{ login_metrics.average_rating|default:0|floatformat:1 }}</strong>
+          <span>Version</span>
+          <strong>1.0</strong>
         </div>
       </div>
     </div>
