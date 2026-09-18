@@ -443,24 +443,25 @@
 {% block content %}
 <div class="homepage-container">
   <!-- Hero Carousel -->
-  {% if featured_book %}
-  <section class="hero-carousel">
-    <div class="hero-slide active">
+  {% if popular_books %}
+  <section class="hero-carousel" tabindex="0" aria-label="Featured novels">
+    {% for book in popular_books|slice:":4" %}
+    <div class="hero-slide{% if forloop.first %} active{% endif %}">
       <div class="hero-content">
         <div class="hero-book-info">
           <span class="featured-badge">Featured Novel</span>
-          <h1>{{ featured_book.title }}</h1>
-          <div class="author">by {{ featured_book.author.name }}</div>
-          <div class="description">{{ featured_book.summary|truncatewords:30 }}</div>
+          <h1>{{ book.title }}</h1>
+          <div class="author">by {{ book.author.name }}</div>
+          <div class="description">{{ book.summary|truncatewords:30 }}</div>
           <div class="meta">
-            <span class="rating">★ {{ featured_book.rating }}</span>
-            <span>{{ featured_book.genres.all|join:", " }}</span>
-            <span>{{ featured_book.chapter_count }} chapters</span>
+            <span class="rating">★ {{ book.rating }}</span>
+            <span>{{ book.genres.all|join:", " }}</span>
+            <span>{{ book.chapter_count }} chapters</span>
           </div>
           <div class="hero-actions">
-            <a href="{{ featured_book.get_absolute_url }}" class="button button-lg">Start Reading</a>
+            <a href="{{ book.get_absolute_url }}" class="button button-lg">Start Reading</a>
             {% if user.is_authenticated %}
-              <form method="post" action="{% url 'add_to_bookshelf' featured_book.slug %}" style="display: inline;">
+              <form method="post" action="{% url 'add_to_bookshelf' book.slug %}" style="display: inline;">
                 {% csrf_token %}
                 <input type="hidden" name="status" value="want_to_read">
                 <button type="submit" class="button button-lg button-outline">Add to Bookshelf</button>
@@ -470,29 +471,24 @@
             {% endif %}
           </div>
         </div>
-        {% if featured_book.cover_image_url %}
-          <img class="hero-book-cover" src="{{ featured_book.cover_image_url }}" alt="Cover of {{ featured_book.title }}" loading="lazy">
+        {% if book.cover_image_url %}
+          <img class="hero-book-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
         {% else %}
-          <div class="hero-book-cover hero-book-cover-bg" style="background: {{ featured_book.cover_color }};"></div>
+          <div class="hero-book-cover hero-book-cover-bg" style="background: {{ book.cover_color }};"></div>
         {% endif %}
       </div>
     </div>
+    {% endfor %}
     
     <div class="hero-controls">
-      <button class="hero-control-btn" id="prev-slide" aria-label="Previous slide">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 19l-7-7 7-7"></path>
-        </svg>
-      </button>
-      <button class="hero-control-btn" id="next-slide" aria-label="Next slide">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M5 19l7-7-7-7"></path>
-        </svg>
-      </button>
+      <button class="hero-control-btn prev-slide" type="button" aria-label="Previous slide">&#8592;</button>
+      <button class="hero-control-btn next-slide" type="button" aria-label="Next slide">&#8594;</button>
     </div>
     
     <div class="hero-indicators">
-      <div class="hero-indicator active" data-slide="0"></div>
+      {% for book in popular_books|slice:":4" %}
+        <button class="hero-indicator{% if forloop.first %} active{% endif %}" type="button" aria-label="Show featured novel {{ forloop.counter }}"></button>
+      {% endfor %}
     </div>
   </section>
   {% endif %}
@@ -692,84 +688,5 @@
   setupBookCarousels();
 })();
 
-// Hero carousel functionality
-document.addEventListener('DOMContentLoaded', function() {
-  const slides = document.querySelectorAll('.hero-slide');
-  const indicators = document.querySelectorAll('.hero-indicator');
-  const prevBtn = document.getElementById('prev-slide');
-  const nextBtn = document.getElementById('next-slide');
-  let currentSlide = 0;
-  let autoPlayInterval;
-
-  function showSlide(index) {
-    slides.forEach((slide, i) => {
-      slide.classList.remove('active');
-      if (indicators[i]) {
-        indicators[i].classList.remove('active');
-      }
-    });
-    
-    if (slides[index]) {
-      slides[index].classList.add('active');
-    }
-    if (indicators[index]) {
-      indicators[index].classList.add('active');
-    }
-    
-    currentSlide = index;
-  }
-
-  function nextSlide() {
-    const next = (currentSlide + 1) % slides.length;
-    showSlide(next);
-  }
-
-  function prevSlide() {
-    const prev = (currentSlide - 1 + slides.length) % slides.length;
-    showSlide(prev);
-  }
-
-  function startAutoPlay() {
-    autoPlayInterval = setInterval(nextSlide, 5000);
-  }
-
-  function stopAutoPlay() {
-    clearInterval(autoPlayInterval);
-  }
-
-  if (prevBtn && nextBtn) {
-    prevBtn.addEventListener('click', () => {
-      prevSlide();
-      stopAutoPlay();
-      startAutoPlay();
-    });
-
-    nextBtn.addEventListener('click', () => {
-      nextSlide();
-      stopAutoPlay();
-      startAutoPlay();
-    });
-  }
-
-  indicators.forEach((indicator, index) => {
-    indicator.addEventListener('click', () => {
-      showSlide(index);
-      stopAutoPlay();
-      startAutoPlay();
-    });
-  });
-
-  // Auto-play carousel
-  if (slides.length > 1) {
-    startAutoPlay();
-    
-    // Pause on hover
-    const carousel = document.querySelector('.hero-carousel');
-    if (carousel) {
-      carousel.addEventListener('mouseenter', stopAutoPlay);
-      carousel.addEventListener('mouseleave', startAutoPlay);
-    }
-  }
-});
 </script>
 {% endblock %}
