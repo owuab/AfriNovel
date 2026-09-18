@@ -61,6 +61,37 @@
   </div>
 </section>
 
+<!-- Featured Reading Promotions -->
+{% if trending_books %}
+<section class="promo-section" aria-label="Featured reading promotions">
+  <div class="container">
+    <div class="promo-carousel" data-landing-promo>
+      <button class="landing-carousel-control prev" type="button" data-promo-prev aria-label="Previous promotion">&#8592;</button>
+      <div class="promo-track">
+        {% for book in trending_books|slice:":3" %}
+        <article class="promo-slide">
+          <a href="{{ book.get_absolute_url }}" class="promo-cover-link">
+            {% if book.cover_image_url %}
+              <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">
+            {% else %}
+              <div class="promo-cover-fallback" style="background: {{ book.cover_color }};"></div>
+            {% endif %}
+          </a>
+          <div class="promo-copy">
+            <span class="featured-badge">Featured Read</span>
+            <h2>{{ book.title }}</h2>
+            <p>{{ book.summary|truncatewords:24 }}</p>
+            <a href="{{ book.get_absolute_url }}" class="btn btn-primary">Read Now</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <button class="landing-carousel-control next" type="button" data-promo-next aria-label="Next promotion">&#8594;</button>
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <!-- Quick Access Cards -->
 <section class="quick-access">
   <div class="container">
@@ -100,7 +131,9 @@
       <a href="{% url 'rankings' %}?type=rating" class="view-all">View All →</a>
     </div>
     
-    <div class="book-grid">
+    <div class="landing-book-rail-shell">
+      <button class="landing-carousel-control prev" type="button" data-book-prev aria-label="Previous popular books">&#8592;</button>
+      <div class="book-grid landing-book-rail" data-book-rail>
       {% for book in popular_books %}
         {% include "components/book_card.html" with book=book show_genres=True show_rating=True show_action=True action_text="Read" %}
       {% empty %}
@@ -108,6 +141,8 @@
           <p>No popular books found.</p>
         </div>
       {% endfor %}
+      </div>
+      <button class="landing-carousel-control next" type="button" data-book-next aria-label="Next popular books">&#8594;</button>
     </div>
   </div>
 </section>
@@ -166,7 +201,9 @@
       <a href="{% url 'novels' %}" class="view-all">View All →</a>
     </div>
     
-    <div class="book-grid">
+    <div class="landing-book-rail-shell">
+      <button class="landing-carousel-control prev" type="button" data-book-prev aria-label="Previous recent books">&#8592;</button>
+      <div class="book-grid landing-book-rail" data-book-rail>
       {% for book in recent_books %}
         {% include "components/book_card.html" with book=book show_genres=True show_rating=True show_action=True action_text="Read" show_badge=True badge_text="New" badge_class="badge-new" %}
       {% empty %}
@@ -174,6 +211,8 @@
           <p>No recent books found.</p>
         </div>
       {% endfor %}
+      </div>
+      <button class="landing-carousel-control next" type="button" data-book-next aria-label="Next recent books">&#8594;</button>
     </div>
   </div>
 </section>
@@ -186,7 +225,9 @@
       <a href="{% url 'rankings' %}?type=trending" class="view-all">View All →</a>
     </div>
     
-    <div class="book-grid">
+    <div class="landing-book-rail-shell">
+      <button class="landing-carousel-control prev" type="button" data-book-prev aria-label="Previous trending books">&#8592;</button>
+      <div class="book-grid landing-book-rail" data-book-rail>
       {% for book in trending_books %}
         {% include "components/book_card.html" with book=book show_genres=True show_rating=True show_action=True action_text="Read" show_badge=True badge_text="Trending" badge_class="badge-trending" %}
       {% empty %}
@@ -194,6 +235,8 @@
           <p>No trending books found.</p>
         </div>
       {% endfor %}
+      </div>
+      <button class="landing-carousel-control next" type="button" data-book-next aria-label="Next trending books">&#8594;</button>
     </div>
   </div>
 </section>
@@ -659,6 +702,103 @@
     padding: var(--spacing-8);
     color: var(--color-text-secondary);
   }
+
+  .promo-section {
+    margin-bottom: var(--spacing-10);
+  }
+
+  .promo-carousel,
+  .landing-book-rail-shell {
+    position: relative;
+  }
+
+  .promo-carousel {
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-tertiary));
+  }
+
+  .promo-track {
+    display: flex;
+    transition: transform 450ms ease;
+  }
+
+  .promo-slide {
+    min-width: 100%;
+    display: grid;
+    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+    gap: var(--spacing-8);
+    align-items: center;
+    padding: var(--spacing-8);
+  }
+
+  .promo-cover-link {
+    display: block;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .promo-cover-link img,
+  .promo-cover-fallback {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  .promo-copy h2 {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-3xl);
+    margin: var(--spacing-3) 0;
+  }
+
+  .promo-copy p {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    max-width: 42rem;
+    margin-bottom: var(--spacing-5);
+  }
+
+  .landing-carousel-control {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    width: 42px;
+    height: 42px;
+    transform: translateY(-50%);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: rgba(15, 17, 23, 0.88);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  .landing-carousel-control:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
+  }
+
+  .landing-carousel-control.prev { left: 0.75rem; }
+  .landing-carousel-control.next { right: 0.75rem; }
+
+  .landing-book-rail {
+    display: flex;
+    overflow-x: auto;
+    grid-template-columns: none;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    padding: 0.25rem 0.5rem 0.8rem;
+  }
+
+  .landing-book-rail > .book-card-premium {
+    flex: 0 0 min(180px, 22vw);
+  }
   
   /* Responsive */
   @media (max-width: 1200px) {
@@ -708,4 +848,59 @@
     }
   }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const promo = document.querySelector('[data-landing-promo]');
+  if (promo) {
+    const track = promo.querySelector('.promo-track');
+    const slides = promo.querySelectorAll('.promo-slide');
+    let index = 0;
+    let timer;
+
+    const movePromo = function(step) {
+      index = (index + step + slides.length) % slides.length;
+      track.style.transform = 'translateX(-' + (index * 100) + '%)';
+    };
+
+    const startPromo = function() {
+      if (slides.length > 1) timer = window.setInterval(function() { movePromo(1); }, 5000);
+    };
+    const stopPromo = function() {
+      window.clearInterval(timer);
+    };
+
+    promo.querySelector('[data-promo-prev]').addEventListener('click', function() {
+      movePromo(-1);
+      stopPromo();
+      startPromo();
+    });
+    promo.querySelector('[data-promo-next]').addEventListener('click', function() {
+      movePromo(1);
+      stopPromo();
+      startPromo();
+    });
+    promo.addEventListener('mouseenter', stopPromo);
+    promo.addEventListener('mouseleave', startPromo);
+    startPromo();
+  }
+
+  document.querySelectorAll('[data-book-rail]').forEach(function(rail) {
+    const shell = rail.closest('.landing-book-rail-shell');
+    const card = rail.querySelector('.book-card-premium');
+    if (!shell || !card) return;
+    const step = function() {
+      return card.getBoundingClientRect().width + 16;
+    };
+    shell.querySelector('[data-book-prev]').addEventListener('click', function() {
+      rail.scrollBy({ left: -step(), behavior: 'smooth' });
+    });
+    shell.querySelector('[data-book-next]').addEventListener('click', function() {
+      rail.scrollBy({ left: step(), behavior: 'smooth' });
+    });
+  });
+});
+</script>
 {% endblock %}

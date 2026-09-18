@@ -170,6 +170,161 @@
     margin: 0 auto;
   }
 
+  .promo-carousel-shell,
+  .book-carousel-shell {
+    position: relative;
+    width: 100%;
+  }
+
+  .promo-carousel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    margin-bottom: var(--spacing-8);
+    background: linear-gradient(135deg, rgba(17, 20, 28, 0.96), rgba(35, 41, 54, 0.9));
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 40px rgba(15, 17, 23, 0.18);
+  }
+
+  .promo-track {
+    display: flex;
+    transition: transform 0.45s ease;
+    will-change: transform;
+  }
+
+  .promo-slide {
+    width: 100%;
+    min-width: 100%;
+    display: grid;
+    grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
+    gap: clamp(1rem, 2vw, 2rem);
+    align-items: center;
+    padding: clamp(1rem, 2vw, 2rem);
+  }
+
+  .promo-art {
+    width: 100%;
+    max-width: 240px;
+    margin: 0 auto;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 18px 38px rgba(0,0,0,0.3);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .promo-art img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  .promo-copy {
+    color: var(--color-text-primary);
+    padding-right: 0.5rem;
+  }
+
+  .promo-kicker {
+    display: inline-block;
+    background: rgba(233,69,96,0.16);
+    border: 1px solid rgba(233,69,96,0.45);
+    color: #ffdfe5;
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+  }
+
+  .promo-copy h3 {
+    margin: 0 0 0.6rem;
+    font-size: clamp(1.5rem, 2vw, 2.4rem);
+    line-height: 1.1;
+  }
+
+  .promo-copy p {
+    margin: 0 0 1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    max-width: 40rem;
+  }
+
+  .promo-actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .promo-control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(17,20,28,0.9);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .promo-control:hover,
+  .carousel-arrow:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
+  }
+
+  .promo-control.prev { left: 0.75rem; }
+  .promo-control.next { right: 0.75rem; }
+
+  .carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(17,20,28,0.9);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .carousel-arrow.prev { left: 0.5rem; }
+  .carousel-arrow.next { right: 0.5rem; }
+
+  .book-carousel {
+    display: flex;
+    gap: var(--spacing-4);
+    overflow-x: auto;
+    padding: 0.25rem 0.45rem 0.75rem;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+  }
+
+  .book-carousel::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .book-carousel::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 999px;
+  }
+
   .section-header {
     display: flex;
     align-items: center;
@@ -287,6 +442,50 @@
 
 {% block content %}
 <div class="homepage-container">
+  <!-- Promo / Ad Carousel -->
+  {% if trending_books or popular_books %}
+  <section class="premium-section">
+    <div class="promo-carousel-shell">
+      <div class="promo-carousel" data-carousel="promo" data-autoplay="true">
+        <button class="promo-control prev" type="button" aria-label="Previous promotion">←</button>
+        <div class="promo-track">
+          {% for promo in trending_books|slice:':3' %}
+          <article class="promo-slide">
+            <div class="promo-art">
+              <img src="{{ promo.cover_image_url|default:'' }}" alt="Cover of {{ promo.title }}" loading="lazy">
+            </div>
+            <div class="promo-copy">
+              <span class="promo-kicker">Featured read</span>
+              <h3>{{ promo.title }}</h3>
+              <p>{{ promo.summary|default:'Discover a fresh story with rich character arcs and captivating chapters.'|truncatewords:28 }}</p>
+              <div class="promo-actions">
+                <a href="{{ promo.get_absolute_url }}" class="button button-lg">Read now</a>
+                <a href="{% url 'novels' %}" class="button button-lg button-outline">Browse catalog</a>
+              </div>
+            </div>
+          </article>
+          {% empty %}
+          <article class="promo-slide">
+            <div class="promo-art">
+              <img src="{% static 'images/afrinovel-logo.svg' %}" alt="AfriNovel promotion" loading="lazy">
+            </div>
+            <div class="promo-copy">
+              <span class="promo-kicker">New picks</span>
+              <h3>Explore the next great read</h3>
+              <p>Find sharp character work, compelling fantasy arcs, and immersive stories designed for your next binge session.</p>
+              <div class="promo-actions">
+                <a href="{% url 'novels' %}" class="button button-lg">Browse novels</a>
+              </div>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+        <button class="promo-control next" type="button" aria-label="Next promotion">→</button>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- Hero Carousel -->
   {% if featured_book %}
   <section class="hero-carousel">
@@ -366,12 +565,16 @@
       <h2>Trending Novels</h2>
       <a href="{% url 'rankings' %}">View all →</a>
     </div>
-    <div class="book-carousel">
-      {% for book in trending_books %}
-        {% include "components/book_card.html" with book=book show_rating=True %}
-      {% empty %}
-        <div class="empty-state">No trending novels yet</div>
-      {% endfor %}
+    <div class="book-carousel-shell">
+      <button class="carousel-arrow prev" type="button" data-carousel-nav="prev" data-target="trending-books" aria-label="Previous books">←</button>
+      <div class="book-carousel" data-carousel="book" data-target="trending-books">
+        {% for book in trending_books %}
+          {% include "components/book_card.html" with book=book show_rating=True %}
+        {% empty %}
+          <div class="empty-state">No trending novels yet</div>
+        {% endfor %}
+      </div>
+      <button class="carousel-arrow next" type="button" data-carousel-nav="next" data-target="trending-books" aria-label="Next books">→</button>
     </div>
   </section>
 
@@ -381,12 +584,16 @@
       <h2>Latest Updates</h2>
       <a href="{% url 'novels' %}">View all →</a>
     </div>
-    <div class="book-carousel">
-      {% for book in recent_books %}
-        {% include "components/book_card.html" with book=book show_rating=True show_badge=True badge_text="New" %}
-      {% empty %}
-        <div class="empty-state">No recent novels</div>
-      {% endfor %}
+    <div class="book-carousel-shell">
+      <button class="carousel-arrow prev" type="button" data-carousel-nav="prev" data-target="latest-books" aria-label="Previous books">←</button>
+      <div class="book-carousel" data-carousel="book" data-target="latest-books">
+        {% for book in recent_books %}
+          {% include "components/book_card.html" with book=book show_rating=True show_badge=True badge_text="New" %}
+        {% empty %}
+          <div class="empty-state">No recent novels</div>
+        {% endfor %}
+      </div>
+      <button class="carousel-arrow next" type="button" data-carousel-nav="next" data-target="latest-books" aria-label="Next books">→</button>
     </div>
   </section>
 
@@ -396,12 +603,16 @@
       <h2>Popular Novels</h2>
       <a href="{% url 'rankings' %}">View all →</a>
     </div>
-    <div class="book-carousel">
-      {% for book in popular_books %}
-        {% include "components/book_card.html" with book=book show_rating=True %}
-      {% empty %}
-        <div class="empty-state">No popular novels yet</div>
-      {% endfor %}
+    <div class="book-carousel-shell">
+      <button class="carousel-arrow prev" type="button" data-carousel-nav="prev" data-target="popular-books" aria-label="Previous books">←</button>
+      <div class="book-carousel" data-carousel="book" data-target="popular-books">
+        {% for book in popular_books %}
+          {% include "components/book_card.html" with book=book show_rating=True %}
+        {% empty %}
+          <div class="empty-state">No popular novels yet</div>
+        {% endfor %}
+      </div>
+      <button class="carousel-arrow next" type="button" data-carousel-nav="next" data-target="popular-books" aria-label="Next books">→</button>
     </div>
   </section>
 
@@ -411,12 +622,16 @@
       <h2>Completed Novels</h2>
       <a href="{% url 'completed' %}">View all →</a>
     </div>
-    <div class="book-carousel">
-      {% for book in completed_books %}
-        {% include "components/book_card.html" with book=book show_rating=True %}
-      {% empty %}
-        <div class="empty-state">No completed novels yet</div>
-      {% endfor %}
+    <div class="book-carousel-shell">
+      <button class="carousel-arrow prev" type="button" data-carousel-nav="prev" data-target="completed-books" aria-label="Previous books">←</button>
+      <div class="book-carousel" data-carousel="book" data-target="completed-books">
+        {% for book in completed_books %}
+          {% include "components/book_card.html" with book=book show_rating=True %}
+        {% empty %}
+          <div class="empty-state">No completed novels yet</div>
+        {% endfor %}
+      </div>
+      <button class="carousel-arrow next" type="button" data-carousel-nav="next" data-target="completed-books" aria-label="Next books">→</button>
     </div>
   </section>
 
@@ -427,18 +642,100 @@
       <h2>Recommended For You</h2>
       <a href="{% url 'recommendations' %}">View all →</a>
     </div>
-    <div class="book-carousel">
-      {% for book in recommended_books %}
-        {% include "components/book_card.html" with book=book show_rating=True show_badge=True badge_text="Recommended" %}
-      {% empty %}
-        <div class="empty-state">No recommendations yet. Start reading to get personalized suggestions!</div>
-      {% endfor %}
+    <div class="book-carousel-shell">
+      <button class="carousel-arrow prev" type="button" data-carousel-nav="prev" data-target="recommended-books" aria-label="Previous books">←</button>
+      <div class="book-carousel" data-carousel="book" data-target="recommended-books">
+        {% for book in recommended_books %}
+          {% include "components/book_card.html" with book=book show_rating=True show_badge=True badge_text="Recommended" %}
+        {% empty %}
+          <div class="empty-state">No recommendations yet. Start reading to get personalized suggestions!</div>
+        {% endfor %}
+      </div>
+      <button class="carousel-arrow next" type="button" data-carousel-nav="next" data-target="recommended-books" aria-label="Next books">→</button>
     </div>
   </section>
   {% endif %}
 </div>
 
 <script>
+(function() {
+  function setupPromoCarousel() {
+    const promoCarousels = document.querySelectorAll('[data-carousel="promo"]');
+    promoCarousels.forEach((carousel) => {
+      const track = carousel.querySelector('.promo-track');
+      if (!track) return;
+      const slides = Array.from(track.children);
+      if (slides.length < 2) return;
+
+      let index = 0;
+      let timer = null;
+
+      function goTo(nextIndex) {
+        index = (nextIndex + slides.length) % slides.length;
+        track.style.transform = 'translateX(-' + (index * 100) + '%)';
+      }
+
+      function next() { goTo(index + 1); }
+      function prev() { goTo(index - 1); }
+
+      const nextButton = carousel.querySelector('.promo-control.next');
+      const prevButton = carousel.querySelector('.promo-control.prev');
+      if (nextButton) nextButton.addEventListener('click', () => { next(); restart(); });
+      if (prevButton) prevButton.addEventListener('click', () => { prev(); restart(); });
+
+      function start() {
+        stop();
+        timer = setInterval(next, 5000);
+      }
+
+      function stop() {
+        if (timer) clearInterval(timer);
+      }
+
+      function restart() {
+        stop();
+        start();
+      }
+
+      carousel.addEventListener('mouseenter', stop);
+      carousel.addEventListener('mouseleave', start);
+      start();
+    });
+  }
+
+  function setupBookCarousels() {
+    const carousels = document.querySelectorAll('[data-carousel="book"]');
+    carousels.forEach((carousel) => {
+      const firstCard = carousel.querySelector('.book-card-premium');
+      if (!firstCard) return;
+
+      const getStep = () => {
+        const style = window.getComputedStyle(carousel);
+        const gap = parseFloat(style.columnGap || style.gap || '16');
+        return Math.max(firstCard.getBoundingClientRect().width + gap, 220);
+      };
+
+      const prevButtons = document.querySelectorAll('[data-carousel-nav="prev"][data-target="' + (carousel.dataset.target || '') + '"]');
+      const nextButtons = document.querySelectorAll('[data-carousel-nav="next"][data-target="' + (carousel.dataset.target || '') + '"]');
+
+      prevButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          carousel.scrollBy({ left: -getStep(), behavior: 'smooth' });
+        });
+      });
+
+      nextButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          carousel.scrollBy({ left: getStep(), behavior: 'smooth' });
+        });
+      });
+    });
+  }
+
+  setupPromoCarousel();
+  setupBookCarousels();
+})();
+
 // Hero carousel functionality
 document.addEventListener('DOMContentLoaded', function() {
   const slides = document.querySelectorAll('.hero-slide');

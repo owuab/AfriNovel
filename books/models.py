@@ -163,7 +163,7 @@ class Book(models.Model):
 
     @property
     def cover_image_url(self):
-        if self.cover_url:
+        if self.cover_url and 'gutenberg.org' not in self.cover_url.casefold():
             return self.cover_url
         cover_upload = self.uploads.filter(kind=BookUpload.COVER).first()
         if cover_upload and cover_upload.file:
@@ -452,10 +452,8 @@ class CatalogBook(models.Model):
 
     @property
     def cover_image_url(self):
-        if self.cover_url:
+        if self.cover_url and 'gutenberg.org' not in self.cover_url.casefold():
             return self.cover_url
-        if self.source == 'gutenberg' and self.external_id.isdigit():
-            return f'https://www.gutenberg.org/cache/epub/{self.external_id}/pg{self.external_id}.cover.medium.jpg'
         if self.source == 'internet_archive':
             return f'https://archive.org/services/img/{self.external_id}'
         return ''
