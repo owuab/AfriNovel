@@ -129,6 +129,26 @@
     text-overflow: ellipsis;
   }
 
+  .reader-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--reader-ink);
+    font: 700 13px 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .reader-brand img {
+    width: 34px;
+    height: 34px;
+    padding: 3px;
+    border-radius: 6px;
+    object-fit: contain;
+    background: #ffffff;
+    border: 1px solid #d4af37;
+  }
+
   .chapter-nav {
     display: flex;
     gap: 8px;
@@ -382,6 +402,11 @@
     </svg>
     <span>Back to book</span>
   </button>
+
+  <a class="reader-brand" href="{% url 'home' %}" aria-label="AfriNovel home">
+    <img src="{% static 'images/afrinovel-logo.svg' %}" alt="">
+    <span>AfriNovel</span>
+  </a>
   
   <div class="book-title">{{ book.title }}</div>
   
@@ -466,7 +491,7 @@
   {% if sections %}
     {% for section in sections %}
       {% if section.title %}
-        <h2>{{ section.title }}</h2>
+        <h2 data-reader-section>{{ section.title }}</h2>
       {% endif %}
       {% for paragraph in section.paragraphs %}
         {% if paragraph.html %}
@@ -519,6 +544,40 @@ document.addEventListener('DOMContentLoaded', function() {
       window.history.back();
     {% endif %}
   });
+
+  // Full-text readers use rendered sections as the previous/next reading stops.
+  const sectionHeadings = Array.from(document.querySelectorAll('[data-reader-section]'));
+  const sectionButtons = [
+    document.getElementById('prevChapter'),
+    document.getElementById('prevChapterBottom'),
+    document.getElementById('nextChapter'),
+    document.getElementById('nextChapterBottom')
+  ].filter(Boolean);
+  let currentSection = -1;
+
+  function updateSectionButtons() {
+    sectionButtons.forEach((button) => {
+      const isPrevious = button.id.toLowerCase().includes('prev');
+      button.disabled = sectionHeadings.length === 0 || (isPrevious ? currentSection <= 0 : currentSection >= sectionHeadings.length - 1);
+    });
+  }
+
+  function moveSection(step) {
+    if (!sectionHeadings.length) {
+      showToast('No additional sections are available');
+      return;
+    }
+    const nextIndex = Math.max(0, Math.min(sectionHeadings.length - 1, currentSection + step));
+    currentSection = nextIndex;
+    sectionHeadings[currentSection].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    updateSectionButtons();
+  }
+
+  document.getElementById('prevChapter')?.addEventListener('click', () => moveSection(-1));
+  document.getElementById('prevChapterBottom')?.addEventListener('click', () => moveSection(-1));
+  document.getElementById('nextChapter')?.addEventListener('click', () => moveSection(1));
+  document.getElementById('nextChapterBottom')?.addEventListener('click', () => moveSection(1));
+  updateSectionButtons();
   
   // Bookmark functionality
   document.getElementById('bookmarkBtn').addEventListener('click', function() {
