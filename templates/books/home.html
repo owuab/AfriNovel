@@ -442,50 +442,6 @@
 
 {% block content %}
 <div class="homepage-container">
-  <!-- Promo / Ad Carousel -->
-  {% if trending_books or popular_books %}
-  <section class="premium-section">
-    <div class="promo-carousel-shell">
-      <div class="promo-carousel" data-carousel="promo" data-autoplay="true">
-        <button class="promo-control prev" type="button" aria-label="Previous promotion">←</button>
-        <div class="promo-track">
-          {% for promo in trending_books|slice:':3' %}
-          <article class="promo-slide">
-            <div class="promo-art">
-              <img src="{{ promo.cover_image_url|default:'' }}" alt="Cover of {{ promo.title }}" loading="lazy">
-            </div>
-            <div class="promo-copy">
-              <span class="promo-kicker">Featured read</span>
-              <h3>{{ promo.title }}</h3>
-              <p>{{ promo.summary|default:'Discover a fresh story with rich character arcs and captivating chapters.'|truncatewords:28 }}</p>
-              <div class="promo-actions">
-                <a href="{{ promo.get_absolute_url }}" class="button button-lg">Read now</a>
-                <a href="{% url 'novels' %}" class="button button-lg button-outline">Browse catalog</a>
-              </div>
-            </div>
-          </article>
-          {% empty %}
-          <article class="promo-slide">
-            <div class="promo-art">
-              <img src="{% static 'images/afrinovel-logo.svg' %}" alt="AfriNovel promotion" loading="lazy">
-            </div>
-            <div class="promo-copy">
-              <span class="promo-kicker">New picks</span>
-              <h3>Explore the next great read</h3>
-              <p>Find sharp character work, compelling fantasy arcs, and immersive stories designed for your next binge session.</p>
-              <div class="promo-actions">
-                <a href="{% url 'novels' %}" class="button button-lg">Browse novels</a>
-              </div>
-            </div>
-          </article>
-          {% endfor %}
-        </div>
-        <button class="promo-control next" type="button" aria-label="Next promotion">→</button>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
   <!-- Hero Carousel -->
   {% if featured_book %}
   <section class="hero-carousel">
