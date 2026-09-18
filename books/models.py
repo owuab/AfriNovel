@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from pathlib import Path
 from uuid import uuid4
+from urllib.parse import quote
 from django.core.validators import FileExtensionValidator
 from datetime import timedelta
 
@@ -456,6 +457,8 @@ class CatalogBook(models.Model):
             return self.cover_url
         if self.source == 'internet_archive':
             return f'https://archive.org/services/img/{self.external_id}'
+        if self.source == 'gutenberg' and self.title:
+            return f'https://covers.openlibrary.org/b/title/{quote(self.title, safe="")}-L.jpg'
         return ''
 
     @property
