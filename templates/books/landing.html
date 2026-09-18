@@ -377,10 +377,13 @@
     grid-template-columns: 1fr 1.5fr;
     gap: var(--spacing-8);
     align-items: center;
+    min-height: 450px;
   }
   
   .featured-book-link {
     text-decoration: none;
+    height: 450px;
+    align-self: center;
   }
   
   .featured-cover {
@@ -756,6 +759,12 @@
     .featured-book {
       grid-template-columns: 1fr;
       text-align: center;
+      min-height: 0;
+    }
+
+    .featured-book-link {
+      height: min(420px, 70vw);
+      justify-self: center;
     }
     
     .featured-info {
