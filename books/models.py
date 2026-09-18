@@ -168,7 +168,11 @@ class Book(models.Model):
             return self.cover_url
         cover_upload = self.uploads.filter(kind=BookUpload.COVER).first()
         if cover_upload and cover_upload.file:
-            return cover_upload.file.url
+            try:
+                if cover_upload.file.storage.exists(cover_upload.file.name):
+                    return cover_upload.file.url
+            except (OSError, ValueError):
+                pass
         if self.catalog_book:
             return self.catalog_book.cover_image_url
         return ''
