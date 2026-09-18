@@ -96,6 +96,30 @@
     background: #3d3d3d;
   }
 
+  .reader-back-button {
+    width: auto;
+    min-width: 142px;
+    padding: 0 14px;
+    gap: 8px;
+    border-color: var(--reader-accent);
+    background: var(--reader-accent);
+    color: #ffffff;
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .reader-back-button:hover {
+    border-color: #ff855d;
+    background: #e55a2b;
+    color: #ffffff;
+  }
+
+  .reader-back-button span {
+    line-height: 1;
+  }
+
   .book-title {
     flex: 1;
     font: 600 14px 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -337,16 +361,26 @@
       width: 32px;
       height: 32px;
     }
+
+    .reader-back-button {
+      min-width: 40px;
+      padding: 0;
+    }
+
+    .reader-back-button span {
+      display: none;
+    }
   }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="reader-toolbar" id="readerToolbar">
-  <button class="toolbar-icon" id="backBtn" aria-label="Back to book details">
+  <button class="toolbar-icon reader-back-button" id="backBtn" type="button" aria-label="Back to book details">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M15 19l-7-7 7-7"></path>
     </svg>
+    <span>Back to book</span>
   </button>
   
   <div class="book-title">{{ book.title }}</div>
