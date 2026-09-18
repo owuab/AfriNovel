@@ -3,9 +3,16 @@
 <article class="book-card-premium">
   <a href="{{ book.get_reader_url }}" class="book-cover-wrapper">
     {% if book.cover_image_url %}
-      <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy" decoding="async" width="130" height="195">
+      <img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy" decoding="async" width="130" height="195" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+      <span class="book-cover-fallback" hidden aria-label="Cover unavailable">
+        <strong>{{ book.title }}</strong>
+        <small>{{ book.author.name }}</small>
+      </span>
     {% else %}
-      <div style="width: 100%; height: 100%; background: {{ book.cover_color }};"></div>
+      <span class="book-cover-fallback" style="background: {{ book.cover_color }};" aria-label="Cover unavailable">
+        <strong>{{ book.title }}</strong>
+        <small>{{ book.author.name }}</small>
+      </span>
     {% endif %}
     {% if show_badge %}
       <span class="book-status status-ongoing">{{ badge_text }}</span>

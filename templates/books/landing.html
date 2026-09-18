@@ -15,9 +15,10 @@
             <div class="featured-book">
               <a href="{{ book.get_absolute_url }}" class="featured-book-link">
                 {% if book.cover_image_url %}
-                  <img class="featured-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">
+                  <img class="featured-cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+                  <div class="featured-cover featured-cover-fallback" hidden style="background: {{ book.cover_color }};">{{ book.title }}</div>
                 {% else %}
-                  <div class="featured-cover" style="background: {{ book.cover_color }};"></div>
+                  <div class="featured-cover featured-cover-fallback" style="background: {{ book.cover_color }};">{{ book.title }}</div>
                 {% endif %}
               </a>
               <div class="featured-info">
@@ -389,6 +390,16 @@
     border-radius: var(--border-radius-md);
     object-fit: cover;
     box-shadow: var(--shadow-xl);
+  }
+
+  .featured-cover-fallback {
+    display: flex;
+    align-items: flex-end;
+    padding: var(--spacing-6);
+    box-sizing: border-box;
+    color: #fff;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
   }
   
   .featured-info {
