@@ -6,7 +6,7 @@
     <title>{% block title %}{{ site_title|default:'AfriNovel Admin' }}{% endblock %}</title>
     {% block extrastyle %}{% endblock %}
     {% block extrahead %}{% endblock %}
-    <link rel="stylesheet" href="{% static 'admin/admin.css' %}?v=26" />
+    <link rel="stylesheet" href="{% static 'admin/admin.css' %}?v=27" />
   </head>
   <body class="admin-body {% if is_popup %}popup{% endif %} {% block bodyclass %}{% endblock %}" data-theme="light">
     {% block body %}
@@ -14,7 +14,7 @@
     <div class="admin-shell">
       <aside class="sidebar">
         <a class="brand-wrap" href="{% url 'admin_panel:dashboard' %}">
-          <img class="brand-mark" src="{% static 'images/afrinovel-logo-icon.svg' %}" alt="AfriNovel Logo">
+          <img class="brand-mark" src="{% static 'images/afrinovel-afn-logo.svg' %}?v=1" alt="AfriNovel Logo">
           <span>
             <span class="brand-name">AfriNovel</span>
             <span class="brand-subtitle">Admin Console</span>

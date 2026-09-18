@@ -124,6 +124,8 @@ body[data-theme="dark"].admin-body {
   background: var(--primary);
   color: white;
   box-shadow: var(--shadow-md);
+  object-fit: contain;
+  padding: 3px;
 }
 
 .brand-mark img {

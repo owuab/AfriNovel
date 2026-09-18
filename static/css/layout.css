@@ -65,6 +65,11 @@
 .site-header .nav-brand-logo {
   width: 40px;
   height: 40px;
+  object-fit: contain;
+  background: #0b0b0b;
+  border: 1px solid #d4af37;
+  border-radius: 6px;
+  padding: 3px;
   flex: 0 0 40px;
   border-radius: 8px;
   object-fit: contain;
