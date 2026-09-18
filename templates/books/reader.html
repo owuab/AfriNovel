@@ -435,7 +435,11 @@
         <h2>{{ section.title }}</h2>
       {% endif %}
       {% for paragraph in section.paragraphs %}
-        <p>{{ paragraph|safe }}</p>
+        {% if paragraph.html %}
+          <p>{{ paragraph.html|safe }}</p>
+        {% else %}
+          <p>{{ paragraph|safe }}</p>
+        {% endif %}
       {% endfor %}
     {% endfor %}
   {% else %}
