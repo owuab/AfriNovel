@@ -486,6 +486,9 @@ class HomePageTests(TestCase):
         self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_registration_persists_email_and_names(self):
+        signup_page = self.client.get(reverse('signup'))
+        self.assertContains(signup_page, 'name="first_name"')
+        self.assertContains(signup_page, 'name="last_name"')
         response = self.client.post(reverse('signup'), {
             'first_name': 'Ada', 'last_name': 'Lovelace', 'username': 'ada',
             'email': 'ada@example.com', 'password1': 'Complex-pass-123', 'password2': 'Complex-pass-123',
