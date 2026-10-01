@@ -9,13 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* Wuxiaworld-inspired dark theme colors */
-    --reader-bg: #1a1a1a;
-    --reader-paper: #2d2d2d;
-    --reader-ink: #e0e0e0;
-    --reader-muted: #a0a0a0;
-    --reader-line: #404040;
-    --reader-accent: #ff6b35;
+    --reader-bg: var(--brand-paper);
+    --reader-paper: var(--brand-card);
+    --reader-ink: var(--brand-ink);
+    --reader-muted: var(--brand-ink-soft);
+    --reader-line: var(--brand-line);
+    --reader-accent: var(--brand-green);
     --reading-width: 50rem;
     --reading-size: 1.125rem;
     --reading-leading: 1.8;
@@ -31,27 +30,27 @@
   }
 
   .theme-sepia {
-    --reader-bg: #f4ecd8;
-    --reader-paper: #faf8f1;
-    --reader-ink: #5c4b37;
-    --reader-muted: #8b7355;
-    --reader-line: #d4c4a8;
+    --reader-bg: var(--brand-paper);
+    --reader-paper: var(--brand-card);
+    --reader-ink: var(--brand-ink);
+    --reader-muted: var(--brand-ink-soft);
+    --reader-line: var(--brand-line);
   }
 
   .theme-dark {
-    --reader-bg: #1a1a1a;
-    --reader-paper: #2d2d2d;
-    --reader-ink: #e0e0e0;
-    --reader-muted: #a0a0a0;
-    --reader-line: #404040;
+    --reader-bg: var(--brand-ink);
+    --reader-paper: var(--brand-card);
+    --reader-ink: var(--brand-ink);
+    --reader-muted: var(--brand-ink-soft);
+    --reader-line: var(--brand-line);
   }
 
   .theme-light {
-    --reader-bg: #ffffff;
-    --reader-paper: #fafafa;
-    --reader-ink: #333333;
-    --reader-muted: #666666;
-    --reader-line: #e0e0e0;
+    --reader-bg: var(--brand-card);
+    --reader-paper: var(--brand-paper);
+    --reader-ink: var(--brand-ink);
+    --reader-muted: var(--brand-ink-soft);
+    --reader-line: var(--brand-line);
   }
 
   .reader-toolbar {
@@ -60,7 +59,7 @@
     z-index: 1000;
     min-height: 60px;
     border-bottom: 1px solid var(--reader-line);
-    background: rgba(26, 26, 26, 0.98);
+    background: var(--reader-paper);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -68,12 +67,10 @@
     padding: 12px 24px;
     font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     transition: transform 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-md);
   }
 
-  .reader-toolbar.hidden {
-    transform: translateY(-100%);
-  }
+  .reader-toolbar.hidden { transform: translateY(-100%); }
 
   .toolbar-icon {
     width: 36px;
@@ -93,7 +90,7 @@
   .toolbar-icon:hover {
     border-color: var(--reader-accent);
     color: var(--reader-accent);
-    background: #3d3d3d;
+    background: var(--color-bg-tertiary);
   }
 
   .reader-back-button {
@@ -103,7 +100,7 @@
     gap: 8px;
     border-color: var(--reader-accent);
     background: var(--reader-accent);
-    color: #ffffff;
+    color: var(--color-text-inverse);
     font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 13px;
     font-weight: 700;
@@ -111,14 +108,12 @@
   }
 
   .reader-back-button:hover {
-    border-color: #ff855d;
-    background: #e55a2b;
-    color: #ffffff;
+    border-color: var(--color-accent-dark);
+    background: var(--color-accent-dark);
+    color: var(--color-text-inverse);
   }
 
-  .reader-back-button span {
-    line-height: 1;
-  }
+  .reader-back-button span { line-height: 1; }
 
   .book-title {
     flex: 1;
@@ -145,19 +140,16 @@
     padding: 3px;
     border-radius: 6px;
     object-fit: contain;
-    background: #ffffff;
-    border: 1px solid #d4af37;
+    background: var(--brand-card);
+    border: 1px solid var(--brand-gold);
   }
 
-  .chapter-nav {
-    display: flex;
-    gap: 8px;
-  }
+  .chapter-nav { display: flex; gap: 8px; }
 
   .chapter-nav-btn {
     padding: 8px 16px;
     background: var(--reader-accent);
-    color: #ffffff;
+    color: var(--color-text-inverse);
     border: none;
     border-radius: 4px;
     font-weight: 600;
@@ -167,14 +159,9 @@
     font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
-  .chapter-nav-btn:hover {
-    background: #e55a2b;
-  }
+  .chapter-nav-btn:hover { background: var(--color-accent-dark); }
 
-  .chapter-nav-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  .chapter-nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .progress-bar {
     position: fixed;
@@ -182,7 +169,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: #404040;
+    background: var(--reader-line);
     z-index: 999;
   }
 
@@ -202,7 +189,7 @@
     border: 1px solid var(--reader-line);
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-xl);
     z-index: 1001;
     transform: translateX(120%);
     transition: transform 0.3s ease;
@@ -254,7 +241,7 @@
 
   .theme-btn.active {
     background: var(--reader-accent);
-    color: #ffffff;
+    color: var(--color-text-inverse);
     border-color: var(--reader-accent);
   }
 
@@ -269,7 +256,7 @@
     padding: 40px;
     background: var(--reader-paper);
     border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-xl);
   }
 
   .reader-content h1 {
@@ -322,7 +309,7 @@
     bottom: 24px;
     right: 24px;
     background: var(--reader-accent);
-    color: #ffffff;
+    color: var(--color-text-inverse);
     padding: 12px 20px;
     border-radius: 4px;
     opacity: 0;
@@ -331,7 +318,7 @@
     font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
     font-weight: 500;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-md);
   }
 
   .toast.show {
@@ -339,10 +326,10 @@
   }
 
   .error-message {
-    color: #ff6b6b;
+    color: var(--color-danger);
     padding: 16px;
-    background: rgba(255, 107, 107, 0.1);
-    border: 1px solid #ff6b6b;
+    background: var(--color-danger-light);
+    border: 1px solid var(--color-danger);
     border-radius: 4px;
     margin-bottom: 24px;
     font-size: 14px;

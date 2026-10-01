@@ -5,51 +5,62 @@
 
 /* ==================== COLOR PALETTE ==================== */
 :root {
-  /* Wuxiaworld-inspired Color Scheme */
+  /* AfriNovel palette sampled from the active admin dashboard theme. */
+  --brand-ink: #172a3a;
+  --brand-ink-soft: #536575;
+  --brand-paper: #f5f2ec;
+  --brand-card: #fffdf9;
+  --brand-line: #e4ded4;
+  --brand-green: #2f6f5e;
+  --brand-green-soft: #e4f0ea;
+  --brand-coral: #c56d4e;
+  --brand-gold: #b58b3b;
+  --brand-info: #477c91;
+
   /* Backgrounds */
-  --color-bg-primary: #1a1a2e;
-  --color-bg-secondary: #16213e;
-  --color-bg-tertiary: #0f3460;
-  --color-bg-card: #1a1a2e;
-  --color-bg-dark: #0a0a1a;
+  --color-bg-primary: var(--brand-paper);
+  --color-bg-secondary: var(--brand-card);
+  --color-bg-tertiary: var(--brand-green-soft);
+  --color-bg-card: var(--brand-card);
+  --color-bg-dark: var(--brand-ink);
   
   /* Text Colors */
-  --color-text-primary: #eaeaea;
-  --color-text-secondary: #b8b8b8;
-  --color-text-muted: #888888;
-  --color-text-inverse: #1a1a2e;
-  --color-text-accent: #e94560;
+  --color-text-primary: var(--brand-ink);
+  --color-text-secondary: var(--brand-ink-soft);
+  --color-text-muted: #87938f;
+  --color-text-inverse: #fffdf9;
+  --color-text-accent: var(--brand-green);
   
-  /* Semantic Colors - Wuxiaworld style */
-  --color-accent: #e94560;
-  --color-accent-dark: #c73e54;
-  --color-accent-light: #ff6b85;
-  --color-success: #00d9a5;
-  --color-success-light: rgba(0, 217, 165, 0.1);
-  --color-danger: #ff4757;
-  --color-danger-light: rgba(255, 71, 87, 0.1);
-  --color-warning: #ffa502;
-  --color-warning-light: rgba(255, 165, 2, 0.1);
-  --color-info: #5352ed;
-  --color-info-light: rgba(83, 82, 237, 0.1);
+  /* Semantic colors used by forms, buttons, states, and links. */
+  --color-accent: var(--brand-green);
+  --color-accent-dark: var(--brand-ink);
+  --color-accent-light: var(--brand-green-soft);
+  --color-success: var(--brand-green);
+  --color-success-light: var(--brand-green-soft);
+  --color-danger: var(--brand-coral);
+  --color-danger-light: #f7e2da;
+  --color-warning: var(--brand-gold);
+  --color-warning-light: #f8efd9;
+  --color-info: var(--brand-info);
+  --color-info-light: #e4edf0;
   
   /* Novel-specific Colors */
-  --color-ongoing: #00d9a5;
-  --color-completed: #5352ed;
-  --color-hiatus: #ffa502;
-  --color-free: #00d9a5;
-  --color-locked: #ff4757;
-  --color-rating: #ffa502;
+  --color-ongoing: var(--brand-green);
+  --color-completed: var(--brand-info);
+  --color-hiatus: var(--brand-gold);
+  --color-free: var(--brand-green);
+  --color-locked: var(--brand-coral);
+  --color-rating: var(--brand-gold);
   
   /* Borders & Lines */
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-border-light: rgba(255, 255, 255, 0.05);
-  --color-border-dark: rgba(255, 255, 255, 0.15);
+  --color-border: var(--brand-line);
+  --color-border-light: rgba(23, 42, 58, 0.06);
+  --color-border-dark: #c8d9d1;
   
   /* Interactive */
-  --color-link: #e94560;
-  --color-link-hover: #ff6b85;
-  --color-link-visited: #c73e54;
+  --color-link: var(--brand-green);
+  --color-link-hover: var(--brand-ink);
+  --color-link-visited: var(--brand-green);
   
   /* ==================== TYPOGRAPHY ==================== */
   --font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -126,12 +137,12 @@
   
   /* ==================== SHADOWS ==================== */
   --shadow-none: none;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 1px 2px rgba(23, 42, 58, 0.04);
+  --shadow-base: 0 2px 6px rgba(23, 42, 58, 0.06);
+  --shadow-md: 0 4px 12px rgba(23, 42, 58, 0.07);
+  --shadow-lg: 0 8px 20px rgba(23, 42, 58, 0.08);
+  --shadow-xl: 0 12px 30px rgba(23, 42, 58, 0.08);
+  --shadow-2xl: 0 18px 38px rgba(23, 42, 58, 0.12);
   
   /* ==================== TRANSITIONS ==================== */
   --transition-fast: 150ms ease-in-out;
@@ -325,7 +336,7 @@ button.success {
 
 .button-success:hover,
 button.success:hover {
-  background-color: #1f4838;
+  background-color: var(--color-accent-dark);
 }
 
 .button-danger,
@@ -335,7 +346,7 @@ button.danger {
 
 .button-danger:hover,
 button.danger:hover {
-  background-color: #701f1f;
+  background-color: var(--color-accent-dark);
 }
 
 .button-outline {
@@ -577,7 +588,7 @@ select.error:focus {
 .message.debug,
 .alert.debug {
   border-left-color: var(--color-text-muted);
-  background-color: #f0f0f0;
+  background-color: var(--color-bg-tertiary);
 }
 
 .message-icon {

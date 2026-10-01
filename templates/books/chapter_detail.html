@@ -9,13 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* Wuxiaworld-inspired dark theme colors */
-    --reader-bg: #1a1a1a;
-    --reader-paper: #2d2d2d;
-    --reader-ink: #e0e0e0;
-    --reader-muted: #a0a0a0;
-    --reader-line: #404040;
-    --reader-accent: #ff6b35;
+    --reader-bg: var(--brand-paper);
+    --reader-paper: var(--brand-card);
+    --reader-ink: var(--brand-ink);
+    --reader-muted: var(--brand-ink-soft);
+    --reader-line: var(--brand-line);
+    --reader-accent: var(--brand-green);
     --reading-width: 50rem;
     --reading-size: 1.125rem;
     --reading-leading: 1.8;
@@ -111,7 +110,7 @@
   .nav-btn {
     padding: 8px 16px;
     background: var(--reader-accent);
-    color: #ffffff;
+    color: var(--color-text-inverse);
     text-decoration: none;
     border-radius: 4px;
     font-weight: 600;
@@ -125,13 +124,13 @@
   }
 
   .nav-btn:hover {
-    background: #e55a2b;
+    background: var(--color-accent-dark);
   }
 
   .nav-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: #404040;
+    background: var(--color-border);
   }
 
   .chapter-list-dropdown {
