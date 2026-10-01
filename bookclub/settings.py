@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -172,6 +173,11 @@ if postgres_db_name and postgres_db_user:
             'PORT': os.getenv('POSTGRES_PORT') or os.getenv('DB_PORT', '5432'),
         }
     }
+elif os.getenv('RAILWAY_ENVIRONMENT'):
+    raise ImproperlyConfigured(
+        'Railway deployments require PostgreSQL DB_NAME and DB_USER settings; '
+        'refusing to store account data in ephemeral SQLite.'
+    )
 else:
     DATABASES = {
         'default': {
