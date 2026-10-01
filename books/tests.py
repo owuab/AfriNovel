@@ -502,6 +502,13 @@ class HomePageTests(TestCase):
         user = get_user_model().objects.get(username='ada')
         self.assertEqual(user.email, 'ada@example.com')
         self.assertEqual(user.first_name, 'Ada')
+        self.assertTrue(user.check_password('Complex-pass-123'))
+        self.client.post(reverse('logout'))
+        login_response = self.client.post(reverse('login'), {
+            'username': 'ada@example.com',
+            'password': 'Complex-pass-123',
+        })
+        self.assertRedirects(login_response, reverse('home'))
 
     def test_connected_accounts_requires_login(self):
         response = self.client.get(reverse('connected_accounts'))

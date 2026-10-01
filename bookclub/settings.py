@@ -155,17 +155,21 @@ SOCIALACCOUNT_PROVIDERS = {
 
 
 # Database
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
+# Railway's shared PostgreSQL service exposes DB_* variables by default.
+# Keep POSTGRES_* aliases for existing environments, but prefer the shared DB
+# instead of silently falling back to a container-local SQLite file.
+postgres_db_name = os.getenv('POSTGRES_DB') or os.getenv('DB_NAME')
+postgres_db_user = os.getenv('POSTGRES_USER') or os.getenv('DB_USER')
 
-if os.getenv('POSTGRES_DB') and os.getenv('POSTGRES_USER'):
+if postgres_db_name and postgres_db_user:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('POSTGRES_DB'),
-            'USER': os.getenv('POSTGRES_USER'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            'NAME': postgres_db_name,
+            'USER': postgres_db_user,
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD') or os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('POSTGRES_HOST') or os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT') or os.getenv('DB_PORT', '5432'),
         }
     }
 else:
