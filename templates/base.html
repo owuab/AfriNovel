@@ -75,6 +75,7 @@
                         <a href="{% url 'completed' %}" class="nav-link">Completed</a>
                         
                         {% if user.is_authenticated %}
+                            <a href="{% url 'writer_dashboard' %}" class="nav-link">Write</a>
                             <a href="{% url 'view_bookshelf' %}" class="nav-link">Bookshelf</a>
                             <div class="nav-divider"></div>
                             <div class="nav-dropdown">

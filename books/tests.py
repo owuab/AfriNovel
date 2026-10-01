@@ -74,6 +74,11 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
 
+    def test_authenticated_navigation_exposes_writer_dashboard(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('home'))
+        self.assertContains(response, 'href="/dashboard/writer/" class="nav-link">Write</a>')
+
     def test_rankings_page_renders_all_ranking_aggregates(self):
         for ranking_type in ('rating', 'reviews', 'trending'):
             with self.subTest(ranking_type=ranking_type):
