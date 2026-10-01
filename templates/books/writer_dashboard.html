@@ -3,7 +3,7 @@
 
 {% block title %}Writer Dashboard | AfriNovel{% endblock %}
 
-{% block extra_css %}
+{% block writer_legacy_css %}
 <style>
   /* Writer Dashboard specific styles using design system tokens */
 
@@ -166,72 +166,66 @@
 {% endblock %}
 
 {% block content %}
-<div class="container main-grid">
-  <aside class="sidebar">
-    <h3 class="section-title">Writer</h3>
-    <div class="menu-item active">Dashboard</div>
-    <div class="menu-item">Drafts</div>
-    <div class="menu-item">Published</div>
-    <div class="menu-item">Analytics</div>
-  </aside>
+<div class="container writer-dashboard">
+  <header class="writer-heading">
+    <div><p class="eyebrow">YOUR STUDIO</p><h1>Writer Dashboard</h1><p>Keep your stories moving, from first draft to publication.</p></div>
+    <a class="button" href="{% url 'writer_book_create' %}">Create New Book</a>
+  </header>
+  <section class="writer-stats" aria-label="Book statistics">
+    <div><span>My books</span><strong>{{ book_count }}</strong></div>
+    <div><span>Drafts</span><strong>{{ draft_count }}</strong></div>
+    <div><span>Published</span><strong>{{ published_count }}</strong></div>
+    <div><span>Completed</span><strong>{{ completed_count }}</strong></div>
+    <div><span>Total views</span><strong>{{ total_views }}</strong></div>
+  </section>
 
-  <section class="content">
-    <div class="hero-card">
-      <h2>Writer Dashboard</h2>
-      <p>Publish freely, track engagement, and grow your reading community.</p>
-    </div>
-
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-label">Drafts</div>
-        <div class="stat-value">{{ drafts|length }}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Published</div>
-        <div class="stat-value">{{ published|length }}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Total reads</div>
-        <div class="stat-value">12.4K</div>
-      </div>
-    </div>
-
-    <p><a class="button" href="{% url 'publish_book' %}">Publish a book</a></p>
-
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3>Drafts</h3>
-      </div>
-      {% if drafts %}
-        {% for draft in drafts %}
-          <div class="list-item">
-            <span class="item-title">{{ draft.title }}</span>
-            <span class="badge draft">{{ draft.status }}</span>
-          </div>
-        {% endfor %}
-      {% else %}
-        <p style="color:var(--color-text-secondary);">No drafts yet. <a href="{% url 'publish_book' %}" style="color:var(--color-accent); font-weight:700;">Start writing</a></p>
-      {% endif %}
-    </div>
-
-    <div class="dashboard-section">
-      <div class="section-header">
-        <h3>Published</h3>
-      </div>
-      {% if published %}
-        {% for item in published %}
-          <div class="list-item">
-            <div>
-              <span class="item-title">{{ item.title }}</span>
-              <div class="metric-text">{{ item.reads }} reads</div>
+  <section class="writer-section">
+    <div class="writer-section-heading"><div><p class="eyebrow">LIBRARY</p><h2>My Books</h2></div></div>
+    {% if books %}
+      <div class="writer-book-list">
+        {% for book in books %}
+          <article class="writer-book-row">
+            {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">{% else %}<div class="writer-cover-placeholder" aria-hidden="true">AN</div>{% endif %}
+            <div class="writer-book-info">
+              <h3>{{ book.title }}</h3>
+              <p>{{ book.author.name }}{% if book.subtitle %} · {{ book.subtitle }}{% endif %}</p>
+              <div class="writer-book-metrics"><span>{{ book.get_status_display }} · {{ book.get_novel_status_display }}</span><span>{{ book.chapters_total }} chapters</span><span>{{ book.view_count }} views</span><span>{{ book.saves_total }} library saves</span><span>Edited {{ book.updated_at|date:"M j, Y" }}</span></div>
             </div>
-            <span class="badge">Published</span>
-          </div>
+            <div class="writer-book-actions">
+              <a class="button button-secondary" href="{% url 'writer_book_edit' book.pk %}">Edit details</a>
+              {% if book.chapters.exists %}<a class="button button-secondary" href="{% url 'writer_chapter_editor' book.pk book.chapters.first.pk %}">Continue writing</a>{% else %}<a class="button button-secondary" href="{% url 'writer_chapter_create' book.pk %}">Add chapter</a>{% endif %}
+              {% if book.status == 'draft' %}
+                <a class="text-action" href="{% url 'writer_publish_preview' book.pk %}">Review &amp; publish</a>
+              {% elif book.status == 'published' %}
+                <a class="text-action" href="{% url 'book_detail' book.slug %}">Public page</a>
+                <form method="post" action="{% url 'writer_book_action' book.pk 'unpublish' %}">{% csrf_token %}<button class="text-action" type="submit">Unpublish</button></form>
+              {% elif book.status == 'archived' %}
+                <form method="post" action="{% url 'writer_book_action' book.pk 'restore' %}">{% csrf_token %}<button class="text-action" type="submit">Restore to drafts</button></form>
+              {% endif %}
+              <form method="post" action="{% url 'writer_book_action' book.pk 'archive' %}">{% csrf_token %}<button class="text-action" type="submit">Archive</button></form>
+              <form method="post" action="{% url 'writer_book_action' book.pk 'delete' %}" onsubmit="return confirm('Permanently delete this book and all its chapters?');">{% csrf_token %}<button class="text-action danger" type="submit">Delete</button></form>
+            </div>
+          </article>
         {% endfor %}
-      {% else %}
-        <p style="color:var(--color-text-secondary);">No published works yet. <a href="{% url 'publish_book' %}" style="color:var(--color-accent); font-weight:700;">Publish your first work</a></p>
-      {% endif %}
-    </div>
+      </div>
+    {% else %}
+      <p class="empty-state">Your writing studio is ready when you are. <a href="{% url 'writer_book_create' %}">Create your first book</a>.</p>
+    {% endif %}
+    {% if books_page.has_other_pages %}<nav class="writer-pagination" aria-label="Book pages">{% if books_page.has_previous %}<a href="?page={{ books_page.previous_page_number }}">Previous</a>{% endif %}<span>Page {{ books_page.number }} of {{ books_page.paginator.num_pages }}</span>{% if books_page.has_next %}<a href="?page={{ books_page.next_page_number }}">Next</a>{% endif %}</nav>{% endif %}
+  </section>
+
+  <section class="writer-section recent-writing">
+    <div class="writer-section-heading"><div><p class="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Recently edited chapters</h2></div></div>
+    {% for chapter in recent_chapters %}
+      <a class="recent-chapter" href="{% url 'writer_chapter_editor' chapter.book_id chapter.pk %}"><span>{{ chapter.book.title }}</span><strong>{{ chapter.title }}</strong><small>Edited {{ chapter.updated_at|date:"M j, Y · g:i A" }}</small></a>
+    {% empty %}<p class="empty-state">Your recently edited chapters will appear here.</p>{% endfor %}
   </section>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+  .writer-dashboard{max-width:1180px;padding-top:36px;padding-bottom:72px}.writer-heading,.writer-section-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}.writer-heading{padding:24px 0 30px;border-bottom:1px solid var(--color-border)}.writer-heading h1,.writer-section h2{margin:4px 0;color:var(--color-text-primary)}.writer-heading h1{font-size:2.25rem}.writer-heading p:not(.eyebrow){color:var(--color-text-secondary);margin:8px 0 0}.eyebrow{margin:0;color:var(--color-accent);font-size:.72rem;font-weight:800;letter-spacing:.12em}.writer-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;margin:22px 0 44px;background:var(--color-border);border:1px solid var(--color-border)}.writer-stats div{background:var(--color-bg-secondary);padding:16px}.writer-stats span,.writer-stats strong{display:block}.writer-stats span{color:var(--color-text-secondary);font-size:.82rem}.writer-stats strong{font-size:1.55rem;margin-top:6px}.writer-section{margin:38px 0}.writer-section-heading{margin-bottom:14px}.writer-section h2{font-size:1.45rem}.writer-book-list{border-top:1px solid var(--color-border)}.writer-book-row{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:18px;align-items:center;padding:18px 0;border-bottom:1px solid var(--color-border)}.writer-book-row>img,.writer-cover-placeholder{width:72px;height:96px;object-fit:cover;background:var(--color-bg-tertiary)}.writer-cover-placeholder{display:grid;place-items:center;color:var(--color-accent);font-weight:800}.writer-book-info h3{margin:0 0 4px;font-size:1.1rem}.writer-book-info p{margin:0 0 10px;color:var(--color-text-secondary)}.writer-book-metrics{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--color-text-secondary);font-size:.78rem}.writer-book-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;max-width:320px}.writer-book-actions form{margin:0}.button-secondary{background:var(--color-bg-tertiary);color:var(--color-text-primary);border:1px solid var(--color-border)}.text-action{border:0;background:none;color:var(--color-accent);padding:6px;cursor:pointer;font:inherit;font-size:.82rem}.text-action.danger{color:#b43c35}.empty-state{padding:24px 0;color:var(--color-text-secondary)}.writer-pagination{display:flex;justify-content:space-between;padding:14px 0}.recent-chapter{display:grid;grid-template-columns:1fr 2fr auto;gap:16px;padding:13px 0;border-bottom:1px solid var(--color-border);color:var(--color-text-primary);text-decoration:none}.recent-chapter span,.recent-chapter small{color:var(--color-text-secondary)}@media(max-width:800px){.writer-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.writer-book-row{grid-template-columns:56px minmax(0,1fr)}.writer-book-row>img,.writer-cover-placeholder{width:56px;height:76px}.writer-book-actions{grid-column:2;justify-content:flex-start;max-width:none}.recent-chapter{grid-template-columns:1fr}.writer-heading{align-items:flex-start;flex-direction:column}}
+</style>
 {% endblock %}

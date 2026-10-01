@@ -132,6 +132,11 @@
     border-radius: var(--border-radius-sm);
   }
 
+  .author-books { padding-top: var(--spacing-4); }
+  .author-books h2 { font-size: var(--font-size-xl); margin: 0 0 var(--spacing-3); }
+  .author-book { display: inline-grid; grid-template-columns: 42px minmax(0, 1fr); gap: 10px; align-items: center; width: min(280px, 100%); margin: 0 12px 12px 0; color: var(--color-text-primary); text-decoration: none; }
+  .author-book img, .author-book .cover { width: 42px; height: 60px; margin: 0; object-fit: cover; }
+
   @media (max-width: 500px) {
     .head-row { align-items: flex-start; flex-direction: column; }
     .banner { height: 120px; }
@@ -150,7 +155,7 @@
   <section class="head">
     <div class="head-row">
       <div>
-        <div class="avatar">{{ profile_user.username|slice:':1'|upper }}</div>
+        <div class="avatar"><img src="{{ profile.get_avatar_url }}" alt="{{ profile.display_name|default:profile_user.username }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
         <h1>{{ profile.display_name|default:profile_user.username }}</h1>
       </div>
       {% if user.is_authenticated and profile_user != user %}
@@ -168,6 +173,7 @@
     {% endif %}
 
     <div class="stats">
+      <span><strong>{{ published_stories.paginator.count }}</strong> published books · {{ author_reads }} reads</span>
       <a href="{% url 'followers_page' profile_user.username 'followers' %}">
         <strong>{{ followers_count }}</strong> followers
       </a>
@@ -175,6 +181,18 @@
         <strong>{{ following_count }}</strong> following
       </a>
     </div>
+
+    {% if published_stories %}
+      <section class="author-books">
+        <h2>Published books</h2>
+        {% for book in published_stories %}
+          <a class="author-book" href="{% url 'book_detail' book.slug %}">
+            {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">{% else %}<span class="cover" style="background:{{ book.cover_color }};"></span>{% endif %}
+            <span><strong>{{ book.title }}</strong><br><small>{{ book.view_count }} reads</small></span>
+          </a>
+        {% endfor %}
+      </section>
+    {% endif %}
 
     <nav class="tabs">
       <a href="?tab=posts" class="{% if active_tab == 'posts' %}active{% endif %}">Posts</a>

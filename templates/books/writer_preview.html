@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Preview {{ chapter.title }} | AfriNovel{% endblock %}
+{% block extra_css %}
+<style>
+  .writer-preview{max-width:760px;margin:42px auto;padding:0 22px 70px}.preview-label{color:var(--color-accent);font-size:.75rem;font-weight:800;letter-spacing:.12em}.writer-preview h1{font-size:2rem;margin:8px 0}.preview-meta{color:var(--color-text-secondary);padding-bottom:18px;border-bottom:1px solid var(--color-border)}.preview-content{font:1.12rem/1.85 Georgia,serif;color:var(--color-text-primary);padding:24px 0}.preview-content blockquote{border-left:3px solid var(--color-accent);padding-left:18px;color:var(--color-text-secondary)}
+</style>
+{% endblock %}
+{% block content %}<article class="writer-preview"><p class="preview-label">CHAPTER PREVIEW · NOT PUBLIC</p><h1>{{ chapter.title }}</h1><p class="preview-meta"><a href="{% url 'book_detail' book.slug %}">{{ book.title }}</a> · {{ book.author.name }} · {{ chapter.word_count }} words</p><div class="preview-content">{{ chapter_content|safe }}</div></article>{% endblock %}

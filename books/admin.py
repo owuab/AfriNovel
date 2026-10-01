@@ -9,7 +9,7 @@ from django.template.response import TemplateResponse
 from django.utils.safestring import mark_safe
 from allauth.socialaccount.models import SocialAccount
 from .models import (
-    Genre, Author, Book, Review, ReviewComment, AuthorFollow, UserBookshelf, ReadingList,
+    Genre, Author, Book, Chapter, Review, ReviewComment, AuthorFollow, UserBookshelf, ReadingList,
     Bookmark, BookSource, CatalogBook, CatalogLibraryEntry, Highlight, ProviderStatus,
     ReadingNote, ReadingProgress, SearchHistory, AuthenticationEvent,
     ImportedBook, BookFile, ImportJob, ReadingBookmark, ReadingHighlight, BookUpload,
@@ -163,12 +163,27 @@ class AuthorAdmin(admin.ModelAdmin):
 
 
 # ==================== BOOK ADMIN ====================
+class ChapterInline(admin.TabularInline):
+    model = Chapter
+    extra = 0
+    fields = ('chapter_number', 'title', 'status', 'word_count', 'view_count', 'published_date')
+    readonly_fields = ('word_count', 'view_count')
+
+
+class ChapterAdmin(admin.ModelAdmin):
+    list_display = ('book', 'chapter_number', 'title', 'status', 'word_count', 'view_count', 'updated_at')
+    list_filter = ('status', 'updated_at')
+    search_fields = ('book__title', 'book__author__name', 'title', 'content')
+    readonly_fields = ('word_count', 'view_count', 'created_at', 'updated_at')
+
+
 class BookAdmin(admin.ModelAdmin):
-    list_display = ('title', 'author', 'status_badge', 'rating_display', 'featured_badge', 'review_count')
+    list_display = ('title', 'author', 'owner', 'status_badge', 'rating_display', 'featured_badge', 'review_count')
     list_filter = ('status', 'is_featured', 'created_at', 'genres')
-    search_fields = ('title', 'author__name', 'summary')
+    search_fields = ('title', 'author__name', 'owner__username', 'summary')
     filter_horizontal = ('genres',)
     prepopulated_fields = {'slug': ('title',)}
+    inlines = (ChapterInline,)
     readonly_fields = ('created_at', 'updated_at', 'cover_preview', 'review_count_display')
     actions = ('approve_selected_books', 'return_selected_books_to_draft', 'archive_selected_books', delete_selected)
     
@@ -746,6 +761,7 @@ class ReadingHighlightAdmin(admin.ModelAdmin):
 admin_site.register(Genre, GenreAdmin)
 admin_site.register(Author, AuthorAdmin)
 admin_site.register(Book, BookAdmin)
+admin_site.register(Chapter, ChapterAdmin)
 admin_site.register(Review, ReviewAdmin)
 admin_site.register(ReviewComment, ReviewCommentAdmin)
 admin_site.register(AuthorFollow, AuthorFollowAdmin)

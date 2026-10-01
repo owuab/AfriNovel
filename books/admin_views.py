@@ -343,7 +343,7 @@ class ContentReportsView(AdminAccessMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = ContentReport.objects.select_related('reporter', 'reported_user', 'post')
+        queryset = ContentReport.objects.select_related('reporter', 'reported_user', 'post', 'book', 'chapter')
         
         # Filter by status
         status_filter = self.request.GET.get('status', 'pending')
@@ -357,8 +357,8 @@ class ContentReportsView(AdminAccessMixin, ListView):
         
         # Filter by type
         report_type = self.request.GET.get('type', '')
-        if report_type:
-            queryset = queryset.filter(report_type=report_type)
+        if report_type in {choice[0] for choice in ContentReport.REASONS}:
+            queryset = queryset.filter(reason=report_type)
         
         return queryset.order_by('-created_at')
     
@@ -385,7 +385,29 @@ def resolve_report(request, report_id):
     """Resolve a content report"""
     report = get_object_or_404(ContentReport, id=report_id)
     
-    resolution_notes = request.POST.get('resolution_notes', '')
+    resolution_notes = request.POST.get('resolution', request.POST.get('resolution_notes', ''))
+    action_taken = request.POST.get('action_taken', '')
+
+    if action_taken == 'content_removed':
+        if report.chapter:
+            report.chapter.status = Book.DRAFT
+            report.chapter.published_date = None
+            report.chapter.save(update_fields=['status', 'published_date', 'updated_at'])
+        elif report.book:
+            report.book.status = Book.ARCHIVED
+            report.book.save(update_fields=['status', 'updated_at'])
+        elif report.post:
+            report.post.hidden = True
+            report.post.save(update_fields=['hidden'])
+    elif action_taken == 'user_suspended' and report.reported_user:
+        if not UserSuspension.objects.filter(user=report.reported_user, is_active=True, unsuspended_at__isnull=True).exists():
+            UserSuspension.objects.create(
+                user=report.reported_user,
+                suspended_by=request.user,
+                suspension_type=UserSuspension.TEMPORARY,
+                reason=UserSuspension.OTHER,
+                description=resolution_notes or f'Publishing suspended after report #{report.pk}.',
+            )
     
     report.resolved = True
     report.save()

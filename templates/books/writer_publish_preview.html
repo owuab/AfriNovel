@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Review {{ book.title }} | AfriNovel{% endblock %}
+{% block extra_css %}
+<style>
+  .publish-review{max-width:800px;margin:42px auto 80px;padding:0 20px}.publish-review h1{margin:0}.publish-card{display:grid;grid-template-columns:150px minmax(0,1fr);gap:22px;padding:22px 0;border-bottom:1px solid var(--color-border)}.publish-card img,.publish-cover{width:150px;height:210px;object-fit:cover;background:var(--color-bg-tertiary)}.publish-cover{display:grid;place-items:center;color:var(--color-accent);font-size:1.5rem;font-weight:800}.publish-card h2{margin:0 0 6px}.publish-meta{color:var(--color-text-secondary)}.publish-chapters{padding:20px 0}.publish-chapters li{padding:7px 0}.publish-confirm{padding:18px 0}.publish-confirm label{display:flex;align-items:flex-start;gap:10px}.publish-confirm input{margin-top:5px}.publish-actions{display:flex;align-items:center;gap:14px}@media(max-width:540px){.publish-card{grid-template-columns:84px minmax(0,1fr)}.publish-card img,.publish-cover{width:84px;height:118px}}
+</style>
+{% endblock %}
+{% block content %}
+<main class="publish-review">
+  <p class="eyebrow">FINAL REVIEW</p><h1>Review your book</h1><p>After submission, AfriNovel moderators review the work before it becomes public.</p>
+  <section class="publish-card">
+    {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">{% else %}<div class="publish-cover">AN</div>{% endif %}
+    <div><h2>{{ book.title }}</h2>{% if book.subtitle %}<p>{{ book.subtitle }}</p>{% endif %}<p>By {{ book.author.name }}</p><p class="publish-meta">{{ book.get_content_rating_display }} · {{ book.language }} · {{ book.get_novel_status_display }}{% for genre in book.genres.all %} · {{ genre.name }}{% endfor %}</p><p>{{ book.summary }}</p></div>
+  </section>
+  <section class="publish-chapters"><h2>Chapters ({{ book.chapters.count }})</h2><ol>{% for chapter in book.chapters.all %}<li>{{ chapter.chapter_number }}. {{ chapter.title }} · {{ chapter.get_status_display }} · {{ chapter.word_count }} words</li>{% empty %}<li>No chapters yet.</li>{% endfor %}</ol></section>
+  <form method="post" action="{% url 'writer_submit_book' book.pk %}">{% csrf_token %}
+    <div class="publish-confirm"><label><input type="checkbox" name="rules_confirmed" required><span>I confirm this work follows AfriNovel's publishing rules and that I own or have permission to publish all included content.</span></label></div>
+    <div class="publish-actions"><button class="button" type="submit">Submit for review</button><a href="{% url 'writer_dashboard' %}">Back to dashboard</a></div>
+  </form>
+</main>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ chapter.title }} - {{ book.title }} | AfriNovel{% endblock %}
+{% block extra_css %}
+<style>
+  .writer-workspace{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:calc(100vh - 150px);border-top:1px solid var(--color-border)}.chapter-sidebar{padding:24px 16px;border-right:1px solid var(--color-border);background:var(--color-bg-secondary)}.chapter-sidebar h1{font-size:1.05rem;margin:0 0 4px}.chapter-sidebar p{color:var(--color-text-secondary);font-size:.85rem;margin:0 0 18px}.chapter-list{list-style:none;padding:0;margin:20px 0}.chapter-list a{display:block;padding:10px;border-left:3px solid transparent;text-decoration:none;color:var(--color-text-primary);font-size:.9rem}.chapter-list a.active{border-color:var(--color-accent);background:var(--color-bg-tertiary)}.chapter-list small{display:block;color:var(--color-text-secondary);margin-top:4px}.chapter-add{width:100%}.editor-panel{max-width:1020px;width:100%;padding:25px clamp(18px,5vw,64px) 60px;margin:0 auto}.editor-topline{display:flex;align-items:center;justify-content:space-between;gap:15px;color:var(--color-text-secondary);font-size:.88rem}.editor-topline strong{color:var(--color-text-primary)}.editor-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;margin:24px 0}.editor-heading input{font-size:1.8rem;font-weight:700;border:0;border-bottom:1px solid var(--color-border);background:transparent;color:var(--color-text-primary);padding:8px 0;min-width:0}.save-status{white-space:nowrap;color:var(--color-text-secondary);align-self:center}.editor-toolbar{display:flex;flex-wrap:wrap;gap:5px;padding:9px 0;border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}.editor-toolbar button,.editor-toolbar select,.editor-actions button{min-height:36px;padding:6px 10px;border:1px solid var(--color-border);border-radius:3px;background:var(--color-bg-secondary);color:var(--color-text-primary);cursor:pointer}.editor-toolbar button{font-weight:700}.editor-toolbar select{max-width:130px}.chapter-content-editable{min-height:58vh;padding:24px 0;outline:none;color:var(--color-text-primary);font-family:Georgia,serif;font-size:1.16rem;line-height:1.85}.chapter-content-editable:empty:before{content:attr(data-placeholder);color:var(--color-text-secondary)}.chapter-content-editable blockquote{border-left:3px solid var(--color-accent);padding-left:18px;margin-left:0;color:var(--color-text-secondary)}.editor-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-top:14px;border-top:1px solid var(--color-border)}.editor-actions .push{margin-left:auto}.editor-counts{display:flex;gap:16px;color:var(--color-text-secondary);font-size:.8rem;margin:12px 0}.editor-counts span{white-space:nowrap}.editor-management{display:flex;gap:6px;margin-top:18px;flex-wrap:wrap}.editor-management form{margin:0}.editor-management button{background:none;border:0;color:var(--color-text-secondary);padding:6px;cursor:pointer}.writer-fullscreen .site-header,.writer-fullscreen .site-footer,.writer-fullscreen .messages-container{display:none}.writer-fullscreen .writer-workspace{min-height:100vh}.writer-fullscreen .editor-panel{max-width:1100px}.writer-fullscreen .chapter-sidebar{display:none}.writer-fullscreen .writer-workspace{grid-template-columns:1fr}@media(max-width:760px){.writer-workspace{grid-template-columns:1fr}.chapter-sidebar{border-right:0;border-bottom:1px solid var(--color-border);padding:12px 16px}.chapter-list{display:flex;overflow-x:auto;gap:4px;margin:10px 0}.chapter-list li{min-width:155px}.editor-panel{padding:18px 16px 42px}.editor-heading{grid-template-columns:1fr}.editor-heading input{font-size:1.45rem}.save-status{justify-self:start}.chapter-content-editable{min-height:54vh;font-size:1.08rem}.editor-actions .push{margin-left:0}}
+  .chapter-content-editable .align-left{ text-align:left }.chapter-content-editable .align-center{ text-align:center }.chapter-content-editable .align-right{ text-align:right }.chapter-content-editable .align-justify{ text-align:justify }
+</style>
+{% endblock %}
+{% block content %}
+<div class="writer-workspace" data-server-updated="{{ chapter.updated_at|date:'U' }}" data-chapter-id="{{ chapter.pk }}">
+  <aside class="chapter-sidebar">
+    <h1>{{ book.title }}</h1><p>{{ book.get_status_display }} · {{ chapters|length }} chapters</p>
+    <a class="button chapter-add" href="{% url 'writer_chapter_create' book.pk %}">+ Add chapter</a>
+    <ol class="chapter-list">
+      {% for item in chapters %}<li><a href="{% url 'writer_chapter_editor' book.pk item.pk %}"{% if item.pk == chapter.pk %} class="active"{% endif %}>{{ item.chapter_number }}. {{ item.title }}<small>{{ item.get_status_display }}</small></a></li>{% endfor %}
+    </ol>
+    <a href="{% url 'writer_dashboard' %}">Back to dashboard</a>
+  </aside>
+  <section class="editor-panel">
+    <div class="editor-topline"><span><strong>{{ book.title }}</strong> / Chapter {{ chapter.chapter_number }}</span><span id="save-status" class="save-status" aria-live="polite">Saved</span></div>
+    <form id="chapter-form" method="post">
+      {% csrf_token %}
+      <div class="editor-heading"><input id="chapter-title" name="title" value="{{ chapter.title }}" maxlength="300" aria-label="Chapter title"><button type="button" class="button button-secondary" id="fullscreen-toggle" title="Toggle full-screen writing mode">Focus mode</button></div>
+      <div class="editor-toolbar" role="toolbar" aria-label="Text formatting">
+        <button type="button" data-command="bold" title="Bold">B</button><button type="button" data-command="italic" title="Italic"><i>I</i></button><button type="button" data-command="underline" title="Underline"><u>U</u></button>
+        <select id="block-format" aria-label="Paragraph style"><option value="p">Paragraph</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option></select>
+        <button type="button" data-command="insertUnorderedList" title="Bulleted list">List</button><button type="button" data-command="insertOrderedList" title="Numbered list">1.</button>
+        <button type="button" data-command="justifyLeft" title="Align left">Left</button><button type="button" data-command="justifyCenter" title="Center">Center</button><button type="button" data-command="justifyRight" title="Align right">Right</button>
+        <button type="button" data-command="undo" title="Undo">Undo</button><button type="button" data-command="redo" title="Redo">Redo</button>
+      </div>
+      <div id="chapter-editor" class="chapter-content-editable" contenteditable="true" role="textbox" aria-label="Chapter content" aria-multiline="true" data-placeholder="Begin your chapter...">{{ chapter_content|safe }}</div>
+      <textarea id="chapter-content" name="content" hidden></textarea>
+      <div class="editor-counts"><span><b id="word-count">0</b> words</span><span><b id="character-count">0</b> characters</span></div>
+      <div class="editor-actions">
+        <button type="submit" name="action" value="save">Save</button><button type="submit" name="action" value="draft">Save as draft</button>
+        <a class="button button-secondary" href="{% url 'writer_chapter_preview' book.pk chapter.pk %}" target="_blank" rel="noopener">Preview</a>
+        {% if book.status == 'published' %}
+          {% if chapter.status == 'published' or chapter.status == 'completed' %}<button type="submit" name="action" value="unpublish">Unpublish chapter</button><button type="submit" name="action" value="complete">Mark completed</button>{% else %}<button type="submit" name="action" value="publish">Publish chapter</button>{% endif %}
+        {% else %}<span class="save-status">Book must be approved before chapters go public.</span>{% endif %}
+        <span class="push"></span><a href="{% url 'writer_book_edit' book.pk %}">Book details</a>
+      </div>
+    </form>
+    <div class="editor-management">
+      <form method="post">{% csrf_token %}<button name="action" value="move_up">Move up</button><button name="action" value="move_down">Move down</button></form>
+      <form method="post">{% csrf_token %}<button name="action" value="duplicate">Duplicate chapter</button></form>
+      <form method="post" onsubmit="return confirm('Delete this chapter permanently?');">{% csrf_token %}<button name="action" value="delete">Delete chapter</button></form>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+(() => {
+  const workspace = document.querySelector('.writer-workspace');
+  const editor = document.getElementById('chapter-editor');
+  const form = document.getElementById('chapter-form');
+  const content = document.getElementById('chapter-content');
+  const title = document.getElementById('chapter-title');
+  const status = document.getElementById('save-status');
+  const key = `afrinovel-chapter-${workspace.dataset.chapterId}`;
+  const wordCount = document.getElementById('word-count');
+  const characterCount = document.getElementById('character-count');
+  let timer;
+  const sanitizeLocalMarkup = markup => {
+    const allowed = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'DIV', 'SPAN']);
+    const parsed = new DOMParser().parseFromString(markup, 'text/html');
+    parsed.body.querySelectorAll('*').forEach(node => {
+      if (!allowed.has(node.tagName)) { node.replaceWith(...node.childNodes); return; }
+      [...node.attributes].forEach(attribute => {
+        if (attribute.name === 'class' && /^align-(left|center|right|justify)$/.test(attribute.value)) return;
+        if (attribute.name !== 'style') node.removeAttribute(attribute.name);
+        else {
+          const alignment = node.style.textAlign;
+          node.removeAttribute('style');
+          if (['left', 'center', 'right', 'justify'].includes(alignment)) node.className = `align-${alignment}`;
+        }
+      });
+    });
+    return parsed.body.innerHTML;
+  };
+  const syncContent = () => { content.value = sanitizeLocalMarkup(editor.innerHTML); };
+  const updateCounts = () => {
+    const text = editor.innerText.trim();
+    wordCount.textContent = text ? text.split(/\s+/).length : 0;
+    characterCount.textContent = text.length;
+  };
+  const saveLocal = () => localStorage.setItem(key, JSON.stringify({title: title.value, content: sanitizeLocalMarkup(editor.innerHTML), savedAt: Date.now()}));
+  const autosave = async () => {
+    syncContent(); saveLocal(); status.textContent = 'Saving...';
+    if (!navigator.onLine) { status.textContent = 'Saved locally'; return; }
+    const data = new FormData(form); data.set('action', 'save');
+    try {
+      const response = await fetch(location.href, {method: 'POST', body: data, headers: {'X-Requested-With': 'XMLHttpRequest'}});
+      if (!response.ok) throw new Error('Save failed');
+      const result = await response.json();
+      status.textContent = `Saved at ${result.updated_at}`;
+      localStorage.setItem(key, JSON.stringify({title: title.value, content: content.value, savedAt: result.updated_epoch * 1000}));
+    } catch (_) { status.textContent = 'Offline; saved on this device'; }
+  };
+  const scheduleSave = () => { status.textContent = 'Unsaved changes'; saveLocal(); clearTimeout(timer); timer = setTimeout(autosave, 1200); };
+  try {
+    const local = JSON.parse(localStorage.getItem(key) || 'null');
+    if (local && local.savedAt > Number(workspace.dataset.serverUpdated) * 1000) {
+      title.value = local.title; editor.innerHTML = sanitizeLocalMarkup(local.content); status.textContent = 'Recovered local draft';
+    }
+  } catch (_) { localStorage.removeItem(key); }
+  updateCounts();
+  editor.addEventListener('input', () => { updateCounts(); scheduleSave(); });
+  title.addEventListener('input', scheduleSave);
+  form.addEventListener('submit', syncContent);
+  document.querySelectorAll('[data-command]').forEach(button => button.addEventListener('click', () => { editor.focus(); document.execCommand(button.dataset.command); updateCounts(); scheduleSave(); }));
+  document.getElementById('block-format').addEventListener('change', event => { editor.focus(); document.execCommand('formatBlock', false, event.target.value); scheduleSave(); });
+  document.getElementById('fullscreen-toggle').addEventListener('click', () => document.body.classList.toggle('writer-fullscreen'));
+  window.addEventListener('online', autosave);
+})();
+</script>
+{% endblock %}

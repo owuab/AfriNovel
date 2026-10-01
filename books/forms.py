@@ -3,7 +3,7 @@ User-facing forms for profile management and other user interactions
 """
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import UserProfile
+from .models import Book, UserProfile
 
 
 User = get_user_model()
@@ -58,3 +58,26 @@ class ProfileEditForm(forms.ModelForm):
             cleaned_data['avatar_url'] = ''
         
         return cleaned_data
+
+
+class WriterBookForm(forms.ModelForm):
+    cover = forms.ImageField(required=False)
+    original_work = forms.BooleanField(required=True)
+
+    class Meta:
+        model = Book
+        fields = [
+            'title', 'subtitle', 'summary', 'genres', 'subgenre', 'tags',
+            'language', 'content_rating', 'novel_status',
+        ]
+        widgets = {
+            'summary': forms.Textarea(attrs={'rows': 5}),
+            'genres': forms.SelectMultiple(attrs={'size': 5}),
+            'tags': forms.TextInput(attrs={'placeholder': 'family, folklore, adventure'}),
+        }
+
+    def clean_cover(self):
+        cover = self.cleaned_data.get('cover')
+        if cover and cover.size > 10 * 1024 * 1024:
+            raise forms.ValidationError('Cover images must be 10 MB or smaller.')
+        return cover

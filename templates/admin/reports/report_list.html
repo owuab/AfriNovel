@@ -251,10 +251,21 @@
         <div class="reported-user-info">
             <div class="info-label">👤 Reported User</div>
             <div class="info-value">
-                <strong>{{ report.reported_user.username }}</strong>
-                <span style="color: #718096;">({{ report.reported_user.email }})</span>
+                {% if report.reported_user %}<strong>{{ report.reported_user.username }}</strong>
+                <span style="color: #718096;">({{ report.reported_user.email }})</span>{% else %}<span>Unknown or imported author</span>{% endif %}
             </div>
         </div>
+
+        {% if report.book or report.chapter or report.post %}
+        <div class="reporter-info">
+            <div class="info-label">Reported Content</div>
+            <div class="info-value">
+                {% if report.chapter %}Chapter {{ report.chapter.chapter_number }}: {{ report.chapter.title }}{% endif %}
+                {% if report.book %}{% if report.chapter %} · {% endif %}Book: {{ report.book.title }}{% endif %}
+                {% if report.post %}Post #{{ report.post_id }}{% endif %}
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Report Description -->
         <div>

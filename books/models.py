@@ -119,12 +119,31 @@ class Book(models.Model):
         (HIATUS, 'Hiatus'),
     ]
 
+    CONTENT_RATING_CHOICES = [
+        ('everyone', 'Everyone'),
+        ('teen', 'Teen'),
+        ('mature', 'Mature'),
+    ]
+
     title = models.CharField(max_length=200)
+    subtitle = models.CharField(max_length=240, blank=True)
     slug = models.SlugField(unique=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='authored_books',
+        db_index=True,
+    )
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
     translator = models.CharField(max_length=200, blank=True, help_text='Translator name')
     licensor = models.CharField(max_length=200, blank=True, help_text='Publisher/licensor name')
     language = models.CharField(max_length=50, default='English', help_text='Original language')
+    subgenre = models.CharField(max_length=100, blank=True)
+    content_rating = models.CharField(max_length=16, choices=CONTENT_RATING_CHOICES, default='teen')
+    tags = models.CharField(max_length=500, blank=True, help_text='Comma-separated discovery tags')
+    rights_confirmed = models.BooleanField(default=False)
     summary = models.TextField()
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     cover_url = models.URLField(max_length=1000, blank=True)
@@ -136,6 +155,7 @@ class Book(models.Model):
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
     genres = models.ManyToManyField(Genre, related_name='books')
 
     class Meta:
@@ -150,8 +170,9 @@ class Book(models.Model):
     def get_reader_url(self):
         """Return the appropriate reader URL for this book (wuxiaworld-style direct reading)"""
         # Prioritize chapter detail system for books with chapters
-        if self.chapters.exists():
-            first_chapter = self.chapters.first()
+        public_chapters = self.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED])
+        if public_chapters.exists():
+            first_chapter = public_chapters.first()
             if first_chapter:
                 return reverse('chapter_detail', args=[self.slug, first_chapter.chapter_number])
         # Fall back to other reader systems
@@ -179,7 +200,7 @@ class Book(models.Model):
 
     @property
     def chapter_count(self):
-        return self.chapters.count()
+        return self.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED]).count()
 
     @property
     def review_count(self):
@@ -188,11 +209,17 @@ class Book(models.Model):
 
 class Chapter(models.Model):
     """Individual chapters for web novels"""
+    DRAFT = 'draft'
+    PUBLISHED = 'published'
+    COMPLETED = 'completed'
+    STATUS_CHOICES = [(DRAFT, 'Draft'), (PUBLISHED, 'Published'), (COMPLETED, 'Completed')]
+
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='chapters')
     chapter_number = models.PositiveIntegerField()
     title = models.CharField(max_length=300)
     slug = models.SlugField(max_length=300)
     content = models.TextField(blank=True, help_text='Chapter content')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=PUBLISHED, db_index=True)
     published_date = models.DateTimeField(null=True, blank=True)
     is_free = models.BooleanField(default=True, help_text='Free to read without subscription')
     is_locked = models.BooleanField(default=False, help_text='Locked for premium users')
@@ -207,6 +234,7 @@ class Chapter(models.Model):
         indexes = [
             models.Index(fields=['book', 'chapter_number']),
             models.Index(fields=['book', 'is_free']),
+            models.Index(fields=['book', 'status', 'chapter_number']),
         ]
 
     def __str__(self):
@@ -758,12 +786,19 @@ class Notification(models.Model):
     REPOST = 'repost'
     RECOMMENDATION = 'recommendation'
     MENTION = 'mention'
-    TYPES = [(FOLLOW, 'Follow'), (LIKE, 'Like'), (COMMENT, 'Comment'), (REPOST, 'Repost'), (RECOMMENDATION, 'Recommendation'), (MENTION, 'Mention')]
+    BOOK_PUBLISHED = 'book_published'
+    CHAPTER_PUBLISHED = 'chapter_published'
+    TYPES = [
+        (FOLLOW, 'Follow'), (LIKE, 'Like'), (COMMENT, 'Comment'),
+        (REPOST, 'Repost'), (RECOMMENDATION, 'Recommendation'), (MENTION, 'Mention'),
+        (BOOK_PUBLISHED, 'Book published'), (CHAPTER_PUBLISHED, 'Chapter published'),
+    ]
 
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_notifications')
     notification_type = models.CharField(max_length=24, choices=TYPES)
     post = models.ForeignKey(SocialPost, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     message = models.CharField(max_length=280, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -814,6 +849,8 @@ class ContentReport(models.Model):
 
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reports_created')
     post = models.ForeignKey(SocialPost, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
+    book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True, blank=True, related_name='content_reports')
+    chapter = models.ForeignKey(Chapter, on_delete=models.SET_NULL, null=True, blank=True, related_name='content_reports')
     reported_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='reports_received')
     reason = models.CharField(max_length=24, choices=REASONS)
     details = models.TextField(blank=True)

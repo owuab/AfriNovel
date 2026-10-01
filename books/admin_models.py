@@ -168,8 +168,32 @@ class BookApprovalStatus(models.Model):
         self.reviewed_at = timezone.now()
         self.feedback = feedback
         self.book.status = 'published'
+        self.book.published_at = timezone.now()
         self.save()
-        self.book.save()
+        self.book.save(update_fields=['status', 'published_at', 'updated_at'])
+        from .models import Chapter, Notification
+
+        now = timezone.now()
+        first_chapter = self.book.chapters.filter(status=Chapter.DRAFT).order_by('chapter_number').first()
+        if first_chapter:
+            first_chapter.status = Chapter.PUBLISHED
+            first_chapter.published_date = now
+            first_chapter.save(update_fields=['status', 'published_date', 'updated_at'])
+        recipients = set(self.book.author.followers.values_list('follower_id', flat=True))
+        if self.book.owner_id:
+            recipients.add(self.book.owner_id)
+            recipients.update(self.book.owner.follower_users.values_list('follower_id', flat=True))
+        recipients.discard(admin_user.pk)
+        Notification.objects.bulk_create([
+            Notification(
+                recipient_id=recipient_id,
+                actor=admin_user,
+                notification_type=Notification.BOOK_PUBLISHED,
+                book=self.book,
+                message=f'{self.book.title} is now published.',
+            )
+            for recipient_id in recipients
+        ])
     
     def reject(self, admin_user, reason=''):
         """Reject the book"""

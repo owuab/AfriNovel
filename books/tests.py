@@ -15,9 +15,9 @@ from allauth.core.exceptions import ImmediateHttpResponse
 from .models import (
     AuthenticationEvent, Author, Book, CatalogBook, CatalogCategory, ContentReport, Genre, Notification,
     PostComment, PostLike, Permission, ReadingProgress, Review, RolePermission,
-    SocialPost, UserBookshelf, ReadingList, UserFollow, BookUpload,
+    SocialPost, UserBookshelf, ReadingList, UserFollow, BookUpload, Chapter,
 )
-from .admin_models import AdminAuditLog, AdminRole, BookApprovalStatus
+from .admin_models import AdminAuditLog, AdminRole, BookApprovalStatus, UserSuspension
 from .admin_utilities import PermissionService
 from .services import CatalogService, NormalizedBook
 from .social_auth import BookClubSocialAccountAdapter
@@ -73,6 +73,12 @@ class HomePageTests(TestCase):
     def test_home_page_returns_200(self):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
+
+    def test_rankings_page_renders_all_ranking_aggregates(self):
+        for ranking_type in ('rating', 'reviews', 'trending'):
+            with self.subTest(ranking_type=ranking_type):
+                response = self.client.get(reverse('rankings'), {'type': ranking_type})
+                self.assertEqual(response.status_code, 200)
 
     def test_home_page_has_book_search_form(self):
         response = self.client.get(reverse('home'))
@@ -878,5 +884,150 @@ class BookUploadApprovalTests(TestCase):
 
         self.assertRedirects(response, reverse('admin_panel:book-approval', args=[book.id]))
         self.assertEqual(BookApprovalStatus.objects.get(book=book).status, BookApprovalStatus.APPROVED)
+
+
+class WriterWorkspaceTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(username='story-writer', password='testpass123')
+        self.other_user = get_user_model().objects.create_user(username='other-writer', password='testpass123')
+        self.admin = get_user_model().objects.create_user(username='story-moderator', password='testpass123', is_staff=True)
+        self.author = Author.objects.create(name=self.user.username)
+        self.genre = Genre.objects.create(name='Speculative Fiction')
+        self.book = Book.objects.create(
+            title='The River Remembers',
+            slug='the-river-remembers',
+            owner=self.user,
+            author=self.author,
+            summary='A story of memory and return.',
+            status=Book.DRAFT,
+        )
+        self.chapter = Chapter.objects.create(
+            book=self.book, chapter_number=1, title='First Light', slug='first-light', status=Chapter.DRAFT,
+        )
+
+    def test_create_book_requires_rights_confirmation_and_opens_editor(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('writer_book_create'), {
+            'title': 'New Story',
+            'subtitle': 'A beginning',
+            'summary': 'A newly created story.',
+            'genres': [self.genre.pk],
+            'language': 'English',
+            'content_rating': 'teen',
+            'novel_status': Book.ONGOING,
+            'original_work': 'on',
+        })
+        story = Book.objects.get(title='New Story')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(story.owner, self.user)
+        self.assertTrue(story.rights_confirmed)
+        self.assertEqual(story.status, Book.DRAFT)
+        self.assertTrue(story.chapters.filter(status=Chapter.DRAFT).exists())
+        self.assertIn('/dashboard/writer/books/', response['Location'])
+
+    def test_chapter_autosave_sanitizes_markup_and_updates_counts(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse('writer_chapter_editor', args=[self.book.pk, self.chapter.pk]),
+            {'action': 'save', 'title': 'First Light', 'content': '<p>Hello <strong>world</strong></p><script>alert(1)</script>'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.chapter.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('<script>', self.chapter.content)
+        self.assertIn('<strong>world</strong>', self.chapter.content)
+        self.assertEqual(self.chapter.word_count, 3)
+
+    def test_other_user_cannot_edit_owned_book_or_chapter(self):
+        self.client.force_login(self.other_user)
+        book_response = self.client.get(reverse('writer_book_edit', args=[self.book.pk]))
+        chapter_response = self.client.get(reverse('writer_chapter_editor', args=[self.book.pk, self.chapter.pk]))
+        self.assertEqual(book_response.status_code, 404)
+        self.assertEqual(chapter_response.status_code, 404)
+
+    def test_public_reader_hides_draft_chapters(self):
+        self.book.status = Book.PUBLISHED
+        self.book.save(update_fields=['status'])
+        response = self.client.get(reverse('chapter_detail', args=[self.book.slug, self.chapter.chapter_number]))
+        self.assertEqual(response.status_code, 404)
+        self.chapter.status = Chapter.PUBLISHED
+        self.chapter.save(update_fields=['status'])
+        response = self.client.get(reverse('chapter_detail', args=[self.book.slug, self.chapter.chapter_number]))
+        self.assertEqual(response.status_code, 200)
+
+    def test_moderation_approval_publishes_only_first_draft_chapter(self):
+        second_chapter = Chapter.objects.create(
+            book=self.book, chapter_number=2, title='Next Day', slug='next-day', status=Chapter.DRAFT,
+        )
+        approval = BookApprovalStatus.objects.create(book=self.book)
+        approval.approve(self.admin)
+        self.chapter.refresh_from_db()
+        second_chapter.refresh_from_db()
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.status, Book.PUBLISHED)
+        self.assertEqual(self.chapter.status, Chapter.PUBLISHED)
+        self.assertEqual(second_chapter.status, Chapter.DRAFT)
+
+    def test_reader_can_report_a_published_chapter(self):
+        self.book.status = Book.PUBLISHED
+        self.book.save(update_fields=['status'])
+        self.chapter.status = Chapter.PUBLISHED
+        self.chapter.save(update_fields=['status'])
+        self.client.force_login(self.other_user)
+        response = self.client.post(
+            reverse('report_chapter', args=[self.book.slug, self.chapter.chapter_number]),
+            {'reason': ContentReport.COPYRIGHT, 'details': 'This chapter uses copyrighted text without permission.'},
+        )
+        report = ContentReport.objects.get(reporter=self.other_user)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(report.book, self.book)
+        self.assertEqual(report.chapter, self.chapter)
+        self.assertEqual(report.reported_user, self.user)
+
+    @patch('books.views.AdminNotificationManager.notify_pending_approval')
+    def test_book_submission_enters_moderation_before_publication(self, notify_admin):
+        self.book.rights_confirmed = True
+        self.book.save(update_fields=['rights_confirmed'])
+        self.chapter.content = '<p>A complete opening chapter.</p>'
+        self.chapter.word_count = 4
+        self.chapter.save(update_fields=['content', 'word_count'])
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('writer_submit_book', args=[self.book.pk]), {'rules_confirmed': 'on'})
+        self.assertRedirects(response, reverse('writer_dashboard'))
+        self.assertEqual(BookApprovalStatus.objects.get(book=self.book).status, BookApprovalStatus.PENDING)
+        self.assertEqual(Book.objects.get(pk=self.book.pk).status, Book.DRAFT)
+        notify_admin.assert_called_once_with()
+
+    def test_suspended_writer_cannot_submit_for_review(self):
+        UserSuspension.objects.create(
+            user=self.user,
+            suspended_by=self.admin,
+            suspension_type=UserSuspension.TEMPORARY,
+            reason=UserSuspension.OTHER,
+            description='Publishing privileges suspended for a test.',
+        )
+        self.client.force_login(self.user)
+        self.client.post(reverse('writer_submit_book', args=[self.book.pk]), {'rules_confirmed': 'on'})
+        self.assertFalse(BookApprovalStatus.objects.filter(book=self.book).exists())
+
+    @patch('books.views.AdminNotificationManager.notify_pending_approval')
+    def test_unpublished_approved_book_can_reenter_review(self, notify_admin):
+        self.book.rights_confirmed = True
+        self.book.save(update_fields=['rights_confirmed'])
+        self.chapter.word_count = 2
+        self.chapter.save(update_fields=['word_count'])
+        BookApprovalStatus.objects.create(book=self.book, status=BookApprovalStatus.APPROVED)
+        self.client.force_login(self.user)
+        self.client.post(reverse('writer_submit_book', args=[self.book.pk]), {'rules_confirmed': 'on'})
+        self.assertEqual(BookApprovalStatus.objects.get(book=self.book).status, BookApprovalStatus.PENDING)
+        notify_admin.assert_called_once_with()
+
+    def test_archived_book_can_be_restored(self):
+        self.book.status = Book.ARCHIVED
+        self.book.save(update_fields=['status'])
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('writer_book_action', args=[self.book.pk, 'restore']))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Book.objects.get(pk=self.book.pk).status, Book.DRAFT)
 
 

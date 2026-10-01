@@ -2,16 +2,20 @@ from django.contrib import messages
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from datetime import timedelta
+from django.db import transaction
 from django.utils import timezone
+import bleach
 import json
 import zipfile
 from pathlib import Path
-from .forms import ProfileEditForm
+from html.parser import HTMLParser
+from .forms import ProfileEditForm, WriterBookForm
+from .admin_forms import ContentReportForm
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Sum
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -24,10 +28,10 @@ from .models import (
     Author, AuthorFollow, Bookmark, Book, CatalogBook, CatalogCategory, CatalogLibraryEntry, Genre,
     Highlight, ReadingList, ReadingNote, ReadingProgress, Review, ReviewComment,
     SearchHistory, UserBookshelf, AuthenticationEvent,
-    Notification, PostComment, PostLike, BookUpload,
+    Notification, PostComment, PostLike, BookUpload, ContentReport,
     PostRepost, SavedPost, SocialPost, UserBlock, UserFollow, UserMute, UserProfile, Chapter,
 )
-from .admin_models import BookApprovalStatus
+from .admin_models import BookApprovalStatus, UserSuspension
 from .admin_utilities import AdminNotificationManager
 from .social_auth import BookClubRegistrationForm, EmailOrUsernameAuthenticationForm
 from .services import CatalogService, OpenLibraryProvider, ProviderUnavailable, fetch_reader_text, fetch_uploaded_book_sections, fetch_uploaded_book_text, split_reader_sections
@@ -279,7 +283,9 @@ def book_detail(request, slug):
             and book.approval_status.status == BookApprovalStatus.APPROVED
         ),
         'can_read_in_app': catalog_book and catalog_book.can_read_in_app if catalog_book else False,
-        'first_chapter': book.chapters.first(),
+        'first_chapter': book.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED]).first(),
+        'public_chapters': book.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED]),
+        'report_reasons': ContentReport.REASONS,
     }
     return render(request, 'books/book_detail.html', context)
 
@@ -341,21 +347,24 @@ def chapter_detail(request, slug, chapter_number):
         Chapter,
         book=book,
         chapter_number=chapter_number,
+        status__in=[Chapter.PUBLISHED, Chapter.COMPLETED],
     )
     
     # Get previous and next chapters
     previous_chapter = Chapter.objects.filter(
         book=book,
-        chapter_number__lt=chapter_number
+        chapter_number__lt=chapter_number,
+        status__in=[Chapter.PUBLISHED, Chapter.COMPLETED],
     ).order_by('-chapter_number').first()
     
     next_chapter = Chapter.objects.filter(
         book=book,
-        chapter_number__gt=chapter_number
+        chapter_number__gt=chapter_number,
+        status__in=[Chapter.PUBLISHED, Chapter.COMPLETED],
     ).order_by('chapter_number').first()
     
     # Get all chapters for the chapter list
-    all_chapters = book.chapters.all().order_by('chapter_number')
+    all_chapters = book.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED]).order_by('chapter_number')
     
     # Increment chapter view count
     Chapter.objects.filter(pk=chapter.pk).update(view_count=F('view_count') + 1)
@@ -376,10 +385,11 @@ def chapter_detail(request, slug, chapter_number):
         'book': book,
         'chapter': chapter,
         'chapter_number': chapter_number,
-        'content': chapter.content,
+        'content': _sanitize_chapter_content(chapter.content),
         'previous_chapter': previous_chapter,
         'next_chapter': next_chapter,
         'all_chapters': all_chapters,
+        'report_reasons': ContentReport.REASONS,
     }
     
     return render(request, 'books/chapter_detail.html', context)
@@ -582,8 +592,11 @@ def social_profile(request, username, tab='posts'):
         profile.refresh_from_db()
     following = request.user.is_authenticated and UserFollow.objects.filter(follower=request.user, followed=profile_user).exists()
     posts = SocialPost.objects.filter(author=profile_user, hidden=False).select_related('book', 'catalog_book').annotate(like_count=Count('likes'), comment_count=Count('comments'))
-    context = {'profile_user': profile_user, 'profile': profile, 'tab': tab, 'is_own_profile': own_profile, 'following': following,
+    authored_stories = Book.objects.filter(owner=profile_user, status=Book.PUBLISHED).select_related('author').order_by('-published_at', '-created_at')
+    context = {'profile_user': profile_user, 'profile': profile, 'tab': tab, 'is_own_profile': own_profile, 'following': following, 'is_following': following,
                'followers_count': profile_user.follower_users.count(), 'following_count': profile_user.following_users.count(),
+               'published_stories': Paginator(authored_stories, 12).get_page(request.GET.get('page')),
+               'author_reads': authored_stories.aggregate(total=Sum('view_count'))['total'] or 0,
                'books_read_count': profile_user.bookshelf.filter(status=UserBookshelf.READ).count(), 'posts': posts[:30],
                'reviews': Review.objects.filter(user=profile_user).select_related('book')[:30],
                'books': profile_user.bookshelf.select_related('book').filter(status__in=[UserBookshelf.READ, UserBookshelf.CURRENTLY_READING])[:30]}
@@ -651,18 +664,310 @@ def saved_content(request):
     return render(request, 'books/saved_content.html', {'posts': SavedPost.objects.filter(user=request.user).select_related('post__author', 'post__book')})
 
 
+@login_required
 def writer_dashboard(request):
+    books = Book.objects.filter(owner=request.user).select_related('author').prefetch_related('genres').annotate(
+        chapters_total=Count('chapters', distinct=True),
+        saves_total=Count('on_shelves', distinct=True),
+    )
+    drafts = books.filter(status=Book.DRAFT).order_by('-updated_at')
+    published = books.filter(status=Book.PUBLISHED).order_by('-updated_at')
+    books_page = Paginator(books.order_by('-updated_at'), 20).get_page(request.GET.get('page'))
     context = {
-        'drafts': [
-            {'title': 'The Last Orchard', 'status': 'Draft'},
-            {'title': 'Midnight Essays', 'status': 'Editing'},
-        ],
-        'published': [
-            {'title': 'The Quiet Horizon', 'reads': 1240},
-            {'title': 'Letters of a New Dawn', 'reads': 980},
-        ],
+        'books': books_page,
+        'books_page': books_page,
+        'book_count': books.count(),
+        'drafts': drafts,
+        'published': published,
+        'draft_count': drafts.count(),
+        'published_count': published.count(),
+        'completed_count': books.filter(novel_status=Book.COMPLETED).count(),
+        'total_views': books.aggregate(total=Sum('view_count'))['total'] or 0,
+        'recent_chapters': Chapter.objects.filter(book__owner=request.user).select_related('book').order_by('-updated_at')[:8],
     }
     return render(request, 'books/writer_dashboard.html', context)
+
+
+def _writer_slug(title):
+    base_slug = slugify(title) or 'untitled-story'
+    slug = base_slug
+    suffix = 2
+    while Book.objects.filter(slug=slug).exists():
+        slug = f'{base_slug}-{suffix}'
+        suffix += 1
+    return slug
+
+
+def _writer_cover_upload(book, user, uploaded_file):
+    if not uploaded_file:
+        return
+    book.uploads.filter(kind=BookUpload.COVER).delete()
+    BookUpload.objects.create(
+        book=book,
+        uploaded_by=user,
+        file=uploaded_file,
+        kind=BookUpload.COVER,
+        original_filename=uploaded_file.name[:255],
+        file_size=uploaded_file.size,
+        content_type=getattr(uploaded_file, 'content_type', '')[:120],
+        status=BookUpload.READY,
+    )
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def writer_book_create(request, book_id=None):
+    book = get_object_or_404(Book, pk=book_id, owner=request.user) if book_id else None
+    form = WriterBookForm(request.POST or None, request.FILES or None, instance=book)
+    if request.method == 'POST' and form.is_valid():
+        story = form.save(commit=False)
+        story.owner = request.user
+        story.rights_confirmed = True
+        author_name = request.user.social_profile.display_name if hasattr(request.user, 'social_profile') else ''
+        author_name = author_name or request.user.get_full_name() or request.user.username
+        story.author, _ = Author.objects.get_or_create(name=author_name)
+        if not book:
+            story.slug = _writer_slug(story.title)
+            story.status = Book.DRAFT
+        story.save()
+        form.save_m2m()
+        _writer_cover_upload(story, request.user, form.cleaned_data.get('cover'))
+        if not book:
+            chapter = Chapter.objects.create(
+                book=story, chapter_number=1, title='Chapter 1',
+                slug='chapter-1', status=Chapter.DRAFT,
+            )
+            return redirect('writer_chapter_editor', book_id=story.pk, chapter_id=chapter.pk)
+        messages.success(request, 'Book details saved.')
+        return redirect('writer_dashboard')
+    return render(request, 'books/writer_book_form.html', {'form': form, 'book': book})
+
+
+def _sanitize_chapter_content(content):
+    return bleach.clean(
+        content,
+        tags=['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h1', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'li', 'div', 'span'],
+        attributes=lambda tag, name, value: name == 'class' and value in {
+            'align-left', 'align-center', 'align-right', 'align-justify',
+        },
+        strip=True,
+    )
+
+
+def _chapter_word_count(content):
+    class TextExtractor(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.parts = []
+
+        def handle_starttag(self, tag, attrs):
+            if tag in {'p', 'br', 'div', 'h1', 'h2', 'h3', 'blockquote', 'li'}:
+                self.parts.append(' ')
+
+        def handle_endtag(self, tag):
+            if tag in {'p', 'div', 'h1', 'h2', 'h3', 'blockquote', 'li'}:
+                self.parts.append(' ')
+
+        def handle_data(self, data):
+            self.parts.append(data)
+
+    extractor = TextExtractor()
+    extractor.feed(content)
+    return len(' '.join(extractor.parts).split())
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def writer_chapter_editor(request, book_id, chapter_id=None):
+    book = get_object_or_404(Book, pk=book_id, owner=request.user)
+    if chapter_id:
+        chapter = get_object_or_404(Chapter, pk=chapter_id, book=book)
+    else:
+        last_number = book.chapters.order_by('-chapter_number').values_list('chapter_number', flat=True).first() or 0
+        chapter = Chapter.objects.create(
+            book=book,
+            chapter_number=last_number + 1,
+            title=f'Chapter {last_number + 1}',
+            slug=f'chapter-{last_number + 1}',
+            status=Chapter.DRAFT,
+        )
+        return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=chapter.pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'save')
+        if action == 'delete':
+            chapter.delete()
+            messages.success(request, 'Chapter deleted.')
+            return redirect('writer_dashboard')
+        if action == 'duplicate':
+            number = (book.chapters.order_by('-chapter_number').values_list('chapter_number', flat=True).first() or 0) + 1
+            duplicate = Chapter.objects.create(
+                book=book, chapter_number=number, title=f'{chapter.title} (copy)',
+                slug=f'{chapter.slug}-copy-{number}', content=chapter.content,
+                word_count=chapter.word_count, status=Chapter.DRAFT,
+            )
+            return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=duplicate.pk)
+
+        if action in {'move_up', 'move_down'}:
+            chapters = list(book.chapters.order_by('chapter_number', 'pk'))
+            current_index = next((index for index, item in enumerate(chapters) if item.pk == chapter.pk), -1)
+            target_index = current_index + (-1 if action == 'move_up' else 1)
+            if 0 <= target_index < len(chapters):
+                chapters[current_index], chapters[target_index] = chapters[target_index], chapters[current_index]
+                offset = len(chapters) + max(item.chapter_number for item in chapters) + 1
+                with transaction.atomic():
+                    for item in chapters:
+                        Chapter.objects.filter(pk=item.pk).update(chapter_number=item.chapter_number + offset)
+                    for number, item in enumerate(chapters, 1):
+                        Chapter.objects.filter(pk=item.pk).update(chapter_number=number)
+            return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=chapter.pk)
+
+        chapter.title = request.POST.get('title', '').strip()[:300] or f'Chapter {chapter.chapter_number}'
+        chapter.content = _sanitize_chapter_content(request.POST.get('content', ''))
+        chapter.word_count = _chapter_word_count(chapter.content)
+        if action == 'publish':
+            if _publishing_is_suspended(request.user):
+                messages.error(request, 'Publishing privileges are suspended for this account.')
+            elif book.status != Book.PUBLISHED:
+                messages.error(request, 'This book must be approved and published before its chapters can go live.')
+            else:
+                chapter.status = Chapter.PUBLISHED
+                chapter.published_date = timezone.now()
+                _notify_book_followers(book, request.user, chapter)
+                messages.success(request, 'Chapter published.')
+        elif action in {'unpublish', 'draft'}:
+            chapter.status = Chapter.DRAFT
+            if action == 'unpublish':
+                chapter.published_date = None
+        elif action == 'complete':
+            chapter.status = Chapter.COMPLETED
+            chapter.published_date = chapter.published_date or timezone.now()
+        chapter.save()
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'saved': True,
+                'updated_at': timezone.localtime(chapter.updated_at).strftime('%H:%M:%S'),
+                'updated_epoch': chapter.updated_at.timestamp(),
+            })
+        return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=chapter.pk)
+
+    return render(request, 'books/writer_editor.html', {
+        'book': book,
+        'chapter': chapter,
+        'chapter_content': _sanitize_chapter_content(chapter.content),
+        'chapters': book.chapters.order_by('chapter_number'),
+    })
+
+
+def _notify_book_followers(book, actor, chapter=None):
+    followers = set(book.owner.follower_users.values_list('follower_id', flat=True)) if book.owner_id else set()
+    followers.update(book.author.followers.values_list('follower_id', flat=True))
+    followers.discard(actor.pk)
+    notification_type = Notification.CHAPTER_PUBLISHED if chapter else Notification.BOOK_PUBLISHED
+    message = f'A new chapter of {book.title} is available.' if chapter else f'{book.title} is now published.'
+    Notification.objects.bulk_create([
+        Notification(recipient_id=user_id, actor=actor, notification_type=notification_type, book=book, message=message)
+        for user_id in followers
+    ])
+
+
+def _publishing_is_suspended(user):
+    return UserSuspension.objects.filter(user=user, is_active=True, unsuspended_at__isnull=True).exists()
+
+
+@login_required
+def writer_chapter_preview(request, book_id, chapter_id):
+    book = get_object_or_404(Book, pk=book_id, owner=request.user)
+    chapter = get_object_or_404(Chapter, pk=chapter_id, book=book)
+    return render(request, 'books/writer_preview.html', {
+        'book': book,
+        'chapter': chapter,
+        'chapter_content': _sanitize_chapter_content(chapter.content),
+    })
+
+
+@login_required
+@require_POST
+def writer_submit_book(request, book_id):
+    book = get_object_or_404(Book, pk=book_id, owner=request.user)
+    if _publishing_is_suspended(request.user):
+        messages.error(request, 'Publishing privileges are suspended for this account.')
+    elif request.POST.get('rules_confirmed') != 'on' or not book.rights_confirmed:
+        messages.error(request, 'Confirm the publishing rules and your rights to submit this book.')
+    elif book.status == Book.PUBLISHED:
+        messages.info(request, 'This book is already published. New chapters can be published from the editor.')
+    elif not book.chapters.filter(word_count__gt=0).exists():
+        messages.error(request, 'Write at least one chapter before submitting this book for review.')
+    else:
+        approval, created = BookApprovalStatus.objects.get_or_create(book=book)
+        if not created and approval.status != BookApprovalStatus.PENDING:
+            approval.status = BookApprovalStatus.PENDING
+            approval.submitted_at = timezone.now()
+            approval.save(update_fields=['status', 'submitted_at'])
+        if created or approval.status == BookApprovalStatus.PENDING:
+            AdminNotificationManager.notify_pending_approval()
+            messages.success(request, 'Your book has been submitted for review. It will be public after approval.')
+    return redirect('writer_dashboard')
+
+
+@login_required
+def writer_publish_preview(request, book_id):
+    book = get_object_or_404(Book.objects.select_related('author').prefetch_related('genres', 'chapters'), pk=book_id, owner=request.user)
+    return render(request, 'books/writer_publish_preview.html', {'book': book})
+
+
+@login_required
+@require_POST
+def report_book_content(request, slug, chapter_number=None):
+    book = get_object_or_404(Book, slug=slug, status=Book.PUBLISHED)
+    chapter = None
+    if chapter_number is not None:
+        chapter = get_object_or_404(
+            Chapter,
+            book=book,
+            chapter_number=chapter_number,
+            status__in=[Chapter.PUBLISHED, Chapter.COMPLETED],
+        )
+    if book.owner_id == request.user.pk:
+        return HttpResponseBadRequest('You cannot report your own work.')
+    form = ContentReportForm(request.POST)
+    if form.is_valid():
+        report = form.save(commit=False)
+        report.reporter = request.user
+        report.book = book
+        report.chapter = chapter
+        report.reported_user = book.owner
+        report.save()
+        AdminNotificationManager.notify_new_report(report)
+        messages.success(request, 'Thank you. Your report has been sent to the moderation team.')
+    else:
+        messages.error(request, 'Please provide a reason and at least 20 characters of detail.')
+    return redirect('book_detail' if chapter is None else 'chapter_detail', **({'slug': book.slug} if chapter is None else {'slug': book.slug, 'chapter_number': chapter.chapter_number}))
+
+
+@login_required
+@require_POST
+def writer_book_action(request, book_id, action):
+    book = get_object_or_404(Book, pk=book_id, owner=request.user)
+    if action == 'delete':
+        book.delete()
+        messages.success(request, 'Book deleted.')
+    elif action == 'archive':
+        book.status = Book.ARCHIVED
+        book.save(update_fields=['status', 'updated_at'])
+        messages.success(request, 'Book archived.')
+    elif action == 'unpublish':
+        book.status = Book.DRAFT
+        book.published_at = None
+        book.save(update_fields=['status', 'published_at', 'updated_at'])
+        messages.success(request, 'Book returned to drafts.')
+    elif action == 'restore':
+        book.status = Book.DRAFT
+        book.save(update_fields=['status', 'updated_at'])
+        messages.success(request, 'Book restored to drafts.')
+    else:
+        return HttpResponseBadRequest('Unknown book action.')
+    return redirect('writer_dashboard')
 
 
 @login_required
@@ -711,11 +1016,15 @@ def publish_book(request):
                 errors.append(f'{uploaded_file.name}: files must be 50 MB or smaller.')
         if errors:
             return render(request, 'books/publish_book.html', {'errors': errors, 'max_upload_size': max_upload_size})
+        if _publishing_is_suspended(request.user):
+            messages.error(request, 'Publishing privileges are suspended for this account.')
+            return redirect('writer_dashboard')
 
         author, _ = Author.objects.get_or_create(name=request.user.username)
         book = Book.objects.create(
             title=title,
             slug=slug,
+            owner=request.user,
             author=author,
             summary=summary,
             cover_color=cover_color,
@@ -828,7 +1137,7 @@ def disconnect_social_account(request, provider):
 def profile_view(request):
     user = request.user
     profile = _profile_for(user)
-    authored_books = Book.objects.filter(author__name=user.username)[:4]
+    authored_books = Book.objects.filter(owner=user, status=Book.PUBLISHED).order_by('-published_at', '-created_at')[:12]
     context = {
         'user': user,
         'profile': profile,
@@ -837,6 +1146,8 @@ def profile_view(request):
         'books_read_count': user.bookshelf.filter(status=UserBookshelf.READ).count(),
         'followers_count': user.follower_users.count(),
         'profile_view_count': profile.profile_views,
+        'published_book_count': Book.objects.filter(owner=user, status=Book.PUBLISHED).count(),
+        'author_reads': Book.objects.filter(owner=user, status=Book.PUBLISHED).aggregate(total=Sum('view_count'))['total'] or 0,
     }
     return render(request, 'books/profile.html', context)
 
@@ -1563,7 +1874,7 @@ def rankings(request):
     
     # Annotate with review count for rankings
     books = books.annotate(
-        review_count=Count('reviews', distinct=True),
+        ranking_review_count=Count('reviews', distinct=True),
         bookshelf_count=Count('on_shelves', distinct=True)
     )
     
@@ -1583,12 +1894,12 @@ def rankings(request):
     elif ranking_type == 'reads':
         books = books.order_by('-bookshelf_count', '-rating')
     elif ranking_type == 'reviews':
-        books = books.order_by('-review_count', '-rating')
+        books = books.order_by('-ranking_review_count', '-rating')
     elif ranking_type == 'trending':
         # Trending reflects real recent views, saves, and reviews.
         books = books.filter(
             Q(created_at__gte=timezone.now() - timedelta(days=30)) | Q(view_count__gt=0)
-        ).order_by('-view_count', '-bookshelf_count', '-review_count', '-created_at')
+        ).order_by('-view_count', '-bookshelf_count', '-ranking_review_count', '-created_at')
     else:
         books = books.order_by('-rating', '-created_at')
     

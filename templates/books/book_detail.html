@@ -415,21 +415,21 @@
           <a href="{% url 'catalogue_reader' catalog_book.pk %}" class="chapter-title">Read Complete Novel</a>
           <span class="chapter-date">Available Now</span>
         </li>
-      {% elif book.chapters.exists %}
-        {% for chapter in book.chapters.all|slice:":10" %}
+      {% elif public_chapters %}
+        {% for chapter in public_chapters|slice:":10" %}
           <li class="chapter-item">
             <span class="chapter-number">Chapter {{ chapter.chapter_number }}</span>
             <a href="{% url 'chapter_detail' book.slug chapter.chapter_number %}" class="chapter-title">{{ chapter.title }}</a>
-            <span class="chapter-date">{{ chapter.published_at|date:"M d, Y"|default:"N/A" }}</span>
+              <span class="chapter-date">{{ chapter.published_date|date:"M d, Y"|default:"N/A" }}</span>
           </li>
         {% endfor %}
       {% else %}
         <li class="chapter-item">No chapters available yet</li>
       {% endif %}
     </ul>
-    {% if book.chapters.count > 10 %}
+    {% if public_chapters|length > 10 %}
     <div style="text-align: center; margin-top: var(--spacing-4);">
-      <a href="#" class="button button-outline">View All {{ book.chapters.count }} Chapters</a>
+      <span>{{ public_chapters|length }} published chapters</span>
     </div>
     {% endif %}
   </section>
@@ -454,6 +454,19 @@
         <div style="color: var(--color-text-primary); font-weight: var(--font-weight-semibold);">{{ book.chapter_count }}</div>
       </div>
     </div>
+  </section>
+
+  <section class="content-section">
+    <details>
+      <summary>Report this book</summary>
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'report_book' book.slug %}" style="display:grid;gap:12px;max-width:640px;margin-top:16px;">
+          {% csrf_token %}<label>Reason <select name="reason" required>{% for value,label in report_reasons %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+          <label>Details <textarea name="details" minlength="20" required rows="4"></textarea></label>
+          <button class="button button-outline" type="submit">Send report</button>
+        </form>
+      {% else %}<p><a href="{% url 'login' %}">Sign in</a> to report content.</p>{% endif %}
+    </details>
   </section>
 
   <section class="content-section">

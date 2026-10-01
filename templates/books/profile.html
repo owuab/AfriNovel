@@ -182,16 +182,10 @@
         {% if user.is_staff or user.is_superuser %}
           <p><a class="admin-control-link" href="{% url 'admin_panel:dashboard' %}">Open admin control panel</a></p>
         {% endif %}
-        <p><a href="{% url 'profile_edit' %}" style="color: var(--color-accent); font-weight: 700;">Edit Profile</a></p>
+        <p><a href="{% url 'profile_edit' %}" style="color: var(--color-accent); font-weight: 700;">Edit Profile</a> · <a href="{% url 'writer_dashboard' %}" style="color: var(--color-accent); font-weight: 700;">Writer Dashboard</a></p>
         <div class="stats-grid">
-          <a class="stat-box" href="{% url 'social_profile_tab' user.username 'books' %}">
-            <div class="stat-label">Books read</div>
-            <div class="stat-value">{{ books_read_count }}</div>
-          </a>
-          <a class="stat-box" href="{% url 'social_profile_tab' user.username 'posts' %}">
-            <div class="stat-label">Views</div>
-            <div class="stat-value">{{ profile_view_count }}</div>
-          </a>
+          <div class="stat-box"><div class="stat-label">Published books</div><div class="stat-value">{{ published_book_count }}</div></div>
+          <div class="stat-box"><div class="stat-label">Author reads</div><div class="stat-value">{{ author_reads }}</div></div>
           <a class="stat-box" href="{% url 'followers_page' user.username %}">
             <div class="stat-label">Followers</div>
             <div class="stat-value">{{ followers_count }}</div>
@@ -207,7 +201,7 @@
       <div class="book-grid">
         {% for book in authored_books %}
           <div class="book-card">
-            <div class="cover" style="background: {{ book.cover_color }};"></div>
+            {% if book.cover_image_url %}<img class="cover" src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">{% else %}<div class="cover" style="background: {{ book.cover_color }};"></div>{% endif %}
             <div class="book-title">{{ book.title }}</div>
           </div>
         {% endfor %}
