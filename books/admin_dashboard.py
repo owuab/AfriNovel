@@ -1,7 +1,16 @@
 """Admin dashboard analytics and statistics"""
-from django.db.models import Count, Q, Avg
+from decimal import Decimal
+from datetime import timedelta
+
+from django.db.models import Count, Q, Avg, Sum
 from django.contrib.auth import get_user_model
-from .models import Genre, Author, Book, Review, UserBookshelf, ReadingList
+from django.utils import timezone
+from .models import (
+    Advertisement, AdClick, AdImpression, Chapter, Genre, Author, Book, Review,
+    UserBookshelf, ReadingList, MonetizationPayment, PremiumSubscription,
+    SubscriptionPlan, WriterEarning, WriterProfile, WriterWithdrawal,
+)
+from .admin_models import UserSuspension
 
 User = get_user_model()
 
@@ -123,6 +132,7 @@ def get_dashboard_stats():
             },
         }
         
+        stats['monetization'] = get_monetization_stats()
         return stats
     except Exception:
         # Return default stats if database queries fail
@@ -154,7 +164,93 @@ def get_dashboard_stats():
             'reading_lists': {
                 'total': 0, 'public': 0, 'private': 0,
             },
+            'monetization': get_monetization_stats(),
         }
+
+
+def get_monetization_stats():
+    """Calculate owner-facing monetary and ad metrics from verified ledgers."""
+    now = timezone.now()
+    active_subscriptions = PremiumSubscription.objects.filter(
+        status=PremiumSubscription.ACTIVE,
+        starts_at__lte=now,
+        ends_at__gt=now,
+    )
+    subscription_revenue = MonetizationPayment.objects.filter(
+        status=MonetizationPayment.SUCCESS,
+        currency='NGN',
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    pending_payments = MonetizationPayment.objects.filter(
+        status__in=[MonetizationPayment.PENDING, MonetizationPayment.INITIALIZED],
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    active_ads = Advertisement.objects.filter(is_active=True).filter(
+        Q(starts_at__isnull=True) | Q(starts_at__lte=now),
+        Q(ends_at__isnull=True) | Q(ends_at__gt=now),
+    )
+    impressions = AdImpression.objects.count()
+    clicks = AdClick.objects.count()
+    ad_revenue = sum(
+        (ad.estimated_revenue_per_click or Decimal('0')) * ad.click_count
+        for ad in Advertisement.objects.annotate(click_count=Count('clicks'))
+    )
+    paid_payouts = WriterWithdrawal.objects.filter(
+        status=WriterWithdrawal.PAID,
+        currency='NGN',
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    pending_payouts = WriterWithdrawal.objects.filter(
+        status__in=[WriterWithdrawal.PENDING, WriterWithdrawal.PROCESSING],
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    total_earnings = WriterEarning.objects.exclude(
+        status=WriterEarning.REVERSED,
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    approved_writers = WriterProfile.objects.filter(status=WriterProfile.APPROVED)
+    active_writers = approved_writers.filter(
+        user__premium_subscriptions__status=PremiumSubscription.ACTIVE,
+        user__premium_subscriptions__starts_at__lte=now,
+        user__premium_subscriptions__ends_at__gt=now,
+    ).distinct().count()
+    platform_revenue = subscription_revenue + ad_revenue - paid_payouts
+    return {
+        'users': {
+            'total': User.objects.count(),
+            'subscribers': active_subscriptions.values('user_id').distinct().count(),
+            'non_subscribers': max(User.objects.count() - active_subscriptions.values('user_id').distinct().count(), 0),
+            'active': User.objects.filter(is_active=True).count(),
+            'suspended': UserSuspension.objects.filter(is_active=True).values('user_id').distinct().count(),
+        },
+        'subscriptions': {
+            'active': active_subscriptions.count(),
+            'expired': PremiumSubscription.objects.filter(status=PremiumSubscription.EXPIRED).count(),
+            'monthly': active_subscriptions.filter(plan__billing_period=SubscriptionPlan.MONTHLY).count(),
+            'yearly': active_subscriptions.filter(plan__billing_period=SubscriptionPlan.YEARLY).count(),
+            'revenue': subscription_revenue,
+            'renewing_30_days': active_subscriptions.filter(ends_at__lte=now + timedelta(days=30), cancel_at_period_end=False).count(),
+        },
+        'writers': {
+            'total': WriterProfile.objects.count(),
+            'approved': approved_writers.count(),
+            'active': active_writers,
+            'published_books': Book.objects.filter(owner__writer_profile__status=WriterProfile.APPROVED, status=Book.PUBLISHED).distinct().count(),
+            'chapters': Chapter.objects.filter(book__owner__writer_profile__status=WriterProfile.APPROVED).count(),
+            'earnings': total_earnings,
+            'withdrawal_requests': WriterWithdrawal.objects.filter(status__in=[WriterWithdrawal.PENDING, WriterWithdrawal.PROCESSING]).count(),
+        },
+        'advertising': {
+            'active_ads': active_ads.count(),
+            'impressions': impressions,
+            'clicks': clicks,
+            'ctr': round(clicks / impressions * 100, 2) if impressions else 0,
+            'revenue': ad_revenue,
+        },
+        'finance': {
+            'subscription_revenue': subscription_revenue,
+            'advertising_revenue': ad_revenue,
+            'writer_payouts': paid_payouts,
+            'platform_revenue': platform_revenue,
+            'pending_payments': pending_payments + pending_payouts,
+            'completed_payments': subscription_revenue + paid_payouts,
+        },
+    }
 
 
 def get_recent_activity():

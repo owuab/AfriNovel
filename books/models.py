@@ -786,6 +786,16 @@ class Notification(models.Model):
     MENTION = 'mention'
     BOOK_PUBLISHED = 'book_published'
     CHAPTER_PUBLISHED = 'chapter_published'
+    SUBSCRIPTION = 'subscription'
+    PAYMENT_FAILED = 'payment_failed'
+    SUBSCRIPTION_EXPIRED = 'subscription_expired'
+    EARNING_CREATED = 'earning_created'
+    WITHDRAWAL_REQUESTED = 'withdrawal_requested'
+    WITHDRAWAL_APPROVED = 'withdrawal_approved'
+    WITHDRAWAL_REJECTED = 'withdrawal_rejected'
+    PAYMENT_RECEIVED = 'payment_received'
+    WRITER_APPROVED = 'writer_approved'
+    WRITER_REJECTED = 'writer_rejected'
     TYPES = [
         (FOLLOW, 'Follow'),
         (LIKE, 'Like'),
@@ -795,6 +805,16 @@ class Notification(models.Model):
         (MENTION, 'Mention'),
         (BOOK_PUBLISHED, 'Book published'),
         (CHAPTER_PUBLISHED, 'Chapter published'),
+        (SUBSCRIPTION, 'Subscription updated'),
+        (PAYMENT_FAILED, 'Payment failed'),
+        (SUBSCRIPTION_EXPIRED, 'Subscription expired'),
+        (EARNING_CREATED, 'Writer earning created'),
+        (WITHDRAWAL_REQUESTED, 'Withdrawal requested'),
+        (WITHDRAWAL_APPROVED, 'Withdrawal approved'),
+        (WITHDRAWAL_REJECTED, 'Withdrawal rejected'),
+        (PAYMENT_RECEIVED, 'Payment received'),
+        (WRITER_APPROVED, 'Writer application approved'),
+        (WRITER_REJECTED, 'Writer application rejected'),
     ]
 
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
@@ -1204,6 +1224,265 @@ class PaymentTransaction(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class SubscriptionPlan(models.Model):
+    MONTHLY = 'monthly'
+    YEARLY = 'yearly'
+    BILLING_PERIODS = [(MONTHLY, 'Monthly'), (YEARLY, 'Yearly')]
+
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True)
+    billing_period = models.CharField(max_length=16, choices=BILLING_PERIODS)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=8, choices=Subscription.CURRENCY_CHOICES, default=Subscription.NGN)
+    benefits = models.JSONField(default=list, blank=True)
+    provider_plan_code = models.CharField(max_length=100, blank=True, help_text='Optional Paystack plan code for automatic renewals.')
+    is_active = models.BooleanField(default=True, db_index=True)
+    display_order = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'price']
+
+    def __str__(self):
+        return f'{self.name} ({self.get_billing_period_display()})'
+
+
+class PremiumSubscription(models.Model):
+    PENDING = 'pending'
+    ACTIVE = 'active'
+    CANCELLED = 'cancelled'
+    EXPIRED = 'expired'
+    STATUSES = [(PENDING, 'Pending'), (ACTIVE, 'Active'), (CANCELLED, 'Cancelled'), (EXPIRED, 'Expired')]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='premium_subscriptions')
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.PROTECT, related_name='subscriptions')
+    status = models.CharField(max_length=16, choices=STATUSES, default=PENDING, db_index=True)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True)
+    cancel_at_period_end = models.BooleanField(default=False)
+    provider_subscription_code = models.CharField(max_length=120, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['user', 'status', '-ends_at'])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'], condition=models.Q(status='active'), name='unique_active_premium_subscription',
+            ),
+        ]
+
+    @property
+    def is_current(self):
+        now = timezone.now()
+        return self.status == self.ACTIVE and self.starts_at and self.starts_at <= now and self.ends_at and now < self.ends_at
+
+
+class MonetizationPayment(models.Model):
+    SUBSCRIPTION = 'subscription'
+    PURPOSES = [(SUBSCRIPTION, 'Subscription')]
+    INITIALIZED = 'initialized'
+    PENDING = 'pending'
+    SUCCESS = 'success'
+    FAILED = 'failed'
+    REFUNDED = 'refunded'
+    STATUSES = [(INITIALIZED, 'Initialized'), (PENDING, 'Pending'), (SUCCESS, 'Success'), (FAILED, 'Failed'), (REFUNDED, 'Refunded')]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='monetization_payments')
+    plan = models.ForeignKey(SubscriptionPlan, null=True, blank=True, on_delete=models.PROTECT, related_name='payments')
+    subscription = models.ForeignKey(PremiumSubscription, null=True, blank=True, on_delete=models.SET_NULL, related_name='payments')
+    purpose = models.CharField(max_length=24, choices=PURPOSES, default=SUBSCRIPTION)
+    provider = models.CharField(max_length=32, default='paystack')
+    reference = models.CharField(max_length=120, unique=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=8, default=Subscription.NGN)
+    status = models.CharField(max_length=16, choices=STATUSES, default=INITIALIZED, db_index=True)
+    checkout_url = models.URLField(max_length=1000, blank=True)
+    provider_reference = models.CharField(max_length=120, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['user', 'status', '-created_at'])]
+
+
+class WriterProfile(models.Model):
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    REJECTED = 'rejected'
+    SUSPENDED = 'suspended'
+    STATUSES = [(PENDING, 'Pending'), (APPROVED, 'Approved'), (REJECTED, 'Rejected'), (SUSPENDED, 'Suspended')]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='writer_profile')
+    pen_name = models.CharField(max_length=120)
+    bio = models.TextField(blank=True)
+    status = models.CharField(max_length=16, choices=STATUSES, default=PENDING, db_index=True)
+    payout_recipient_code = models.CharField(max_length=120, blank=True, help_text='Tokenized payout recipient stored by the configured provider.')
+    payout_account_name = models.CharField(max_length=120, blank=True)
+    payout_account_last4 = models.CharField(max_length=4, blank=True)
+    payout_bank_code = models.CharField(max_length=32, blank=True)
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='writer_profiles_reviewed')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.pen_name
+
+
+class MonetizationConfig(models.Model):
+    PER_READ = 'per_read'
+    ENGAGEMENT = 'read_engagement'
+    EARNING_FORMULAS = [(PER_READ, 'Per qualifying read'), (ENGAGEMENT, 'Read plus engagement bonus')]
+
+    earning_formula = models.CharField(max_length=24, choices=EARNING_FORMULAS, default=PER_READ)
+    earning_per_read = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    engagement_bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    minimum_read_seconds = models.PositiveSmallIntegerField(default=30)
+    minimum_withdrawal = models.DecimalField(max_digits=12, decimal_places=2, default=5000)
+    ad_frequency_cap = models.PositiveSmallIntegerField(default=3)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return 'Monetization settings'
+
+
+class ReaderSession(models.Model):
+    token = models.UUIDField(default=uuid4, unique=True, editable=False)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='reader_sessions')
+    chapter = models.ForeignKey(Chapter, null=True, blank=True, on_delete=models.CASCADE, related_name='reader_sessions')
+    reader = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='verified_reader_sessions')
+    identity_hash = models.CharField(max_length=64)
+    read_date = models.DateField(default=timezone.localdate)
+    started_at = models.DateTimeField(auto_now_add=True)
+    qualified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['chapter', 'identity_hash', 'read_date'], name='unique_daily_chapter_reader_session')]
+        indexes = [models.Index(fields=['book', 'qualified_at'])]
+
+
+class WriterEarning(models.Model):
+    PENDING = 'pending'
+    AVAILABLE = 'available'
+    WITHDRAWN = 'withdrawn'
+    REVERSED = 'reversed'
+    STATUSES = [(PENDING, 'Pending'), (AVAILABLE, 'Available'), (WITHDRAWN, 'Withdrawn'), (REVERSED, 'Reversed')]
+    QUALIFYING_READ = 'qualifying_read'
+    ENGAGEMENT = 'engagement'
+    ACTIVITY_TYPES = [(QUALIFYING_READ, 'Qualifying read'), (ENGAGEMENT, 'Engagement bonus')]
+
+    writer = models.ForeignKey(WriterProfile, on_delete=models.PROTECT, related_name='earnings')
+    book = models.ForeignKey(Book, on_delete=models.PROTECT, related_name='writer_earnings')
+    chapter = models.ForeignKey(Chapter, null=True, blank=True, on_delete=models.PROTECT, related_name='writer_earnings')
+    reader_session = models.OneToOneField(ReaderSession, null=True, blank=True, on_delete=models.PROTECT, related_name='earning')
+    activity_type = models.CharField(max_length=24, choices=ACTIVITY_TYPES, default=QUALIFYING_READ)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=8, default=Subscription.NGN)
+    status = models.CharField(max_length=16, choices=STATUSES, default=PENDING, db_index=True)
+    reference = models.UUIDField(default=uuid4, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    available_at = models.DateTimeField(null=True, blank=True)
+    withdrawn_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['writer', 'status', '-created_at'])]
+
+
+class WriterWithdrawal(models.Model):
+    PENDING = 'pending'
+    PROCESSING = 'processing'
+    PAID = 'paid'
+    REJECTED = 'rejected'
+    FAILED = 'failed'
+    STATUSES = [(PENDING, 'Pending'), (PROCESSING, 'Processing'), (PAID, 'Paid'), (REJECTED, 'Rejected'), (FAILED, 'Failed')]
+
+    writer = models.ForeignKey(WriterProfile, on_delete=models.PROTECT, related_name='withdrawals')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=8, default=Subscription.NGN)
+    status = models.CharField(max_length=16, choices=STATUSES, default=PENDING, db_index=True)
+    reference = models.UUIDField(default=uuid4, unique=True, editable=False)
+    provider_reference = models.CharField(max_length=120, blank=True)
+    failure_reason = models.TextField(blank=True)
+    processed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='writer_withdrawals_processed')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-requested_at']
+        indexes = [models.Index(fields=['status', '-requested_at'])]
+
+
+class WithdrawalAllocation(models.Model):
+    withdrawal = models.ForeignKey(WriterWithdrawal, on_delete=models.PROTECT, related_name='allocations')
+    earning = models.ForeignKey(WriterEarning, on_delete=models.PROTECT, related_name='withdrawal_allocations')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['withdrawal', 'earning'], name='unique_withdrawal_earning_allocation')]
+
+
+class Advertisement(models.Model):
+    BANNER = 'banner'
+    IN_APP = 'in_app'
+    INTERSTITIAL = 'interstitial'
+    SPONSORED = 'sponsored'
+    AD_TYPES = [(BANNER, 'Banner'), (IN_APP, 'In-app'), (INTERSTITIAL, 'Interstitial'), (SPONSORED, 'Sponsored content')]
+    SITE_BANNER = 'site_banner'
+    READER_INLINE = 'reader_inline'
+    HOME_FEATURED = 'home_featured'
+    PLACEMENTS = [(SITE_BANNER, 'Site banner'), (READER_INLINE, 'Reader inline'), (HOME_FEATURED, 'Home feature')]
+
+    title = models.CharField(max_length=180)
+    image = models.ImageField(upload_to='advertisements/', blank=True)
+    destination_url = models.URLField(max_length=1000)
+    ad_type = models.CharField(max_length=16, choices=AD_TYPES, default=BANNER)
+    placement = models.CharField(max_length=24, choices=PLACEMENTS, default=SITE_BANNER, db_index=True)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=False, db_index=True)
+    estimated_revenue_per_click = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+
+class AdImpression(models.Model):
+    ad = models.ForeignKey(Advertisement, on_delete=models.CASCADE, related_name='impressions')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='ad_impressions')
+    session_hash = models.CharField(max_length=64)
+    path = models.CharField(max_length=500)
+    impression_key = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['ad', '-created_at'])]
+
+
+class AdClick(models.Model):
+    ad = models.ForeignKey(Advertisement, on_delete=models.CASCADE, related_name='clicks')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='ad_clicks')
+    session_hash = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['ad', '-created_at'])]
 
 
 class ReadingChallenge(models.Model):

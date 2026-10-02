@@ -442,6 +442,7 @@
 
 {% block content %}
 <div class="homepage-container">
+  {% if home_featured_ad %}{% include "components/ad_placement.html" with ad=home_featured_ad %}{% endif %}
   <section class="premium-section homepage-search">
     <form id="homepage-search-form" class="search-bar" method="get" action="{% url 'search_books' %}">
       <label class="sr-only" for="homepage-search-input">Search books</label>

@@ -2,7 +2,30 @@
 {% block title %}{% if book %}Edit {{ book.title }}{% else %}Create a Book{% endif %} | AfriNovel{% endblock %}
 {% block extra_css %}
 <style>
-  .writer-form-page{max-width:820px;margin:42px auto 80px;padding:0 20px}.writer-form-page h1{margin:0 0 8px}.writer-form-page>p{color:var(--color-text-secondary);margin:0 0 28px}.writer-form{display:grid;gap:18px}.writer-form p{display:grid;gap:7px;margin:0}.writer-form label{font-weight:700}.writer-form input,.writer-form textarea,.writer-form select{width:100%;padding:11px 12px;border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-primary);border-radius:4px}.writer-form select[multiple]{min-height:130px}.writer-form input[type=checkbox]{width:auto}.writer-form .helptext{color:var(--color-text-secondary);font-size:.85rem}.writer-form .errorlist{color:#b43c35;margin:0;padding-left:20px}.writer-form .rights-field{display:flex;align-items:flex-start;gap:10px}.writer-form .rights-field label{font-weight:500}.writer-form-actions{display:flex;gap:12px;align-items:center;margin-top:8px}
+  .writer-form-page{max-width:820px;margin:42px auto 80px;padding:0 20px}.writer-form-page h1{margin:0 0 8px}.writer-form-page>p{color:var(--color-text-secondary);margin:0 0 28px}.writer-form{display:grid;gap:18px}.writer-form p{display:grid;gap:7px;margin:0}.writer-form label{font-weight:700}.writer-form input,.writer-form textarea,.writer-form select{width:100%;padding:11px 12px;border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-primary);border-radius:4px}.writer-form .helptext{color:var(--color-text-secondary);font-size:.85rem}.writer-form .errorlist{color:#b43c35;margin:0;padding-left:20px}.writer-form .rights-field{display:flex;align-items:center;gap:10px}.writer-form .rights-field label{font-weight:500;cursor:pointer}.writer-form-actions{display:flex;gap:12px;align-items:center;margin-top:8px}
+</style>
+<style>
+  .writer-form .writer-genre-select {
+    appearance: auto;
+    min-height: 46px;
+    cursor: pointer;
+  }
+
+  .writer-form input[type="checkbox"] {
+    appearance: auto;
+    -webkit-appearance: checkbox;
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    padding: 0;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  .writer-form .rights-field label {
+    line-height: 1.45;
+  }
 </style>
 {% endblock %}
 {% block content %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Writer Programme | AfriNovels{% endblock %}
+{% block extra_css %}
+<style>
+  .writer-program-page{max-width:760px;margin:46px auto 72px;padding:0 20px}.writer-program-page h1{font-family:var(--font-family-serif);color:var(--color-text-primary)}.writer-program-page>p{color:var(--color-text-secondary);line-height:1.7}.writer-program-status{padding:16px;margin:20px 0;border-left:4px solid var(--color-accent);background:var(--color-bg-secondary);color:var(--color-text-primary)}.writer-application-form{display:grid;gap:16px;margin-top:22px}.writer-application-form p{display:grid;gap:7px;margin:0}.writer-application-form input,.writer-application-form textarea{width:100%;padding:11px 12px;border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-primary);border-radius:4px}.writer-application-form label{font-weight:700;color:var(--color-text-primary)}
+</style>
+{% endblock %}
+{% block content %}
+<main class="writer-program-page">
+  <p class="eyebrow">WRITER PROGRAMME</p><h1>Write for AfriNovels</h1>
+  <p>Apply for writer approval to join the earnings programme. Your novels and drafts remain yours while your application is reviewed. Earnings are enabled only while your premium subscription is active.</p>
+  {% if writer_profile %}
+    <div class="writer-program-status">Application status: <strong>{{ writer_profile.get_status_display }}</strong>{% if writer_profile.reviewed_at %}<br>Reviewed {{ writer_profile.reviewed_at|date:"M j, Y" }}{% endif %}</div>
+  {% endif %}
+  {% if not writer_profile or writer_profile.status == 'rejected' or writer_profile.status == 'pending' %}
+    <form class="writer-application-form" method="post">{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">{% if writer_profile %}Resubmit application{% else %}Apply to the writer programme{% endif %}</button></form>
+  {% else %}<a class="button" href="{% url 'writer_dashboard' %}">Open writer dashboard</a>{% endif %}
+</main>
+{% endblock %}

@@ -246,6 +246,7 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'My Library')
 
     def test_writer_dashboard_returns_200(self):
+        self.client.force_login(self.user)
         response = self.client.get(reverse('writer_dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Drafts')
@@ -922,11 +923,20 @@ class WriterWorkspaceTests(TestCase):
             book=self.book, chapter_number=1, title='First Light', slug='first-light', status=Chapter.DRAFT,
         )
 
+    def test_book_form_uses_single_genre_dropdown_and_checkable_rights_control(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('writer_book_create'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="genres" class="writer-genre-select"')
+        self.assertContains(response, 'type="checkbox" name="original_work"')
+        self.assertNotContains(response, 'name="subtitle"')
+        self.assertNotContains(response, 'name="subgenre"')
+        self.assertNotContains(response, 'name="tags"')
+
     def test_create_book_requires_rights_confirmation_and_opens_editor(self):
         self.client.force_login(self.user)
         response = self.client.post(reverse('writer_book_create'), {
             'title': 'New Story',
-            'subtitle': 'A beginning',
             'summary': 'A newly created story.',
             'genres': [self.genre.pk],
             'language': 'English',
@@ -934,8 +944,9 @@ class WriterWorkspaceTests(TestCase):
             'novel_status': Book.ONGOING,
             'original_work': 'on',
         })
+        form_errors = response.context['form'].errors.as_json() if response.context else ''
+        self.assertEqual(response.status_code, 302, form_errors)
         story = Book.objects.get(title='New Story')
-        self.assertEqual(response.status_code, 302)
         self.assertEqual(story.owner, self.user)
         self.assertTrue(story.rights_confirmed)
         self.assertEqual(story.status, Book.DRAFT)

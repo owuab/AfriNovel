@@ -1,0 +1,7 @@
+<aside class="content-ad-placement" aria-label="Advertisement">
+  <span>Sponsored</span>
+  <a href="{% url 'ad_click' ad.pk %}" target="_blank" rel="sponsored noopener">
+    {% if ad.image %}<img src="{{ ad.image.url }}" alt="">{% endif %}
+    <strong>{{ ad.title }}</strong>
+  </a>
+</aside>

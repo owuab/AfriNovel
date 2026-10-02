@@ -448,6 +448,31 @@
 
 {% if stats %}
 
+<div class="stats-section">
+    <h3>Monetization & Financial Overview</h3>
+    <div class="dashboard-grid">
+        <div class="stat-card primary"><div class="stat-label">Active Subscribers</div><div class="stat-value">{{ stats.monetization.subscriptions.active }}</div><div class="stat-subtext">{{ stats.monetization.subscriptions.monthly }} monthly · {{ stats.monetization.subscriptions.yearly }} yearly</div></div>
+        <div class="stat-card success"><div class="stat-label">Subscription Revenue</div><div class="stat-value">₦{{ stats.monetization.finance.subscription_revenue|floatformat:2 }}</div><div class="stat-subtext">Verified payments only</div></div>
+        <div class="stat-card info"><div class="stat-label">Approved Writers</div><div class="stat-value">{{ stats.monetization.writers.approved }}</div><div class="stat-subtext">{{ stats.monetization.writers.active }} currently subscribed</div></div>
+        <div class="stat-card warning"><div class="stat-label">Published Writer Novels</div><div class="stat-value">{{ stats.monetization.writers.published_books }}</div><div class="stat-subtext">{{ stats.monetization.writers.chapters }} chapters</div></div>
+    </div>
+    <div class="dashboard-grid">
+        <div class="stat-card"><div class="stat-label">Writer Earnings</div><div class="stat-value">₦{{ stats.monetization.writers.earnings|floatformat:2 }}</div><div class="stat-subtext">{{ stats.monetization.writers.withdrawal_requests }} open withdrawal requests</div></div>
+        <div class="stat-card"><div class="stat-label">Ad Impressions / Clicks</div><div class="stat-value">{{ stats.monetization.advertising.impressions }} / {{ stats.monetization.advertising.clicks }}</div><div class="stat-subtext">CTR {{ stats.monetization.advertising.ctr }}%</div></div>
+        <div class="stat-card"><div class="stat-label">Estimated Ad Revenue</div><div class="stat-value">₦{{ stats.monetization.advertising.revenue|floatformat:2 }}</div><div class="stat-subtext">Configured value per click</div></div>
+        <div class="stat-card"><div class="stat-label">Platform Revenue</div><div class="stat-value">₦{{ stats.monetization.finance.platform_revenue|floatformat:2 }}</div><div class="stat-subtext">Subscriptions + ads − paid writer withdrawals</div></div>
+    </div>
+    <div class="chart-container">
+        <h4>Operations</h4>
+        <div class="metric-item"><span class="metric-label">Users</span><span class="metric-value">{{ stats.monetization.users.total }} total · {{ stats.monetization.users.subscribers }} subscribers · {{ stats.monetization.users.non_subscribers }} non-subscribers · {{ stats.monetization.users.suspended }} suspended</span></div>
+        <div class="metric-item"><span class="metric-label">Pending payments / payouts</span><span class="metric-value">₦{{ stats.monetization.finance.pending_payments|floatformat:2 }}</span></div>
+        <div class="metric-item"><span class="metric-label">Completed payments and payouts</span><span class="metric-value">₦{{ stats.monetization.finance.completed_payments|floatformat:2 }}</span></div>
+        <div class="metric-item"><span class="metric-label">Renewals due within 30 days</span><span class="metric-value">{{ stats.monetization.subscriptions.renewing_30_days }}</span></div>
+        <div class="metric-item"><span class="metric-label">Active advertisements</span><span class="metric-value">{{ stats.monetization.advertising.active_ads }}</span></div>
+        <div class="metric-item"><span class="metric-label">Manage monetization</span><span class="metric-value"><a href="/admin/books/subscriptionplan/">Plans</a> · <a href="/admin/books/monetizationconfig/">Earning and ad rules</a> · <a href="/admin/books/writerprofile/">Writer approvals</a> · <a href="/admin/books/writerwithdrawal/">Withdrawals</a> · <a href="/admin/books/advertisement/">Advertisements</a></span></div>
+    </div>
+</div>
+
 <!-- BOOKS SECTION -->
 <div class="stats-section">
     <h3>📚 Books</h3>

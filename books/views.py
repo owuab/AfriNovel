@@ -12,7 +12,7 @@ from .forms import CriticApplicationForm, CompetitionEntryForm, ProfileEditForm,
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Sum
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -29,11 +29,14 @@ from .models import (
     PostRepost, SavedPost, SocialPost, UserBlock, UserFollow, UserMute, UserProfile, Chapter,
     ContentReport, Promotion, Competition, CompetitionEntry, Award, CriticProfile, CriticApplication,
     BookRecommendation,
+    ReaderSession, WriterProfile, WriterWithdrawal,
 )
 from .admin_models import BookApprovalStatus, UserSuspension
 from .admin_utilities import AdminNotificationManager
 from .social_auth import BookClubRegistrationForm, EmailOrUsernameAuthenticationForm
 from .services import CatalogService, OpenLibraryProvider, ProviderUnavailable, fetch_reader_text, fetch_uploaded_book_sections, fetch_uploaded_book_text, split_reader_sections
+from .monetization import get_monetization_config, get_reader_session, subscription_dashboard_context, writer_balances
+from .monetization_forms import WithdrawalRequestForm
 
 
 def landing_page(request):
@@ -362,9 +365,7 @@ def chapter_detail(request, slug, chapter_number):
     # Get all chapters for the chapter list
     all_chapters = book.chapters.all().order_by('chapter_number')
     
-    # Increment chapter view count
-    Chapter.objects.filter(pk=chapter.pk).update(view_count=F('view_count') + 1)
-    chapter.refresh_from_db(fields=['view_count'])
+    reader_session = get_reader_session(request, book, chapter)
     
     # Handle reading progress for authenticated users
     if request.user.is_authenticated:
@@ -385,6 +386,8 @@ def chapter_detail(request, slug, chapter_number):
         'previous_chapter': previous_chapter,
         'next_chapter': next_chapter,
         'all_chapters': all_chapters,
+        'reader_session': reader_session,
+        'read_qualification_seconds': get_monetization_config().minimum_read_seconds,
     }
     
     return render(request, 'books/chapter_detail.html', context)
@@ -419,6 +422,7 @@ def reader_dashboard(request):
             'reading_stats': {'read': 0, 'currently_reading': 0, 'total': 0},
             'user': request.user,
         }
+    context.update(subscription_dashboard_context(request.user))
     return render(request, 'books/reader_dashboard.html', context)
 
 
@@ -741,6 +745,20 @@ def writer_dashboard(request):
         'total_views': total_views,
         'recent_chapters': recent_chapters,
     }
+    writer_profile = WriterProfile.objects.filter(user=request.user).first()
+    context['writer_profile'] = writer_profile
+    context['writer_balances'] = writer_balances(writer_profile) if writer_profile else {
+        'total': 0, 'pending': 0, 'available': 0, 'withdrawn': 0, 'reserved': 0,
+    }
+    context['writer_earnings'] = writer_profile.earnings.select_related('book', 'chapter')[:12] if writer_profile else []
+    context['writer_withdrawals'] = writer_profile.withdrawals.all()[:8] if writer_profile else []
+    context['payout_form'] = WithdrawalRequestForm()
+    context['total_chapters'] = Chapter.objects.filter(book__owner=request.user).count()
+    context['total_reads'] = Chapter.objects.filter(book__owner=request.user).aggregate(total=Sum('view_count'))['total'] or 0
+    context['total_readers'] = ReaderSession.objects.filter(
+        book__owner=request.user, qualified_at__isnull=False,
+    ).values('identity_hash').distinct().count()
+    context.update(subscription_dashboard_context(request.user))
     return render(request, 'books/writer_dashboard.html', context)
 
 

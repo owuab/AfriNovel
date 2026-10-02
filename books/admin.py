@@ -3,6 +3,7 @@ from django.contrib.admin.actions import delete_selected
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from django.utils.html import format_html
+from django.utils import timezone
 from django.db.models import Count, Q
 from django.urls import path, reverse
 from django.template.response import TemplateResponse
@@ -15,8 +16,13 @@ from .models import (
     ImportedBook, BookFile, ImportJob, ReadingBookmark, ReadingHighlight, BookUpload,
     Promotion, Competition, CompetitionEntry, Award, AwardCategory, AwardNominee,
     CriticProfile, CriticApplication, ReviewAssignment, CriticReview, CriticEarning,
+    Notification,
+    SubscriptionPlan, PremiumSubscription, MonetizationPayment, WriterProfile,
+    MonetizationConfig, ReaderSession, WriterEarning, WriterWithdrawal,
+    WithdrawalAllocation, Advertisement, AdImpression, AdClick,
 )
 from .admin_dashboard import get_dashboard_stats
+from .monetization import finalize_withdrawal, notify_user, submit_withdrawal
 
 User = get_user_model()
 
@@ -95,6 +101,136 @@ class BookClubAdminSite(admin.AdminSite):
             extra_context['dashboard_stats'] = {}
         
         return super().index(request, extra_context)
+
+
+class WriterProfileAdmin(admin.ModelAdmin):
+    list_display = ('pen_name', 'user', 'status', 'payout_account_last4', 'created_at', 'reviewed_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('pen_name', 'user__username', 'user__email')
+    readonly_fields = ('payout_recipient_code', 'payout_account_last4', 'created_at', 'updated_at', 'reviewed_at')
+    actions = ('approve_writers', 'reject_writers', 'suspend_writers')
+
+    @admin.action(description='Approve selected writer applications')
+    def approve_writers(self, request, queryset):
+        for profile in queryset:
+            profile.status = WriterProfile.APPROVED
+            profile.reviewed_by = request.user
+            profile.reviewed_at = timezone.now()
+            profile.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'updated_at'])
+            notify_user(profile.user, Notification.WRITER_APPROVED, 'Your writer programme application was approved.', request.user)
+        self.message_user(request, 'Selected writer applications approved.')
+
+    @admin.action(description='Reject selected writer applications')
+    def reject_writers(self, request, queryset):
+        for profile in queryset:
+            profile.status = WriterProfile.REJECTED
+            profile.reviewed_by = request.user
+            profile.reviewed_at = timezone.now()
+            profile.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'updated_at'])
+            notify_user(profile.user, Notification.WRITER_REJECTED, 'Your writer programme application was not approved.', request.user)
+        self.message_user(request, 'Selected writer applications rejected.')
+
+    @admin.action(description='Suspend selected writer profiles')
+    def suspend_writers(self, request, queryset):
+        queryset.update(status=WriterProfile.SUSPENDED, reviewed_by=request.user, reviewed_at=timezone.now())
+        self.message_user(request, 'Selected writer profiles suspended.')
+
+
+class WriterWithdrawalAdmin(admin.ModelAdmin):
+    list_display = ('reference', 'writer', 'amount', 'currency', 'status', 'requested_at', 'processed_at')
+    list_filter = ('status', 'currency', 'requested_at')
+    search_fields = ('reference', 'writer__pen_name', 'writer__user__username', 'provider_reference')
+    readonly_fields = ('writer', 'amount', 'currency', 'status', 'reference', 'provider_reference', 'requested_at', 'processed_at')
+    actions = ('initiate_paystack_transfers', 'mark_settled', 'reject_requests')
+
+    @admin.action(description='Initiate Paystack transfers')
+    def initiate_paystack_transfers(self, request, queryset):
+        processed = 0
+        for withdrawal in queryset:
+            try:
+                submit_withdrawal(withdrawal.pk, request.user)
+            except Exception as error:
+                self.message_user(request, f'{withdrawal.reference}: {error}', level='ERROR')
+            else:
+                processed += 1
+        if processed:
+            self.message_user(request, f'{processed} transfer(s) submitted to Paystack.')
+
+    @admin.action(description='Mark as paid after confirmed external settlement')
+    def mark_settled(self, request, queryset):
+        for withdrawal in queryset:
+            finalize_withdrawal(str(withdrawal.reference), True)
+        self.message_user(request, 'Selected withdrawals marked paid and earnings reconciled.')
+
+    @admin.action(description='Reject selected withdrawal requests')
+    def reject_requests(self, request, queryset):
+        for withdrawal in queryset.filter(status__in=[WriterWithdrawal.PENDING, WriterWithdrawal.PROCESSING]):
+            withdrawal.status = WriterWithdrawal.REJECTED
+            withdrawal.failure_reason = 'Rejected by platform administrator.'
+            withdrawal.processed_by = request.user
+            withdrawal.processed_at = timezone.now()
+            withdrawal.save(update_fields=['status', 'failure_reason', 'processed_by', 'processed_at'])
+            notify_user(withdrawal.writer.user, Notification.WITHDRAWAL_REJECTED, 'Your withdrawal request was rejected.', request.user)
+        self.message_user(request, 'Selected withdrawal requests rejected.')
+
+
+class MonetizationConfigAdmin(admin.ModelAdmin):
+    list_display = ('earning_formula', 'earning_per_read', 'engagement_bonus', 'minimum_read_seconds', 'minimum_withdrawal', 'ad_frequency_cap', 'updated_at')
+    readonly_fields = ('updated_at',)
+
+    def has_add_permission(self, request):
+        return not MonetizationConfig.objects.exists()
+
+
+class MonetizationPaymentAdmin(admin.ModelAdmin):
+    list_display = ('reference', 'user', 'plan', 'amount', 'currency', 'status', 'provider', 'verified_at', 'created_at')
+    list_filter = ('status', 'provider', 'currency', 'created_at')
+    search_fields = ('reference', 'provider_reference', 'user__username', 'user__email')
+    readonly_fields = ('user', 'plan', 'subscription', 'purpose', 'provider', 'reference', 'amount', 'currency', 'status', 'checkout_url', 'provider_reference', 'metadata', 'verified_at', 'created_at')
+    actions = None
+
+
+class PremiumSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'plan', 'status', 'starts_at', 'ends_at', 'cancel_at_period_end')
+    list_filter = ('status', 'plan__billing_period', 'cancel_at_period_end')
+    search_fields = ('user__username', 'user__email', 'provider_subscription_code')
+    readonly_fields = tuple(field.name for field in PremiumSubscription._meta.fields)
+    actions = None
+
+
+class ReaderSessionAdmin(admin.ModelAdmin):
+    list_display = ('book', 'chapter', 'reader', 'read_date', 'started_at', 'qualified_at')
+    list_filter = ('read_date', 'qualified_at')
+    readonly_fields = tuple(field.name for field in ReaderSession._meta.fields)
+    actions = None
+
+
+class WithdrawalAllocationAdmin(admin.ModelAdmin):
+    list_display = ('withdrawal', 'earning', 'amount', 'created_at')
+    readonly_fields = tuple(field.name for field in WithdrawalAllocation._meta.fields)
+    actions = None
+
+
+class WriterEarningAdmin(admin.ModelAdmin):
+    list_display = ('reference', 'writer', 'book', 'chapter', 'activity_type', 'amount', 'currency', 'status', 'created_at')
+    list_filter = ('status', 'activity_type', 'currency', 'created_at')
+    search_fields = ('reference', 'writer__pen_name', 'book__title')
+    readonly_fields = tuple(field.name for field in WriterEarning._meta.fields)
+    actions = None
+
+
+class AdImpressionAdmin(admin.ModelAdmin):
+    list_display = ('ad', 'user', 'path', 'created_at')
+    list_filter = ('created_at',)
+    readonly_fields = tuple(field.name for field in AdImpression._meta.fields)
+    actions = None
+
+
+class AdClickAdmin(admin.ModelAdmin):
+    list_display = ('ad', 'user', 'created_at')
+    list_filter = ('created_at',)
+    readonly_fields = tuple(field.name for field in AdClick._meta.fields)
+    actions = None
 
 
 # Create custom admin site instance
@@ -799,4 +935,16 @@ admin_site.register(CriticApplication)
 admin_site.register(ReviewAssignment)
 admin_site.register(CriticReview)
 admin_site.register(CriticEarning)
+admin_site.register(SubscriptionPlan)
+admin_site.register(PremiumSubscription, PremiumSubscriptionAdmin)
+admin_site.register(MonetizationPayment, MonetizationPaymentAdmin)
+admin_site.register(WriterProfile, WriterProfileAdmin)
+admin_site.register(MonetizationConfig, MonetizationConfigAdmin)
+admin_site.register(ReaderSession, ReaderSessionAdmin)
+admin_site.register(WriterEarning, WriterEarningAdmin)
+admin_site.register(WriterWithdrawal, WriterWithdrawalAdmin)
+admin_site.register(WithdrawalAllocation, WithdrawalAllocationAdmin)
+admin_site.register(Advertisement)
+admin_site.register(AdImpression, AdImpressionAdmin)
+admin_site.register(AdClick, AdClickAdmin)
 

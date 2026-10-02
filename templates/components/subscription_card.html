@@ -1,0 +1,25 @@
+<section class="subscription-card" aria-labelledby="subscription-card-title">
+  <header class="subscription-card-heading">
+    <div><p class="eyebrow">PREMIUM</p><h2 id="subscription-card-title">AfriNovels Premium</h2></div>
+    {% if current_subscription %}<span class="subscription-state is-active">Active</span>{% else %}<span class="subscription-state">Free plan</span>{% endif %}
+  </header>
+  {% if current_subscription %}
+    <p class="subscription-summary">{{ current_subscription.plan.name }} · Ads removed · Renew or ends {{ current_subscription.ends_at|date:"M j, Y" }}</p>
+    {% if current_subscription.cancel_at_period_end %}<p class="subscription-summary">Cancellation is scheduled. Premium stays active until the date above.</p>{% endif %}
+  {% else %}
+    <p class="subscription-summary">Enjoy ad-free reading and writing, and unlock writer earnings after approval. Free features remain available.</p>
+  {% endif %}
+  <div class="subscription-plans-compact">
+    {% for plan in subscription_plans %}
+      <article class="subscription-plan-compact">
+        <div><strong>{{ plan.name }}</strong><span>₦{{ plan.price|floatformat:2 }} / {{ plan.get_billing_period_display|lower }}</span></div>
+        <ul>{% for benefit in plan.benefits|slice:":3" %}<li>{{ benefit }}</li>{% endfor %}</ul>
+        {% if payment_configured %}<form method="post" action="{% url 'subscription_checkout' plan.slug %}">{% csrf_token %}<button type="submit">{% if current_subscription %}Change plan{% else %}Subscribe{% endif %}</button></form>{% else %}<a class="subscription-manage" href="{% url 'subscription_plans' %}">View plan details</a>{% endif %}
+      </article>
+    {% empty %}<p>No plans currently available.</p>{% endfor %}
+  </div>
+  <footer class="subscription-card-footer">
+    <span>{% if current_subscription %}Payment confirmed{% else %}Plans and prices are set by AfriNovels{% endif %}</span>
+    <a href="{% url 'subscription_plans' %}">{% if current_subscription %}Manage subscription{% else %}View subscription plans{% endif %}</a>
+  </footer>
+</section>

@@ -3,7 +3,7 @@ User-facing forms for profile management and other user interactions
 """
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Book, CriticApplication, CompetitionEntry, UserProfile
+from .models import Book, CriticApplication, CompetitionEntry, Genre, UserProfile
 
 
 User = get_user_model()
@@ -60,20 +60,34 @@ class ProfileEditForm(forms.ModelForm):
         return cleaned_data
 
 
+class SingleGenreField(forms.ModelMultipleChoiceField):
+    def clean(self, value):
+        if value in self.empty_values:
+            return super().clean(value)
+        if isinstance(value, (list, tuple)):
+            if len(value) > 1:
+                raise forms.ValidationError('Select one genre.', code='too_many_choices')
+        else:
+            value = [value]
+        return super().clean(value)
+
+
 class WriterBookForm(forms.ModelForm):
     cover = forms.ImageField(required=False)
     original_work = forms.BooleanField(required=True)
+    genres = SingleGenreField(
+        queryset=Genre.objects.order_by('name'),
+        widget=forms.Select(attrs={'class': 'writer-genre-select'}),
+        label='Genre',
+    )
 
     class Meta:
         model = Book
         fields = [
-            'title', 'subtitle', 'summary', 'genres', 'subgenre', 'tags',
-            'language', 'content_rating', 'novel_status',
+            'title', 'summary', 'genres', 'language', 'content_rating', 'novel_status',
         ]
         widgets = {
             'summary': forms.Textarea(attrs={'rows': 5}),
-            'genres': forms.SelectMultiple(attrs={'size': 5}),
-            'tags': forms.TextInput(attrs={'placeholder': 'family, folklore, adventure'}),
         }
 
     def clean_cover(self):

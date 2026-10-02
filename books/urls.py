@@ -100,9 +100,31 @@ from .import_views import (
     api_highlight as api_import_highlight,
     api_highlights,
 )
+from .monetization_views import (
+    ad_click,
+    cancel_subscription,
+    create_withdrawal,
+    paystack_callback,
+    paystack_webhook,
+    qualify_read,
+    save_payout_details,
+    subscription_checkout,
+    subscription_plans,
+    writer_program,
+)
 
 urlpatterns = [
     path('', landing_page, name='landing_page'),
+    path('plans/', subscription_plans, name='subscription_plans'),
+    path('plans/<slug:plan_slug>/checkout/', subscription_checkout, name='subscription_checkout'),
+    path('billing/paystack/callback/', paystack_callback, name='paystack_callback'),
+    path('billing/paystack/webhook/', paystack_webhook, name='paystack_webhook'),
+    path('billing/subscription/cancel/', cancel_subscription, name='cancel_subscription'),
+    path('writer-program/apply/', writer_program, name='writer_program'),
+    path('writer/payout-details/', save_payout_details, name='save_payout_details'),
+    path('writer/withdrawals/', create_withdrawal, name='create_withdrawal'),
+    path('ads/<int:ad_id>/click/', ad_click, name='ad_click'),
+    path('api/reader/qualify-read/', qualify_read, name='qualify_read'),
     path('home/', home, name='home'),
     path('rankings/', rankings, name='rankings'),
     path('categories/', categories, name='categories'),

@@ -271,6 +271,17 @@
     {{ content|safe }}
   </div>
 
+  {% if reader_inline_ad %}{% include "components/ad_placement.html" with ad=reader_inline_ad %}{% endif %}
+
+  {% if reader_session %}
+    <div class="read-qualification" id="read-qualification" data-delay="{{ read_qualification_seconds }}">
+      <form id="read-qualification-form" method="post" action="{% url 'qualify_read' %}">
+        {% csrf_token %}<input type="hidden" name="token" value="{{ reader_session.token }}">
+        <span id="read-qualification-status" role="status">A qualifying read is recorded after {{ read_qualification_seconds }} seconds on this chapter.</span>
+      </form>
+    </div>
+  {% endif %}
+
   {% if user.is_authenticated %}
     <details class="chapter-report">
       <summary>Report this chapter</summary>
@@ -319,6 +330,25 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const qualification = document.getElementById('read-qualification');
+  const qualificationForm = document.getElementById('read-qualification-form');
+  const qualificationStatus = document.getElementById('read-qualification-status');
+  if (qualification && qualificationForm && qualificationStatus) {
+    window.setTimeout(async function() {
+      try {
+        const response = await fetch(qualificationForm.action, {
+          method: 'POST',
+          body: new FormData(qualificationForm),
+          headers: {'X-Requested-With': 'XMLHttpRequest'},
+        });
+        const result = await response.json();
+        qualificationStatus.textContent = result.message;
+      } catch (_) {
+        qualificationStatus.textContent = 'Read verification is temporarily unavailable.';
+      }
+    }, (Number(qualification.dataset.delay) + 1) * 1000);
+  }
+
   const chapterListBtn = document.getElementById('chapterListBtn');
   const chapterListPanel = document.getElementById('chapterListPanel');
 
