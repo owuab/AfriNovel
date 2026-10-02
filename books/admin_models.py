@@ -189,7 +189,6 @@ class BookApprovalStatus(models.Model):
                 recipient_id=recipient_id,
                 actor=admin_user,
                 notification_type=Notification.BOOK_PUBLISHED,
-                book=self.book,
                 message=f'{self.book.title} is now published.',
             )
             for recipient_id in recipients

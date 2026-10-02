@@ -2,20 +2,17 @@ from django.contrib import messages
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from datetime import timedelta
-from django.db import transaction
 from django.utils import timezone
-import bleach
 import json
+import re
 import zipfile
 from pathlib import Path
-from html.parser import HTMLParser
-from .forms import ProfileEditForm, WriterBookForm
-from .admin_forms import ContentReportForm
+from .forms import CriticApplicationForm, CompetitionEntryForm, ProfileEditForm, WriterBookForm
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, F, Q
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -28,8 +25,10 @@ from .models import (
     Author, AuthorFollow, Bookmark, Book, CatalogBook, CatalogCategory, CatalogLibraryEntry, Genre,
     Highlight, ReadingList, ReadingNote, ReadingProgress, Review, ReviewComment,
     SearchHistory, UserBookshelf, AuthenticationEvent,
-    Notification, PostComment, PostLike, BookUpload, ContentReport,
+    Notification, PostComment, PostLike, BookUpload,
     PostRepost, SavedPost, SocialPost, UserBlock, UserFollow, UserMute, UserProfile, Chapter,
+    ContentReport, Promotion, Competition, CompetitionEntry, Award, CriticProfile, CriticApplication,
+    BookRecommendation,
 )
 from .admin_models import BookApprovalStatus, UserSuspension
 from .admin_utilities import AdminNotificationManager
@@ -283,9 +282,7 @@ def book_detail(request, slug):
             and book.approval_status.status == BookApprovalStatus.APPROVED
         ),
         'can_read_in_app': catalog_book and catalog_book.can_read_in_app if catalog_book else False,
-        'first_chapter': book.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED]).first(),
-        'public_chapters': book.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED]),
-        'report_reasons': ContentReport.REASONS,
+        'first_chapter': book.chapters.first(),
     }
     return render(request, 'books/book_detail.html', context)
 
@@ -347,24 +344,23 @@ def chapter_detail(request, slug, chapter_number):
         Chapter,
         book=book,
         chapter_number=chapter_number,
-        status__in=[Chapter.PUBLISHED, Chapter.COMPLETED],
     )
+    if book.status != Book.PUBLISHED or chapter.status != Chapter.PUBLISHED:
+        raise Http404
     
     # Get previous and next chapters
     previous_chapter = Chapter.objects.filter(
         book=book,
-        chapter_number__lt=chapter_number,
-        status__in=[Chapter.PUBLISHED, Chapter.COMPLETED],
+        chapter_number__lt=chapter_number
     ).order_by('-chapter_number').first()
     
     next_chapter = Chapter.objects.filter(
         book=book,
-        chapter_number__gt=chapter_number,
-        status__in=[Chapter.PUBLISHED, Chapter.COMPLETED],
+        chapter_number__gt=chapter_number
     ).order_by('chapter_number').first()
     
     # Get all chapters for the chapter list
-    all_chapters = book.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED]).order_by('chapter_number')
+    all_chapters = book.chapters.all().order_by('chapter_number')
     
     # Increment chapter view count
     Chapter.objects.filter(pk=chapter.pk).update(view_count=F('view_count') + 1)
@@ -385,11 +381,10 @@ def chapter_detail(request, slug, chapter_number):
         'book': book,
         'chapter': chapter,
         'chapter_number': chapter_number,
-        'content': _sanitize_chapter_content(chapter.content),
+        'content': chapter.content,
         'previous_chapter': previous_chapter,
         'next_chapter': next_chapter,
         'all_chapters': all_chapters,
-        'report_reasons': ContentReport.REASONS,
     }
     
     return render(request, 'books/chapter_detail.html', context)
@@ -425,6 +420,62 @@ def reader_dashboard(request):
             'user': request.user,
         }
     return render(request, 'books/reader_dashboard.html', context)
+
+
+def promotions_page(request):
+    return render(request, 'books/promotions.html', {'promotions': Promotion.objects.order_by('-starts_at', '-created_at')[:10]})
+
+
+def competitions_page(request):
+    competitions = Competition.objects.order_by('-opens_at')[:12]
+    return render(request, 'books/competitions.html', {'competitions': competitions})
+
+
+def competition_enter(request, slug):
+    competition = get_object_or_404(Competition, slug=slug)
+    if request.method == 'POST':
+        form = CompetitionEntryForm(request.POST)
+        if form.is_valid():
+            entry_book = form.cleaned_data['book']
+            if entry_book.owner_id != request.user.pk:
+                form.add_error('book', 'You can only submit books you own.')
+            else:
+                entry, created = CompetitionEntry.objects.get_or_create(
+                    competition=competition,
+                    writer=request.user,
+                    book=entry_book,
+                    defaults={'statement': form.cleaned_data.get('statement', '')},
+                )
+                if not created:
+                    entry.statement = form.cleaned_data.get('statement', '')
+                    entry.save(update_fields=['statement'])
+                messages.success(request, 'Your entry has been submitted.')
+                return redirect('competitions_page')
+    else:
+        form = CompetitionEntryForm()
+    return render(request, 'books/competition_enter.html', {'competition': competition, 'form': form})
+
+
+def critics_page(request):
+    return render(request, 'books/critics.html', {'critics': CriticProfile.objects.select_related('user').order_by('-reputation')[:12]})
+
+
+def critic_apply(request):
+    if request.method == 'POST':
+        form = CriticApplicationForm(request.POST)
+        if form.is_valid():
+            app = form.save(commit=False)
+            app.user = request.user
+            app.save()
+            messages.success(request, 'Your critic application has been submitted.')
+            return redirect('critics_page')
+    else:
+        form = CriticApplicationForm()
+    return render(request, 'books/critic_apply.html', {'form': form})
+
+
+def writers_awards_page(request):
+    return render(request, 'books/writers_awards.html', {'awards': Award.objects.order_by('-year', 'title')[:10]})
 
 
 def _profile_for(user):
@@ -592,11 +643,8 @@ def social_profile(request, username, tab='posts'):
         profile.refresh_from_db()
     following = request.user.is_authenticated and UserFollow.objects.filter(follower=request.user, followed=profile_user).exists()
     posts = SocialPost.objects.filter(author=profile_user, hidden=False).select_related('book', 'catalog_book').annotate(like_count=Count('likes'), comment_count=Count('comments'))
-    authored_stories = Book.objects.filter(owner=profile_user, status=Book.PUBLISHED).select_related('author').order_by('-published_at', '-created_at')
-    context = {'profile_user': profile_user, 'profile': profile, 'tab': tab, 'is_own_profile': own_profile, 'following': following, 'is_following': following,
+    context = {'profile_user': profile_user, 'profile': profile, 'tab': tab, 'is_own_profile': own_profile, 'following': following,
                'followers_count': profile_user.follower_users.count(), 'following_count': profile_user.following_users.count(),
-               'published_stories': Paginator(authored_stories, 12).get_page(request.GET.get('page')),
-               'author_reads': authored_stories.aggregate(total=Sum('view_count'))['total'] or 0,
                'books_read_count': profile_user.bookshelf.filter(status=UserBookshelf.READ).count(), 'posts': posts[:30],
                'reviews': Review.objects.filter(user=profile_user).select_related('book')[:30],
                'books': profile_user.bookshelf.select_related('book').filter(status__in=[UserBookshelf.READ, UserBookshelf.CURRENTLY_READING])[:30]}
@@ -664,310 +712,201 @@ def saved_content(request):
     return render(request, 'books/saved_content.html', {'posts': SavedPost.objects.filter(user=request.user).select_related('post__author', 'post__book')})
 
 
+def _sanitize_chapter_html(value):
+    if not value:
+        return ''
+    cleaned = re.sub(r'<\s*script\b.*?>.*?<\s*/\s*script\s*>', '', value, flags=re.I | re.S)
+    cleaned = re.sub(r'(?i)<(?!/?(?:p|br|strong|b|em|i|u|ul|ol|li|div|span|blockquote|h1|h2|h3|h4|h5|h6))[^>]+>', '', cleaned)
+    return cleaned
+
+
 @login_required
 def writer_dashboard(request):
-    books = Book.objects.filter(owner=request.user).select_related('author').prefetch_related('genres').annotate(
-        chapters_total=Count('chapters', distinct=True),
-        saves_total=Count('on_shelves', distinct=True),
-    )
-    drafts = books.filter(status=Book.DRAFT).order_by('-updated_at')
-    published = books.filter(status=Book.PUBLISHED).order_by('-updated_at')
-    books_page = Paginator(books.order_by('-updated_at'), 20).get_page(request.GET.get('page'))
+    books = Book.objects.filter(owner=request.user).select_related('author').prefetch_related('chapters').order_by('-updated_at')
+    recent_chapters = Chapter.objects.filter(book__owner=request.user).select_related('book').order_by('-updated_at')[:5]
+    book_count = books.count()
+    draft_count = books.filter(status=Book.DRAFT).count()
+    published_count = books.filter(status=Book.PUBLISHED).count()
+    completed_count = books.filter(novel_status=Book.COMPLETED).count()
+    total_views = sum(book.view_count for book in books)
+    paginator = Paginator(books, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
     context = {
-        'books': books_page,
-        'books_page': books_page,
-        'book_count': books.count(),
-        'drafts': drafts,
-        'published': published,
-        'draft_count': drafts.count(),
-        'published_count': published.count(),
-        'completed_count': books.filter(novel_status=Book.COMPLETED).count(),
-        'total_views': books.aggregate(total=Sum('view_count'))['total'] or 0,
-        'recent_chapters': Chapter.objects.filter(book__owner=request.user).select_related('book').order_by('-updated_at')[:8],
+        'books': page_obj.object_list,
+        'books_page': page_obj,
+        'book_count': book_count,
+        'draft_count': draft_count,
+        'published_count': published_count,
+        'completed_count': completed_count,
+        'total_views': total_views,
+        'recent_chapters': recent_chapters,
     }
     return render(request, 'books/writer_dashboard.html', context)
-
-
-def _writer_slug(title):
-    base_slug = slugify(title) or 'untitled-story'
-    slug = base_slug
-    suffix = 2
-    while Book.objects.filter(slug=slug).exists():
-        slug = f'{base_slug}-{suffix}'
-        suffix += 1
-    return slug
-
-
-def _writer_cover_upload(book, user, uploaded_file):
-    if not uploaded_file:
-        return
-    book.uploads.filter(kind=BookUpload.COVER).delete()
-    BookUpload.objects.create(
-        book=book,
-        uploaded_by=user,
-        file=uploaded_file,
-        kind=BookUpload.COVER,
-        original_filename=uploaded_file.name[:255],
-        file_size=uploaded_file.size,
-        content_type=getattr(uploaded_file, 'content_type', '')[:120],
-        status=BookUpload.READY,
-    )
 
 
 @login_required
 @require_http_methods(['GET', 'POST'])
 def writer_book_create(request, book_id=None):
     book = get_object_or_404(Book, pk=book_id, owner=request.user) if book_id else None
-    form = WriterBookForm(request.POST or None, request.FILES or None, instance=book)
-    if request.method == 'POST' and form.is_valid():
-        story = form.save(commit=False)
-        story.owner = request.user
-        story.rights_confirmed = True
-        author_name = request.user.social_profile.display_name if hasattr(request.user, 'social_profile') else ''
-        author_name = author_name or request.user.get_full_name() or request.user.username
-        story.author, _ = Author.objects.get_or_create(name=author_name)
-        if not book:
-            story.slug = _writer_slug(story.title)
-            story.status = Book.DRAFT
-        story.save()
-        form.save_m2m()
-        _writer_cover_upload(story, request.user, form.cleaned_data.get('cover'))
-        if not book:
-            chapter = Chapter.objects.create(
-                book=story, chapter_number=1, title='Chapter 1',
-                slug='chapter-1', status=Chapter.DRAFT,
-            )
-            return redirect('writer_chapter_editor', book_id=story.pk, chapter_id=chapter.pk)
-        messages.success(request, 'Book details saved.')
-        return redirect('writer_dashboard')
-    return render(request, 'books/writer_book_form.html', {'form': form, 'book': book})
-
-
-def _sanitize_chapter_content(content):
-    return bleach.clean(
-        content,
-        tags=['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h1', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'li', 'div', 'span'],
-        attributes=lambda tag, name, value: name == 'class' and value in {
-            'align-left', 'align-center', 'align-right', 'align-justify',
-        },
-        strip=True,
-    )
-
-
-def _chapter_word_count(content):
-    class TextExtractor(HTMLParser):
-        def __init__(self):
-            super().__init__()
-            self.parts = []
-
-        def handle_starttag(self, tag, attrs):
-            if tag in {'p', 'br', 'div', 'h1', 'h2', 'h3', 'blockquote', 'li'}:
-                self.parts.append(' ')
-
-        def handle_endtag(self, tag):
-            if tag in {'p', 'div', 'h1', 'h2', 'h3', 'blockquote', 'li'}:
-                self.parts.append(' ')
-
-        def handle_data(self, data):
-            self.parts.append(data)
-
-    extractor = TextExtractor()
-    extractor.feed(content)
-    return len(' '.join(extractor.parts).split())
-
-
-@login_required
-@require_http_methods(['GET', 'POST'])
-def writer_chapter_editor(request, book_id, chapter_id=None):
-    book = get_object_or_404(Book, pk=book_id, owner=request.user)
-    if chapter_id:
-        chapter = get_object_or_404(Chapter, pk=chapter_id, book=book)
-    else:
-        last_number = book.chapters.order_by('-chapter_number').values_list('chapter_number', flat=True).first() or 0
-        chapter = Chapter.objects.create(
-            book=book,
-            chapter_number=last_number + 1,
-            title=f'Chapter {last_number + 1}',
-            slug=f'chapter-{last_number + 1}',
-            status=Chapter.DRAFT,
-        )
-        return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=chapter.pk)
-
     if request.method == 'POST':
-        action = request.POST.get('action', 'save')
-        if action == 'delete':
-            chapter.delete()
-            messages.success(request, 'Chapter deleted.')
-            return redirect('writer_dashboard')
-        if action == 'duplicate':
-            number = (book.chapters.order_by('-chapter_number').values_list('chapter_number', flat=True).first() or 0) + 1
-            duplicate = Chapter.objects.create(
-                book=book, chapter_number=number, title=f'{chapter.title} (copy)',
-                slug=f'{chapter.slug}-copy-{number}', content=chapter.content,
-                word_count=chapter.word_count, status=Chapter.DRAFT,
-            )
-            return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=duplicate.pk)
-
-        if action in {'move_up', 'move_down'}:
-            chapters = list(book.chapters.order_by('chapter_number', 'pk'))
-            current_index = next((index for index, item in enumerate(chapters) if item.pk == chapter.pk), -1)
-            target_index = current_index + (-1 if action == 'move_up' else 1)
-            if 0 <= target_index < len(chapters):
-                chapters[current_index], chapters[target_index] = chapters[target_index], chapters[current_index]
-                offset = len(chapters) + max(item.chapter_number for item in chapters) + 1
-                with transaction.atomic():
-                    for item in chapters:
-                        Chapter.objects.filter(pk=item.pk).update(chapter_number=item.chapter_number + offset)
-                    for number, item in enumerate(chapters, 1):
-                        Chapter.objects.filter(pk=item.pk).update(chapter_number=number)
-            return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=chapter.pk)
-
-        chapter.title = request.POST.get('title', '').strip()[:300] or f'Chapter {chapter.chapter_number}'
-        chapter.content = _sanitize_chapter_content(request.POST.get('content', ''))
-        chapter.word_count = _chapter_word_count(chapter.content)
-        if action == 'publish':
-            if _publishing_is_suspended(request.user):
-                messages.error(request, 'Publishing privileges are suspended for this account.')
-            elif book.status != Book.PUBLISHED:
-                messages.error(request, 'This book must be approved and published before its chapters can go live.')
-            else:
-                chapter.status = Chapter.PUBLISHED
-                chapter.published_date = timezone.now()
-                _notify_book_followers(book, request.user, chapter)
-                messages.success(request, 'Chapter published.')
-        elif action in {'unpublish', 'draft'}:
-            chapter.status = Chapter.DRAFT
-            if action == 'unpublish':
-                chapter.published_date = None
-        elif action == 'complete':
-            chapter.status = Chapter.COMPLETED
-            chapter.published_date = chapter.published_date or timezone.now()
-        chapter.save()
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({
-                'saved': True,
-                'updated_at': timezone.localtime(chapter.updated_at).strftime('%H:%M:%S'),
-                'updated_epoch': chapter.updated_at.timestamp(),
-            })
-        return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=chapter.pk)
-
-    return render(request, 'books/writer_editor.html', {
-        'book': book,
-        'chapter': chapter,
-        'chapter_content': _sanitize_chapter_content(chapter.content),
-        'chapters': book.chapters.order_by('chapter_number'),
-    })
-
-
-def _notify_book_followers(book, actor, chapter=None):
-    followers = set(book.owner.follower_users.values_list('follower_id', flat=True)) if book.owner_id else set()
-    followers.update(book.author.followers.values_list('follower_id', flat=True))
-    followers.discard(actor.pk)
-    notification_type = Notification.CHAPTER_PUBLISHED if chapter else Notification.BOOK_PUBLISHED
-    message = f'A new chapter of {book.title} is available.' if chapter else f'{book.title} is now published.'
-    Notification.objects.bulk_create([
-        Notification(recipient_id=user_id, actor=actor, notification_type=notification_type, book=book, message=message)
-        for user_id in followers
-    ])
-
-
-def _publishing_is_suspended(user):
-    return UserSuspension.objects.filter(user=user, is_active=True, unsuspended_at__isnull=True).exists()
-
-
-@login_required
-def writer_chapter_preview(request, book_id, chapter_id):
-    book = get_object_or_404(Book, pk=book_id, owner=request.user)
-    chapter = get_object_or_404(Chapter, pk=chapter_id, book=book)
-    return render(request, 'books/writer_preview.html', {
-        'book': book,
-        'chapter': chapter,
-        'chapter_content': _sanitize_chapter_content(chapter.content),
-    })
+        form = WriterBookForm(request.POST, request.FILES, instance=book)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.author, _ = Author.objects.get_or_create(name=request.user.username)
+            obj.owner = request.user
+            obj.status = Book.DRAFT
+            obj.rights_confirmed = True
+            if not obj.slug:
+                base_slug = slugify(obj.title) or 'untitled-book'
+                obj.slug = base_slug
+                counter = 1
+                while Book.objects.filter(slug=obj.slug).exclude(pk=obj.pk).exists():
+                    obj.slug = f'{base_slug}-{counter}'
+                    counter += 1
+            obj.save()
+            form.save_m2m()
+            if not obj.chapters.exists():
+                Chapter.objects.create(
+                    book=obj,
+                    chapter_number=1,
+                    title='Opening Chapter',
+                    slug='opening-chapter',
+                    content='',
+                    status=Chapter.DRAFT,
+                )
+            messages.success(request, 'Book details saved.')
+            return redirect('writer_book_edit', book_id=obj.pk)
+    else:
+        form = WriterBookForm(instance=book)
+    return render(request, 'books/writer_book_form.html', {'form': form, 'book': book})
 
 
 @login_required
 @require_POST
 def writer_submit_book(request, book_id):
     book = get_object_or_404(Book, pk=book_id, owner=request.user)
-    if _publishing_is_suspended(request.user):
-        messages.error(request, 'Publishing privileges are suspended for this account.')
-    elif request.POST.get('rules_confirmed') != 'on' or not book.rights_confirmed:
-        messages.error(request, 'Confirm the publishing rules and your rights to submit this book.')
-    elif book.status == Book.PUBLISHED:
-        messages.info(request, 'This book is already published. New chapters can be published from the editor.')
-    elif not book.chapters.filter(word_count__gt=0).exists():
-        messages.error(request, 'Write at least one chapter before submitting this book for review.')
+    if UserSuspension.objects.filter(user=request.user, is_active=True).exists():
+        messages.error(request, 'Your publishing privileges are currently suspended.')
+        return redirect('writer_dashboard')
+    if request.POST.get('rules_confirmed') != 'on':
+        messages.error(request, 'Please confirm the rights and submission rules.')
+        return redirect('writer_book_edit', book_id=book.pk)
+
+    book.rights_confirmed = True
+    book.save(update_fields=['rights_confirmed', 'updated_at'])
+    if not BookApprovalStatus.objects.filter(book=book).exists():
+        BookApprovalStatus.objects.create(book=book)
     else:
-        approval, created = BookApprovalStatus.objects.get_or_create(book=book)
-        if not created and approval.status != BookApprovalStatus.PENDING:
-            approval.status = BookApprovalStatus.PENDING
-            approval.submitted_at = timezone.now()
-            approval.save(update_fields=['status', 'submitted_at'])
-        if created or approval.status == BookApprovalStatus.PENDING:
-            AdminNotificationManager.notify_pending_approval()
-            messages.success(request, 'Your book has been submitted for review. It will be public after approval.')
+        approval = BookApprovalStatus.objects.get(book=book)
+        approval.status = BookApprovalStatus.PENDING
+        approval.feedback = ''
+        approval.rejection_reason = ''
+        approval.save(update_fields=['status', 'feedback', 'rejection_reason', 'reviewed_by', 'reviewed_at'])
+    AdminNotificationManager.notify_pending_approval()
+    messages.success(request, 'Your book is now in review.')
     return redirect('writer_dashboard')
 
 
 @login_required
 def writer_publish_preview(request, book_id):
-    book = get_object_or_404(Book.objects.select_related('author').prefetch_related('genres', 'chapters'), pk=book_id, owner=request.user)
+    book = get_object_or_404(Book, pk=book_id, owner=request.user)
     return render(request, 'books/writer_publish_preview.html', {'book': book})
 
 
 @login_required
-@require_POST
-def report_book_content(request, slug, chapter_number=None):
-    book = get_object_or_404(Book, slug=slug, status=Book.PUBLISHED)
+@require_http_methods(['GET', 'POST'])
+def writer_chapter_editor(request, book_id, chapter_id=None):
+    book = get_object_or_404(Book, pk=book_id, owner=request.user)
     chapter = None
-    if chapter_number is not None:
-        chapter = get_object_or_404(
-            Chapter,
-            book=book,
-            chapter_number=chapter_number,
-            status__in=[Chapter.PUBLISHED, Chapter.COMPLETED],
-        )
-    if book.owner_id == request.user.pk:
-        return HttpResponseBadRequest('You cannot report your own work.')
-    form = ContentReportForm(request.POST)
-    if form.is_valid():
-        report = form.save(commit=False)
-        report.reporter = request.user
-        report.book = book
-        report.chapter = chapter
-        report.reported_user = book.owner
-        report.save()
-        AdminNotificationManager.notify_new_report(report)
-        messages.success(request, 'Thank you. Your report has been sent to the moderation team.')
+    if chapter_id is not None:
+        chapter = get_object_or_404(Chapter, pk=chapter_id, book=book)
     else:
-        messages.error(request, 'Please provide a reason and at least 20 characters of detail.')
-    return redirect('book_detail' if chapter is None else 'chapter_detail', **({'slug': book.slug} if chapter is None else {'slug': book.slug, 'chapter_number': chapter.chapter_number}))
+        next_number = book.chapters.count() + 1
+        slug_base = slugify(book.title) or 'chapter'
+        chapter = Chapter.objects.create(
+            book=book,
+            chapter_number=next_number,
+            title=f'Chapter {next_number}',
+            slug=f'{slug_base}-{next_number}',
+            content='',
+            status=Chapter.DRAFT,
+        )
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'save')
+        chapter.title = request.POST.get('title', chapter.title).strip() or chapter.title
+        cleaned = _sanitize_chapter_html(request.POST.get('content', chapter.content))
+        chapter.content = cleaned
+        chapter.word_count = len(re.findall(r'\b\w+\b', re.sub(r'<[^>]+>', ' ', cleaned)))
+        if action == 'draft':
+            chapter.status = Chapter.DRAFT
+        elif action == 'publish':
+            chapter.status = Chapter.PUBLISHED
+        elif action == 'complete':
+            chapter.status = Chapter.COMPLETED
+        elif action == 'save':
+            chapter.status = chapter.status or Chapter.DRAFT
+        chapter.slug = slugify(chapter.title) or f'chapter-{chapter.chapter_number}'
+        chapter.save(update_fields=['title', 'content', 'word_count', 'status', 'slug', 'updated_at'])
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'saved', 'updated_at': chapter.updated_at.strftime('%Y-%m-%d %H:%M:%S')})
+        messages.success(request, 'Chapter saved.')
+        return redirect('writer_chapter_editor', book_id=book.pk, chapter_id=chapter.pk)
+
+    chapter_content = chapter.content or ''
+    chapters = book.chapters.order_by('chapter_number')
+    return render(request, 'books/writer_editor.html', {'book': book, 'chapter': chapter, 'chapters': chapters, 'chapter_content': chapter_content})
 
 
 @login_required
-@require_POST
+def writer_chapter_preview(request, book_id, chapter_id):
+    book = get_object_or_404(Book, pk=book_id, owner=request.user)
+    chapter = get_object_or_404(Chapter, pk=chapter_id, book=book)
+    return render(request, 'books/writer_preview.html', {'book': book, 'chapter': chapter, 'content': chapter.content})
+
+
+@login_required
+@require_http_methods(['POST'])
 def writer_book_action(request, book_id, action):
     book = get_object_or_404(Book, pk=book_id, owner=request.user)
-    if action == 'delete':
-        book.delete()
-        messages.success(request, 'Book deleted.')
-    elif action == 'archive':
+    if action == 'archive':
         book.status = Book.ARCHIVED
-        book.save(update_fields=['status', 'updated_at'])
-        messages.success(request, 'Book archived.')
-    elif action == 'unpublish':
-        book.status = Book.DRAFT
-        book.published_at = None
-        book.save(update_fields=['status', 'published_at', 'updated_at'])
-        messages.success(request, 'Book returned to drafts.')
     elif action == 'restore':
         book.status = Book.DRAFT
-        book.save(update_fields=['status', 'updated_at'])
-        messages.success(request, 'Book restored to drafts.')
+    elif action == 'unpublish':
+        book.status = Book.DRAFT
+    elif action == 'delete':
+        book.delete()
+        return redirect('writer_dashboard')
     else:
-        return HttpResponseBadRequest('Unknown book action.')
+        messages.error(request, 'Unknown action.')
+        return redirect('writer_dashboard')
+    book.save(update_fields=['status', 'updated_at'])
+    messages.success(request, 'Book updated.')
     return redirect('writer_dashboard')
+
+
+@login_required
+@require_http_methods(['POST'])
+def report_book_content(request, slug, chapter_number=None):
+    book = get_object_or_404(Book, slug=slug)
+    chapter = None
+    if chapter_number is not None:
+        chapter = get_object_or_404(Chapter, book=book, chapter_number=chapter_number)
+    details = request.POST.get('details', '').strip()
+    reason = request.POST.get('reason', ContentReport.OTHER)
+    ContentReport.objects.create(
+        reporter=request.user,
+        reported_user=book.owner or getattr(book.author, 'user', None),
+        book=book,
+        chapter=chapter,
+        reason=reason,
+        details=details,
+    )
+    messages.success(request, 'Thanks for reporting this content. Our team will review it shortly.')
+    if chapter is not None:
+        return redirect('chapter_detail', slug=book.slug, chapter_number=chapter.chapter_number)
+    return redirect('book_detail', slug=book.slug)
 
 
 @login_required
@@ -1016,15 +955,11 @@ def publish_book(request):
                 errors.append(f'{uploaded_file.name}: files must be 50 MB or smaller.')
         if errors:
             return render(request, 'books/publish_book.html', {'errors': errors, 'max_upload_size': max_upload_size})
-        if _publishing_is_suspended(request.user):
-            messages.error(request, 'Publishing privileges are suspended for this account.')
-            return redirect('writer_dashboard')
 
         author, _ = Author.objects.get_or_create(name=request.user.username)
         book = Book.objects.create(
             title=title,
             slug=slug,
-            owner=request.user,
             author=author,
             summary=summary,
             cover_color=cover_color,
@@ -1137,7 +1072,7 @@ def disconnect_social_account(request, provider):
 def profile_view(request):
     user = request.user
     profile = _profile_for(user)
-    authored_books = Book.objects.filter(owner=user, status=Book.PUBLISHED).order_by('-published_at', '-created_at')[:12]
+    authored_books = Book.objects.filter(author__name=user.username)[:4]
     context = {
         'user': user,
         'profile': profile,
@@ -1146,8 +1081,6 @@ def profile_view(request):
         'books_read_count': user.bookshelf.filter(status=UserBookshelf.READ).count(),
         'followers_count': user.follower_users.count(),
         'profile_view_count': profile.profile_views,
-        'published_book_count': Book.objects.filter(owner=user, status=Book.PUBLISHED).count(),
-        'author_reads': Book.objects.filter(owner=user, status=Book.PUBLISHED).aggregate(total=Sum('view_count'))['total'] or 0,
     }
     return render(request, 'books/profile.html', context)
 
@@ -1268,6 +1201,21 @@ def search_books(request):
     else:  # relevance
         books = books.order_by('-rating', '-created_at')
     
+    catalogue_books = []
+    catalogue_query = ''
+    if query and not books.exists():
+        normalized, _, _ = CatalogService.search(query, request.GET)
+        if not normalized:
+            fallback_query = ' '.join(
+                word for word in re.findall(r"[\w'-]+", query)
+                if word.casefold() not in {'a', 'an', 'and', 'all', 'of', 'the', 'to'}
+            )
+            if fallback_query and fallback_query.casefold() != query.casefold():
+                normalized, _, _ = CatalogService.search(fallback_query, request.GET)
+                if normalized:
+                    catalogue_query = fallback_query
+        catalogue_books = [CatalogService.persist(result) for result in normalized]
+
     # Pagination
     paginator = Paginator(books, 20)
     page = paginator.get_page(request.GET.get('page'))
@@ -1283,6 +1231,8 @@ def search_books(request):
         'author_filter': author_filter,
         'rating_filter': rating_filter,
         'sort_by': sort_by,
+        'catalogue_books': catalogue_books,
+        'catalogue_query': catalogue_query,
     }
     return render(request, 'books/search_results.html', context)
 
@@ -1337,6 +1287,11 @@ def discover(request):
             created_at__gte=timezone.now() - timedelta(days=30)
         ).order_by('-rating', '-view_count', '-created_at')
     
+    catalogue_books = []
+    if query:
+        normalized, _, _ = CatalogService.search(query, request.GET)
+        catalogue_books = [CatalogService.persist(result) for result in normalized]
+
     # Get all genres for filter dropdown
     genres = Genre.objects.all().annotate(book_count=Count('books')).order_by('name')
     
@@ -1363,6 +1318,7 @@ def discover(request):
         'books': page,
         'genres': genres,
         'filters': filters,
+        'catalogue_books': catalogue_books,
     })
 
 
@@ -1431,9 +1387,15 @@ def catalogue_reader(request, book_id):
         sections = split_reader_sections(fetch_reader_text(book))
     except (PermissionError, ProviderUnavailable) as error:
         reader_error = str(error)
+
     return render(request, 'books/reader.html', {
-        'book': book, 'sections': sections, 'progress': progress,
-        'bookmarks': Bookmark.objects.filter(user=request.user, book=book) if request.user.is_authenticated else [], 'reader_error': reader_error,
+        'book': book,
+        'sections': sections,
+        'progress': progress,
+        'bookmarks': Bookmark.objects.filter(user=request.user, book=book) if request.user.is_authenticated else [],
+        'reader_error': reader_error,
+        'chapter_number': 1,
+        'is_catalogue': True,
     })
 
 
@@ -2061,57 +2023,49 @@ def novels(request):
 
 @require_http_methods(['GET'])
 def novels_api(request):
-    """API endpoint for novels catalogue with filtering, search, and pagination"""
+    """API endpoint for novels catalogue with filtering, search, and pagination."""
     try:
-        # Get query parameters
         page = max(int(request.GET.get('page', 1) or 1), 1)
-        page_size = min(int(request.GET.get('page_size', 24) or 24), 100)  # Max 100 per page
-        search_query = request.GET.get('search', '').strip()
-        genre_filter = request.GET.get('genre', '')
-        status_filter = request.GET.get('status', '')
-        sort_by = request.GET.get('sort', 'trending')
-        
-        # Base queryset
+        page_size = min(int(request.GET.get('page_size', 24) or 24), 100)
+        search_query = (request.GET.get('search', '') or '').strip()
+        genre_filter = (request.GET.get('genre', '') or '').strip()
+        status_filter = (request.GET.get('status', '') or '').strip()
+        sort_by = (request.GET.get('sort', 'newest') or 'newest').strip()
+
         books = Book.objects.filter(status=Book.PUBLISHED).select_related('author').prefetch_related('genres')
-        
-        # Apply search filter
+
         if search_query:
             books = books.filter(
                 Q(title__icontains=search_query) |
                 Q(author__name__icontains=search_query) |
-                Q(summary__icontains=search_query)
-            )
-        
-        # Apply genre filter
+                Q(translator__icontains=search_query) |
+                Q(summary__icontains=search_query) |
+                Q(genres__name__icontains=search_query)
+            ).distinct()
+
         if genre_filter:
-            books = books.filter(genres__slug=genre_filter)
-        
-        # Apply status filter
+            books = books.filter(genres__slug=genre_filter).distinct()
+
         if status_filter:
             books = books.filter(novel_status=status_filter)
-        
-        # Apply sorting
+
         if sort_by == 'popular':
-            books = books.order_by('-view_count', '-rating')
-        elif sort_by == 'newest':
-            books = books.order_by('-created_at')
+            books = books.order_by('-view_count', '-rating', '-updated_at')
         elif sort_by == 'rating':
-            books = books.order_by('-rating', '-view_count')
+            books = books.order_by('-rating', '-view_count', '-updated_at')
         elif sort_by == 'chapters':
-            books = books.annotate(chapter_count=Count('chapters')).order_by('-chapter_count')
+            books = books.annotate(chapter_count=Count('chapters')).order_by('-chapter_count', '-updated_at')
         elif sort_by == 'title_asc':
             books = books.order_by('title')
         elif sort_by == 'title_desc':
             books = books.order_by('-title')
-        else:  # trending (default)
-            books = books.filter(
-                created_at__gte=timezone.now() - timedelta(days=30)
-            ).order_by('-rating', '-view_count', '-created_at')
-        
-        # Get total count before pagination
+        elif sort_by == 'trending':
+            books = books.order_by('-rating', '-view_count', '-updated_at')
+        else:
+            books = books.order_by('-updated_at', '-created_at')
+
         total_count = books.count()
-        
-        # Pagination
+
         paginator = Paginator(books, page_size)
         try:
             page_obj = paginator.page(page)
@@ -2119,15 +2073,15 @@ def novels_api(request):
             page_obj = paginator.page(1)
         except EmptyPage:
             page_obj = paginator.page(paginator.num_pages)
-        
-        # Serialize books
+
         books_data = []
         for book in page_obj.object_list:
+            author_name = book.author.name if book.author else 'Unknown Author'
             book_data = {
                 'id': book.id,
                 'title': book.title,
                 'slug': book.slug,
-                'author': book.author.name,
+                'author': author_name,
                 'translator': book.translator if book.translator else None,
                 'cover_url': book.cover_image_url,
                 'cover_color': book.cover_color,
@@ -2141,11 +2095,10 @@ def novels_api(request):
                 'url': request.build_absolute_uri(book.get_absolute_url()),
             }
             books_data.append(book_data)
-        
-        # Get available genres for filters
+
         genres = Genre.objects.all().annotate(book_count=Count('books')).order_by('name')
         genres_data = [{'name': genre.name, 'slug': genre.slug, 'book_count': genre.book_count} for genre in genres]
-        
+
         return JsonResponse({
             'results': books_data,
             'total': total_count,
@@ -2162,7 +2115,7 @@ def novels_api(request):
                 'sort': sort_by,
             }
         })
-        
+
     except Exception as e:
         return JsonResponse({
             'error': 'An error occurred while fetching novels',

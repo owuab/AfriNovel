@@ -66,8 +66,8 @@
   width: 40px;
   height: 40px;
   object-fit: contain;
-  background: var(--brand-ink);
-  border: 1px solid var(--brand-gold);
+  background: #0b0b0b;
+  border: 1px solid #d4af37;
   border-radius: 6px;
   padding: 3px;
   flex: 0 0 40px;
@@ -768,7 +768,7 @@ select:focus-visible {
   justify-content: flex-end;
   gap: var(--spacing-1);
   color: #fff;
-  background: linear-gradient(145deg, var(--brand-ink), var(--brand-coral));
+  background: linear-gradient(145deg, #25364a, #8c3f52);
   text-align: left;
 }
 

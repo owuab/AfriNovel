@@ -228,6 +228,8 @@
     <div class="results-count">{{ books.paginator.count }} result{{ books.paginator.count|pluralize }}</div>
   </div>
 
+  {% if catalogue_query %}<p>Showing catalogue results for "{{ catalogue_query }}"</p>{% endif %}
+
   <div class="book-grid">
     {% for book in books %}
       {% include "components/book_card.html" with book=book show_rating=True show_genres=True %}
@@ -236,6 +238,14 @@
         <h3>No books found</h3>
         <p>Try adjusting your search terms or filters</p>
       </div>
+    {% endfor %}
+    {% for book in catalogue_books %}
+      <article class="book-card-premium catalogue-result">
+        <a href="{% url 'catalogue_detail' book.pk %}" class="book-cover-wrapper">
+          {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">{% else %}<span class="book-cover-fallback"><strong>{{ book.title }}</strong></span>{% endif %}
+        </a>
+        <div class="book-content"><h3 class="book-title"><a href="{% url 'catalogue_detail' book.pk %}">{{ book.title }}</a></h3><div class="book-author">{{ book.authors|join:", " }}</div><div class="book-meta">Catalogue · {{ book.get_access_type_display }}</div></div>
+      </article>
     {% endfor %}
   </div>
 

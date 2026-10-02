@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Promotions & Events | AfriNovel{% endblock %}
+{% block content %}
+<main class="container platform-page">
+  <header class="platform-hero"><p class="eyebrow">AFRINOVEL EVENTS</p><h1>Promotions & announcements</h1><p>Writing opportunities, community events, contests, and platform news.</p></header>
+  <section class="platform-grid">
+    {% for promotion in promotions %}
+      <article class="platform-card">{% if promotion.banner %}<img src="{{ promotion.banner.url }}" alt="{{ promotion.title }}">{% endif %}<p class="eyebrow">{{ promotion.get_category_display }}</p><h2>{{ promotion.title }}</h2><p>{{ promotion.description|linebreaksbr }}</p>{% if promotion.starts_at or promotion.ends_at %}<small>{{ promotion.starts_at|date:"M j, Y" }}{% if promotion.ends_at %} - {{ promotion.ends_at|date:"M j, Y" }}{% endif %}</small>{% endif %}{% if promotion.destination_url %}<p><a class="button" href="{{ promotion.destination_url }}">{{ promotion.call_to_action|default:"Learn more" }}</a></p>{% endif %}</article>
+    {% empty %}<p class="empty-state">No published promotions at the moment.</p>{% endfor %}
+  </section>
+</main>
+{% endblock %}
+{% block extra_css %}<style>
+.platform-page{max-width:1180px;padding:42px 20px 80px}.platform-hero{padding:28px 0;border-bottom:1px solid var(--color-border);margin-bottom:28px}.platform-hero h1{margin:4px 0 8px}.platform-hero p:not(.eyebrow){color:var(--color-text-secondary)}.eyebrow{color:var(--brand-green);font-size:.72rem;font-weight:800;letter-spacing:.12em;margin:0}.platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}.platform-card{background:var(--brand-card);border:1px solid var(--brand-line);border-radius:10px;padding:20px;box-shadow:var(--shadow-sm)}.platform-card img{display:block;width:100%;max-height:190px;object-fit:cover;border-radius:6px;margin:-20px -20px 18px;width:calc(100% + 40px)}.platform-card h2{font-size:1.25rem;margin:8px 0}.platform-card p{color:var(--brand-ink-soft);line-height:1.65}.platform-card small{color:var(--brand-ink-soft)}
++</style>{% endblock %}

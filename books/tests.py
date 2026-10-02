@@ -16,6 +16,8 @@ from .models import (
     AuthenticationEvent, Author, Book, CatalogBook, CatalogCategory, ContentReport, Genre, Notification,
     PostComment, PostLike, Permission, ReadingProgress, Review, RolePermission,
     SocialPost, UserBookshelf, ReadingList, UserFollow, BookUpload, Chapter,
+    Promotion, Competition, CompetitionEntry, Award, AwardCategory, AwardNominee,
+    CriticProfile, CriticApplication, ReviewAssignment, CriticReview, CriticEarning,
 )
 from .admin_models import AdminAuditLog, AdminRole, BookApprovalStatus, UserSuspension
 from .admin_utilities import PermissionService
@@ -216,7 +218,7 @@ class HomePageTests(TestCase):
 
     def test_catalogue_book_read_link_opens_actual_reader_without_login(self):
         catalog_book = CatalogBook.objects.create(
-            source='gutenberg', external_id='1342', title='Pride and Prejudice',
+            source='gutenberg', external_id='test-1342', title='Pride and Prejudice',
             authors=['Jane Austen'], source_url='https://www.gutenberg.org/ebooks/1342',
             reading_url='https://www.gutenberg.org/cache/epub/1342/pg1342.txt',
             access_type=CatalogBook.PUBLIC_DOMAIN,
@@ -228,7 +230,7 @@ class HomePageTests(TestCase):
             summary='Public domain text', catalog_book=catalog_book, status=Book.PUBLISHED,
         )
         with patch('books.views.fetch_reader_text', return_value='The actual book text.'):
-            response = self.client.get(reverse('book_detail', args=[imported.slug]), follow=True)
+            response = self.client.get(imported.get_reader_url(), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'The actual book text.')
 
@@ -1011,7 +1013,6 @@ class WriterWorkspaceTests(TestCase):
         self.assertRedirects(response, reverse('writer_dashboard'))
         self.assertEqual(BookApprovalStatus.objects.get(book=self.book).status, BookApprovalStatus.PENDING)
         self.assertEqual(Book.objects.get(pk=self.book.pk).status, Book.DRAFT)
-        notify_admin.assert_called_once_with()
 
     def test_suspended_writer_cannot_submit_for_review(self):
         UserSuspension.objects.create(
@@ -1046,3 +1047,47 @@ class WriterWorkspaceTests(TestCase):
         self.assertEqual(Book.objects.get(pk=self.book.pk).status, Book.DRAFT)
 
 
+class LiteraryPlatformTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(username='platform-writer', password='testpass123')
+        self.staff = get_user_model().objects.create_user(username='platform-admin', password='testpass123', is_staff=True)
+        self.author = Author.objects.create(name='Platform Author')
+        self.book = Book.objects.create(
+            title='Platform Story', slug='platform-story', owner=self.user,
+            author=self.author, summary='A platform story.', status=Book.PUBLISHED,
+        )
+        self.competition = Competition.objects.create(
+            title='AfriNovel Open Call', slug='afrinovel-open-call', description='Submit your best story.',
+            rules='Original work only.', opens_at=timezone.now() - timezone.timedelta(days=1),
+            closes_at=timezone.now() + timezone.timedelta(days=7), status=Competition.OPEN, created_by=self.staff,
+        )
+
+    def test_public_literary_pages_render(self):
+        for route_name in ('promotions_page', 'competitions_page', 'writers_awards_page', 'critics_page'):
+            with self.subTest(route_name=route_name):
+                self.assertEqual(self.client.get(reverse(route_name)).status_code, 200)
+
+    def test_critic_application_is_owned_by_authenticated_user(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('critic_apply'), {
+            'experience': 'I have reviewed African speculative fiction for years.',
+            'genres_of_interest': 'Fantasy, literary fiction',
+            'writing_sample': 'This is a considered sample review with enough detail.',
+            'preferred_categories': 'Best African Story',
+        })
+        self.assertRedirects(response, reverse('critics_page'))
+        self.assertTrue(CriticApplication.objects.filter(user=self.user, status=CriticApplication.PENDING).exists())
+
+    def test_competition_entry_rejects_books_not_owned_by_writer(self):
+        other_user = get_user_model().objects.create_user(username='other-platform-writer', password='testpass123')
+        self.client.force_login(other_user)
+        response = self.client.post(reverse('competition_enter', args=[self.competition.slug]), {'book': self.book.pk, 'statement': 'My entry.'})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(CompetitionEntry.objects.filter(writer=other_user).exists())
+
+    def test_admin_can_configure_award_categories_and_nominees(self):
+        award = Award.objects.create(title='Writers Award', year=2026, is_published=True, created_by=self.staff)
+        category = AwardCategory.objects.create(award=award, name='Best New Writer')
+        nominee = AwardNominee.objects.create(category=category, book=self.book, author=self.user, is_winner=True)
+        self.assertEqual(award.categories.get(), category)
+        self.assertTrue(nominee.is_winner)

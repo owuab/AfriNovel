@@ -3,7 +3,7 @@ User-facing forms for profile management and other user interactions
 """
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Book, UserProfile
+from .models import Book, CriticApplication, CompetitionEntry, UserProfile
 
 
 User = get_user_model()
@@ -81,3 +81,22 @@ class WriterBookForm(forms.ModelForm):
         if cover and cover.size > 10 * 1024 * 1024:
             raise forms.ValidationError('Cover images must be 10 MB or smaller.')
         return cover
+
+
+class CriticApplicationForm(forms.ModelForm):
+    class Meta:
+        model = CriticApplication
+        fields = ['experience', 'genres_of_interest', 'writing_sample', 'preferred_categories']
+        widgets = {
+            'experience': forms.Textarea(attrs={'rows': 4}),
+            'writing_sample': forms.Textarea(attrs={'rows': 8}),
+            'genres_of_interest': forms.TextInput(attrs={'placeholder': 'Fantasy, romance, literary fiction'}),
+            'preferred_categories': forms.TextInput(attrs={'placeholder': 'Best African Story, Reader\'s Choice'}),
+        }
+
+
+class CompetitionEntryForm(forms.ModelForm):
+    class Meta:
+        model = CompetitionEntry
+        fields = ['book', 'statement']
+        widgets = {'statement': forms.Textarea(attrs={'rows': 5})}

@@ -278,6 +278,35 @@
         z-index: 1;
     }
 
+    .theme-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin: -14px 0 26px;
+        color: var(--dashboard-ink-soft);
+        font-size: 12px;
+    }
+
+    .theme-preview-swatch {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border: 1px solid var(--dashboard-line);
+        border-radius: 999px;
+        background: var(--dashboard-card);
+    }
+
+    .theme-preview-swatch::before {
+        content: '';
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--swatch);
+        border: 1px solid rgba(23, 42, 58, 0.16);
+    }
+
     .stats-section {
         margin-bottom: 30px;
     }
@@ -406,6 +435,15 @@
 <div class="dashboard-hero">
     <h1 class="dashboard-title">📊 Admin Dashboard</h1>
     <p class="dashboard-subtitle">Monitor AfriNovel platform metrics and performance</p>
+</div>
+
+<div class="theme-preview" aria-label="AfriNovel theme preview">
+    <span>Theme preview</span>
+    <span class="theme-preview-swatch" style="--swatch: #172a3a;">Ink</span>
+    <span class="theme-preview-swatch" style="--swatch: #f5f2ec;">Paper</span>
+    <span class="theme-preview-swatch" style="--swatch: #2f6f5e;">Green</span>
+    <span class="theme-preview-swatch" style="--swatch: #c56d4e;">Coral</span>
+    <span class="theme-preview-swatch" style="--swatch: #b58b3b;">Gold</span>
 </div>
 
 {% if stats %}

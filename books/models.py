@@ -119,43 +119,30 @@ class Book(models.Model):
         (HIATUS, 'Hiatus'),
     ]
 
-    CONTENT_RATING_CHOICES = [
-        ('everyone', 'Everyone'),
-        ('teen', 'Teen'),
-        ('mature', 'Mature'),
-    ]
-
     title = models.CharField(max_length=200)
-    subtitle = models.CharField(max_length=240, blank=True)
     slug = models.SlugField(unique=True)
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='authored_books',
-        db_index=True,
-    )
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='authored_books')
     translator = models.CharField(max_length=200, blank=True, help_text='Translator name')
     licensor = models.CharField(max_length=200, blank=True, help_text='Publisher/licensor name')
     language = models.CharField(max_length=50, default='English', help_text='Original language')
+    subtitle = models.CharField(max_length=240, blank=True)
     subgenre = models.CharField(max_length=100, blank=True)
-    content_rating = models.CharField(max_length=16, choices=CONTENT_RATING_CHOICES, default='teen')
     tags = models.CharField(max_length=500, blank=True, help_text='Comma-separated discovery tags')
-    rights_confirmed = models.BooleanField(default=False)
     summary = models.TextField()
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
+    content_rating = models.CharField(max_length=16, choices=[('everyone', 'Everyone'), ('teen', 'Teen'), ('mature', 'Mature')], default='teen')
     cover_url = models.URLField(max_length=1000, blank=True)
     catalog_book = models.ForeignKey('CatalogBook', null=True, blank=True, on_delete=models.SET_NULL, related_name='homepage_books')
     view_count = models.PositiveIntegerField(default=0)
     cover_color = models.CharField(max_length=80, default='linear-gradient(135deg, #dcae7b, #8a563f)')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=DRAFT)
     novel_status = models.CharField(max_length=20, choices=NOVEL_STATUS_CHOICES, default=ONGOING, help_text='Story status (ongoing/completed)')
+    published_at = models.DateTimeField(null=True, blank=True)
+    rights_confirmed = models.BooleanField(default=False)
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    published_at = models.DateTimeField(null=True, blank=True)
     genres = models.ManyToManyField(Genre, related_name='books')
 
     class Meta:
@@ -164,15 +151,22 @@ class Book(models.Model):
     def __str__(self):
         return self.title
 
+    @property
+    def chapters_total(self):
+        return self.chapters.count()
+
+    @property
+    def saves_total(self):
+        return self.on_shelves.count()
+
     def get_absolute_url(self):
         return reverse('book_detail', args=[self.slug])
     
     def get_reader_url(self):
         """Return the appropriate reader URL for this book (wuxiaworld-style direct reading)"""
         # Prioritize chapter detail system for books with chapters
-        public_chapters = self.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED])
-        if public_chapters.exists():
-            first_chapter = public_chapters.first()
+        if self.chapters.exists():
+            first_chapter = self.chapters.first()
             if first_chapter:
                 return reverse('chapter_detail', args=[self.slug, first_chapter.chapter_number])
         # Fall back to other reader systems
@@ -200,7 +194,7 @@ class Book(models.Model):
 
     @property
     def chapter_count(self):
-        return self.chapters.filter(status__in=[Chapter.PUBLISHED, Chapter.COMPLETED]).count()
+        return self.chapters.count()
 
     @property
     def review_count(self):
@@ -212,7 +206,11 @@ class Chapter(models.Model):
     DRAFT = 'draft'
     PUBLISHED = 'published'
     COMPLETED = 'completed'
-    STATUS_CHOICES = [(DRAFT, 'Draft'), (PUBLISHED, 'Published'), (COMPLETED, 'Completed')]
+    STATUS_CHOICES = [
+        (DRAFT, 'Draft'),
+        (PUBLISHED, 'Published'),
+        (COMPLETED, 'Completed'),
+    ]
 
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='chapters')
     chapter_number = models.PositiveIntegerField()
@@ -233,8 +231,8 @@ class Chapter(models.Model):
         unique_together = ['book', 'chapter_number']
         indexes = [
             models.Index(fields=['book', 'chapter_number']),
+            models.Index(fields=['book', 'status', 'chapter_number'], name='books_chapt_book_id_50e026_idx'),
             models.Index(fields=['book', 'is_free']),
-            models.Index(fields=['book', 'status', 'chapter_number']),
         ]
 
     def __str__(self):
@@ -789,16 +787,21 @@ class Notification(models.Model):
     BOOK_PUBLISHED = 'book_published'
     CHAPTER_PUBLISHED = 'chapter_published'
     TYPES = [
-        (FOLLOW, 'Follow'), (LIKE, 'Like'), (COMMENT, 'Comment'),
-        (REPOST, 'Repost'), (RECOMMENDATION, 'Recommendation'), (MENTION, 'Mention'),
-        (BOOK_PUBLISHED, 'Book published'), (CHAPTER_PUBLISHED, 'Chapter published'),
+        (FOLLOW, 'Follow'),
+        (LIKE, 'Like'),
+        (COMMENT, 'Comment'),
+        (REPOST, 'Repost'),
+        (RECOMMENDATION, 'Recommendation'),
+        (MENTION, 'Mention'),
+        (BOOK_PUBLISHED, 'Book published'),
+        (CHAPTER_PUBLISHED, 'Chapter published'),
     ]
 
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_notifications')
     notification_type = models.CharField(max_length=24, choices=TYPES)
-    post = models.ForeignKey(SocialPost, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     book = models.ForeignKey(Book, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    post = models.ForeignKey(SocialPost, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     message = models.CharField(max_length=280, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -849,13 +852,232 @@ class ContentReport(models.Model):
 
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reports_created')
     post = models.ForeignKey(SocialPost, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
-    book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True, blank=True, related_name='content_reports')
-    chapter = models.ForeignKey(Chapter, on_delete=models.SET_NULL, null=True, blank=True, related_name='content_reports')
+    book = models.ForeignKey('Book', on_delete=models.SET_NULL, null=True, blank=True, related_name='content_reports')
+    chapter = models.ForeignKey('Chapter', on_delete=models.SET_NULL, null=True, blank=True, related_name='content_reports')
     reported_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='reports_received')
     reason = models.CharField(max_length=24, choices=REASONS)
     details = models.TextField(blank=True)
     resolved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Promotion(models.Model):
+    DRAFT = 'draft'
+    SCHEDULED = 'scheduled'
+    PUBLISHED = 'published'
+    EXPIRED = 'expired'
+    ARCHIVED = 'archived'
+    STATUS_CHOICES = [(DRAFT, 'Draft'), (SCHEDULED, 'Scheduled'), (PUBLISHED, 'Published'), (EXPIRED, 'Expired'), (ARCHIVED, 'Archived')]
+    WRITING = 'writing'
+    COMPETITION = 'competition'
+    AWARDS = 'awards'
+    PLATFORM = 'platform'
+    CATEGORY_CHOICES = [(WRITING, 'Writing'), (COMPETITION, 'Competition'), (AWARDS, 'Awards'), (PLATFORM, 'Platform news')]
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    description = models.TextField()
+    banner = models.ImageField(upload_to='promotions/', blank=True)
+    category = models.CharField(max_length=24, choices=CATEGORY_CHOICES, default=PLATFORM)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=DRAFT, db_index=True)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True)
+    rules = models.TextField(blank=True)
+    eligibility = models.TextField(blank=True)
+    call_to_action = models.CharField(max_length=80, blank=True)
+    destination_url = models.URLField(blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='promotions_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-starts_at', '-created_at']
+        indexes = [models.Index(fields=['status', '-starts_at'])]
+
+    def __str__(self):
+        return self.title
+
+
+class Competition(models.Model):
+    DRAFT = 'draft'
+    OPEN = 'open'
+    CLOSED = 'closed'
+    JUDGING = 'judging'
+    COMPLETED = 'completed'
+    STATUS_CHOICES = [(DRAFT, 'Draft'), (OPEN, 'Open'), (CLOSED, 'Closed'), (JUDGING, 'Judging'), (COMPLETED, 'Completed')]
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    description = models.TextField()
+    banner = models.ImageField(upload_to='competitions/', blank=True)
+    rules = models.TextField()
+    eligibility = models.TextField(blank=True)
+    submission_requirements = models.TextField(blank=True)
+    prizes = models.TextField(blank=True)
+    opens_at = models.DateTimeField()
+    closes_at = models.DateTimeField()
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=DRAFT, db_index=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='competitions_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-opens_at']
+
+    def __str__(self):
+        return self.title
+
+
+class CompetitionEntry(models.Model):
+    SUBMITTED = 'submitted'
+    SHORTLISTED = 'shortlisted'
+    WINNER = 'winner'
+    REJECTED = 'rejected'
+    STATUS_CHOICES = [(SUBMITTED, 'Submitted'), (SHORTLISTED, 'Shortlisted'), (WINNER, 'Winner'), (REJECTED, 'Rejected')]
+
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='entries')
+    writer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='competition_entries')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='competition_entries')
+    statement = models.TextField(blank=True)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=SUBMITTED)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['competition', 'writer', 'book'], name='unique_competition_book_entry')]
+        ordering = ['-submitted_at']
+
+
+class Award(models.Model):
+    title = models.CharField(max_length=200)
+    year = models.PositiveIntegerField()
+    description = models.TextField(blank=True)
+    announcement = models.TextField(blank=True)
+    is_published = models.BooleanField(default=False, db_index=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='awards_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-year', 'title']
+        constraints = [models.UniqueConstraint(fields=['title', 'year'], name='unique_award_title_year')]
+
+    def __str__(self):
+        return f'{self.title} ({self.year})'
+
+
+class AwardCategory(models.Model):
+    award = models.ForeignKey(Award, on_delete=models.CASCADE, related_name='categories')
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['award', 'name'], name='unique_award_category')]
+        ordering = ['name']
+
+    def __str__(self):
+        return f'{self.award}: {self.name}'
+
+
+class AwardNominee(models.Model):
+    category = models.ForeignKey(AwardCategory, on_delete=models.CASCADE, related_name='nominees')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, null=True, blank=True, related_name='award_nominations')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='award_nominations')
+    is_winner = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['category', 'book', 'author'], name='unique_award_nominee')]
+
+
+class CriticProfile(models.Model):
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    SUSPENDED = 'suspended'
+    STATUS_CHOICES = [(PENDING, 'Pending'), (APPROVED, 'Approved'), (SUSPENDED, 'Suspended')]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='critic_profile')
+    bio = models.TextField(blank=True)
+    genres = models.ManyToManyField('Genre', blank=True, related_name='critics')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=PENDING, db_index=True)
+    reputation = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user.get_username()
+
+
+class CriticApplication(models.Model):
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    REJECTED = 'rejected'
+    STATUS_CHOICES = [(PENDING, 'Pending'), (APPROVED, 'Approved'), (REJECTED, 'Rejected')]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='critic_applications')
+    experience = models.TextField()
+    genres_of_interest = models.CharField(max_length=500)
+    writing_sample = models.TextField()
+    preferred_categories = models.CharField(max_length=500, blank=True)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=PENDING, db_index=True)
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='critic_applications_reviewed')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class ReviewAssignment(models.Model):
+    REQUESTED = 'requested'
+    ACCEPTED = 'accepted'
+    SUBMITTED = 'submitted'
+    APPROVED = 'approved'
+    REJECTED = 'rejected'
+    STATUS_CHOICES = [(REQUESTED, 'Requested'), (ACCEPTED, 'Accepted'), (SUBMITTED, 'Submitted'), (APPROVED, 'Approved'), (REJECTED, 'Rejected')]
+
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='critic_assignments')
+    critic = models.ForeignKey(CriticProfile, on_delete=models.PROTECT, related_name='assignments')
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='review_assignments_created')
+    payout_amount = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    due_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=REQUESTED, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['book', 'critic'], name='unique_book_critic_assignment')]
+
+
+class CriticReview(models.Model):
+    assignment = models.OneToOneField(ReviewAssignment, on_delete=models.CASCADE, related_name='review')
+    overall = models.TextField()
+    story_quality = models.PositiveSmallIntegerField(default=3)
+    characters = models.PositiveSmallIntegerField(default=3)
+    world_building = models.PositiveSmallIntegerField(default=3)
+    writing_style = models.PositiveSmallIntegerField(default=3)
+    plot = models.PositiveSmallIntegerField(default=3)
+    originality = models.PositiveSmallIntegerField(default=3)
+    strengths = models.TextField(blank=True)
+    improvements = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+
+
+class CriticEarning(models.Model):
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    PAID = 'paid'
+    STATUS_CHOICES = [(PENDING, 'Pending'), (APPROVED, 'Approved'), (PAID, 'Paid')]
+
+    critic = models.ForeignKey(CriticProfile, on_delete=models.PROTECT, related_name='earnings')
+    assignment = models.OneToOneField(ReviewAssignment, on_delete=models.PROTECT, related_name='earning')
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=PENDING, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class ImportedBook(models.Model):

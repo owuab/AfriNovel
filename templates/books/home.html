@@ -442,6 +442,14 @@
 
 {% block content %}
 <div class="homepage-container">
+  <section class="premium-section homepage-search">
+    <form id="homepage-search-form" class="search-bar" method="get" action="{% url 'search_books' %}">
+      <label class="sr-only" for="homepage-search-input">Search books</label>
+      <input id="homepage-search-input" type="search" name="q" placeholder="Search books and authors..." autocomplete="off">
+      <button type="submit">Search</button>
+    </form>
+  </section>
+
   <!-- Hero Carousel -->
   {% if popular_books %}
   <section class="hero-carousel" tabindex="0" aria-label="Featured novels">
@@ -488,6 +496,41 @@
     <div class="hero-indicators">
       {% for book in popular_books|slice:":4" %}
         <button class="hero-indicator{% if forloop.first %} active{% endif %}" type="button" aria-label="Show featured novel {{ forloop.counter }}"></button>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if free_catalog_books %}
+  <section class="premium-section">
+    <div class="section-header"><h2>Free to read</h2><a href="{% url 'discover' %}">Discover more →</a></div>
+    <div class="book-carousel" data-carousel="book" data-target="free-catalog-books">
+      {% for book in free_catalog_books %}
+        <article class="book-card-premium catalogue-result">
+          <a class="book-cover-wrapper" href="{% url 'catalogue_detail' book.pk %}">
+            {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">{% else %}<span class="book-cover-fallback"><strong>{{ book.title }}</strong></span>{% endif %}
+          </a>
+          <div class="book-content"><h3 class="book-title"><a href="{% url 'catalogue_detail' book.pk %}">{{ book.title }}</a></h3><div class="book-author">{{ book.authors|join:", " }}</div><div class="book-meta">Free to read</div></div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if asian_books %}
+  <section class="premium-section">
+    <div class="section-header"><h2>Asian Books</h2><a href="{% url 'discover' %}?category=asian">Explore all →</a></div>
+    <nav class="asian-subcategories" aria-label="Asian book categories">
+      {% for value, label in asian_subcategories %}<span>{{ label }}</span>{% endfor %}
+    </nav>
+    <div class="book-carousel" data-carousel="book" data-target="asian-books">
+      {% for book in asian_books %}
+        <article class="book-card-premium catalogue-result">
+          <a class="book-cover-wrapper" href="{% url 'catalogue_detail' book.pk %}">
+            {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}" loading="lazy">{% else %}<span class="book-cover-fallback"><strong>{{ book.title }}</strong></span>{% endif %}
+          </a>
+          <div class="book-content"><h3 class="book-title"><a href="{% url 'catalogue_detail' book.pk %}">{{ book.title }}</a></h3><div class="book-author">{{ book.authors|join:", " }}</div></div>
+        </article>
       {% endfor %}
     </div>
   </section>

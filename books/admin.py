@@ -13,6 +13,8 @@ from .models import (
     Bookmark, BookSource, CatalogBook, CatalogLibraryEntry, Highlight, ProviderStatus,
     ReadingNote, ReadingProgress, SearchHistory, AuthenticationEvent,
     ImportedBook, BookFile, ImportJob, ReadingBookmark, ReadingHighlight, BookUpload,
+    Promotion, Competition, CompetitionEntry, Award, AwardCategory, AwardNominee,
+    CriticProfile, CriticApplication, ReviewAssignment, CriticReview, CriticEarning,
 )
 from .admin_dashboard import get_dashboard_stats
 
@@ -786,4 +788,15 @@ admin_site.register(ImportJob, ImportJobAdmin)
 admin_site.register(ReadingBookmark, ReadingBookmarkAdmin)
 admin_site.register(ReadingHighlight, ReadingHighlightAdmin)
 admin_site.register(BookUpload)
+admin_site.register(Promotion)
+admin_site.register(Competition)
+admin_site.register(CompetitionEntry)
+admin_site.register(Award)
+admin_site.register(AwardCategory)
+admin_site.register(AwardNominee)
+admin_site.register(CriticProfile)
+admin_site.register(CriticApplication)
+admin_site.register(ReviewAssignment)
+admin_site.register(CriticReview)
+admin_site.register(CriticEarning)
 

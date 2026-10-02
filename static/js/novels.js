@@ -20,7 +20,7 @@ class NovelsCatalogue {
       search: '',
       genre: '',
       status: '',
-      sort: 'trending',
+      sort: 'newest',
       total: 0,
       totalPages: 0,
       isLoading: false
@@ -33,7 +33,6 @@ class NovelsCatalogue {
   }
 
   init() {
-    this.loadGenres();
     this.setupEventListeners();
     this.loadFromURL();
     this.fetchNovels();
@@ -87,7 +86,7 @@ class NovelsCatalogue {
     this.state.search = params.get('search') || '';
     this.state.genre = params.get('genre') || '';
     this.state.status = params.get('status') || '';
-    this.state.sort = params.get('sort') || 'trending';
+    this.state.sort = params.get('sort') || 'newest';
     this.state.page = parseInt(params.get('page')) || 1;
 
     // Update UI elements
@@ -102,7 +101,7 @@ class NovelsCatalogue {
     if (this.state.search) params.set('search', this.state.search);
     if (this.state.genre) params.set('genre', this.state.genre);
     if (this.state.status) params.set('status', this.state.status);
-    if (this.state.sort !== 'trending') params.set('sort', this.state.sort);
+    if (this.state.sort !== 'newest') params.set('sort', this.state.sort);
     if (this.state.page > 1) params.set('page', this.state.page);
     
     const newURL = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
@@ -111,20 +110,21 @@ class NovelsCatalogue {
 
   async loadGenres() {
     try {
-      const response = await fetch(this.apiEndpoint);
+      const params = new URLSearchParams({ page: 1, page_size: 1 });
+      const response = await fetch(`${this.apiEndpoint}?${params.toString()}`);
       const data = await response.json();
       if (data.genres) {
         this.genres = data.genres;
-        this.populateGenreFilter();
+        this.populateGenreFilter(this.genres);
       }
     } catch (error) {
       console.error('Error loading genres:', error);
     }
   }
 
-  populateGenreFilter() {
+  populateGenreFilter(genres = this.genres) {
     this.genreFilter.innerHTML = '<option value="">All Genres</option>';
-    this.genres.forEach(genre => {
+    genres.forEach(genre => {
       const option = document.createElement('option');
       option.value = genre.slug;
       option.textContent = `${genre.name} (${genre.book_count})`;
@@ -143,11 +143,12 @@ class NovelsCatalogue {
       const params = new URLSearchParams({
         page: this.state.page,
         page_size: this.state.pageSize,
-        search: this.state.search,
-        genre: this.state.genre,
-        status: this.state.status,
-        sort: this.state.sort
+        sort: this.state.sort,
       });
+
+      if (this.state.search) params.set('search', this.state.search);
+      if (this.state.genre) params.set('genre', this.state.genre);
+      if (this.state.status) params.set('status', this.state.status);
 
       const response = await fetch(`${this.apiEndpoint}?${params.toString()}`);
       
@@ -159,7 +160,12 @@ class NovelsCatalogue {
       
       this.state.total = data.total;
       this.state.totalPages = data.total_pages;
-      
+
+      if (data.genres && data.genres.length) {
+        this.genres = data.genres;
+        this.populateGenreFilter(data.genres);
+      }
+
       this.updateResultsInfo(data);
       this.renderNovels(data.results);
       this.renderPagination(data);
@@ -267,10 +273,15 @@ class NovelsCatalogue {
     this.grid.innerHTML = `
       <div class="error-state">
         <h3>Unable to load novels</h3>
-        <p>Please try again later</p>
-        <button class="retry-button" onclick="window.location.reload()">Retry</button>
+        <p>Please try again.</p>
+        <button class="retry-button" type="button">Retry</button>
       </div>
     `;
+
+    const retryButton = this.grid.querySelector('.retry-button');
+    if (retryButton) {
+      retryButton.addEventListener('click', () => this.fetchNovels());
+    }
   }
 
   renderPagination(data) {
