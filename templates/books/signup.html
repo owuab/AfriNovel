@@ -303,6 +303,22 @@
           </button>
         {% endif %}
 
+        {% if social_providers.facebook %}
+          <a class="social-button" href="{% provider_login_url 'facebook' process='login' %}" aria-label="Continue with Facebook">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="#1877F2"><path d="M13.5 22v-8h2.8l.4-3.2h-3.2V7.3c0-.9.3-1.6 1.7-1.6H17V2.7c-.4-.1-1.7-.2-3.1-.2-3.1 0-5.2 1.9-5.2 5.4v2.7H6.5V14h2.2v8h4.8Z"/></svg>
+            </span>
+            Continue with Facebook
+          </a>
+        {% else %}
+          <button class="social-button" type="button" aria-disabled="true" title="Facebook sign-in is not configured">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="#1877F2"><path d="M13.5 22v-8h2.8l.4-3.2h-3.2V7.3c0-.9.3-1.6 1.7-1.6H17V2.7c-.4-.1-1.7-.2-3.1-.2-3.1 0-5.2 1.9-5.2 5.4v2.7H6.5V14h2.2v8h4.8Z"/></svg>
+            </span>
+            Continue with Facebook
+          </button>
+        {% endif %}
+
         {% if social_providers.microsoft %}
           <a class="social-button" href="{% provider_login_url 'microsoft' process='login' %}" aria-label="Continue with Microsoft">
             <span class="provider-icon" aria-hidden="true">
@@ -322,7 +338,7 @@
     </div>
 
     <p class="signup-footer">Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
-    {% if not social_providers.google and not social_providers.apple and not social_providers.microsoft %}
+    {% if not social_providers.google and not social_providers.apple and not social_providers.facebook and not social_providers.github and not social_providers.microsoft %}
       <p class="config-note">Social sign-in will become available when a provider is configured securely by AfriNovel.</p>
     {% endif %}
   </div>

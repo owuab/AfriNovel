@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.apple',
+    'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.microsoft',
     'django_apscheduler',
     'books',
@@ -151,8 +152,9 @@ def provider_app(client_id_env, secret_env, **extra):
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': provider_app('GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', SCOPE=['profile', 'email']),
-    'microsoft': provider_app('MICROSOFT_CLIENT_ID', 'MICROSOFT_CLIENT_SECRET', SCOPE=['openid', 'profile', 'email'], SETTINGS={'tenant': os.getenv('MICROSOFT_TENANT', 'common')}),
     'apple': provider_app('APPLE_CLIENT_ID', 'APPLE_CLIENT_SECRET', SCOPE=['name', 'email']),
+    'facebook': provider_app('FACEBOOK_CLIENT_ID', 'FACEBOOK_CLIENT_SECRET', SCOPE=['email']),
+    'microsoft': provider_app('MICROSOFT_CLIENT_ID', 'MICROSOFT_CLIENT_SECRET', SCOPE=['openid', 'profile', 'email'], SETTINGS={'tenant': os.getenv('MICROSOFT_TENANT', 'common')}),
 }
 
 

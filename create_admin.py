@@ -10,36 +10,39 @@ from books.admin_models import AdminRole
 
 User = get_user_model()
 
-# Create or get superuser
+admin_username = os.getenv('ADMIN_USERNAME', 'admin')
+admin_email = os.getenv('ADMIN_EMAIL', 'admin@bookclub.local')
+admin_password = os.getenv('ADMIN_PASSWORD', 'admin123')
+
 user, created = User.objects.get_or_create(
-    username='admin',
+    username=admin_username,
     defaults={
-        'email': 'admin@bookclub.local',
+        'email': admin_email,
         'is_staff': True,
-        'is_superuser': True
+        'is_superuser': True,
     }
 )
 
-# Ensure user has correct permissions
+if user.email != admin_email:
+    user.email = admin_email
+
 if not user.is_staff or not user.is_superuser:
     user.is_staff = True
     user.is_superuser = True
-    user.set_password('admin123')
-    user.save()
-    print(f"✅ Admin user updated with staff and superuser permissions")
-elif created:
-    user.set_password('admin123')
-    user.save()
+
+user.set_password(admin_password)
+user.save()
+
+if created:
     print(f"✅ Admin user created: {user.username}")
 else:
-    print(f"ℹ️ Admin user already exists: {user.username}")
+    print(f"ℹ️ Admin user already exists: {user.username} (credentials synced)")
 
-# Create admin role if not exists
 admin_role, role_created = AdminRole.objects.get_or_create(
     user=user,
     defaults={
         'role': AdminRole.SUPER_ADMIN,
-        'assigned_by': user
+        'assigned_by': user,
     }
 )
 
@@ -48,5 +51,5 @@ if role_created:
 else:
     print(f"ℹ️ Admin role already exists")
 
-print(f"User: {user.username}, Staff: {user.is_staff}, Superuser: {user.is_superuser}")
-print(f"✅ Admin setup complete! Username: admin, Password: admin123")
+print(f"User: {user.username}, Email: {user.email}, Staff: {user.is_staff}, Superuser: {user.is_superuser}")
+print(f"✅ Admin setup complete! Username: {admin_username}, Password: {admin_password}")
