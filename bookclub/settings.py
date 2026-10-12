@@ -30,9 +30,14 @@ default_debug = 'False' if os.getenv('RAILWAY_ENVIRONMENT') else 'True'
 DEBUG = os.getenv('DEBUG', default_debug).lower() == 'true'
 
 # Production must use a secret supplied by the deployment environment.
-SECRET_KEY = os.getenv('SECRET_KEY') or (secrets.token_urlsafe(50) if DEBUG else '')
+SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
-    raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is disabled.')
+    if DEBUG:
+        SECRET_KEY = secrets.token_urlsafe(64)
+    else:
+        raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is disabled.')
+if len(SECRET_KEY) < 50 or len(set(SECRET_KEY)) < 5:
+    raise ImproperlyConfigured('SECRET_KEY must be at least 50 characters and include enough unique characters for production security.')
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -46,14 +51,12 @@ if not DEBUG and (not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS):
 if DEBUG:
     # Development origins
     CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1', 'http://localhost', 'http://127.0.0.1:8001', 'http://localhost:8001']
-    # Disable CSRF cookie secure flag in development
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
+    # Disable secure-only cookies in development
+    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'false').lower() == 'true'
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
-    # Ensure CSRF cookie is set
     CSRF_COOKIE_HTTPONLY = False
-    # Use session-based CSRF for better development experience
     CSRF_USE_SESSIONS = False
 else:
     # Production: use environment variable or fallback to ALLOWED_HOSTS
@@ -65,12 +68,10 @@ else:
             if origin.strip()
         ]
     else:
-        # Fallback: convert ALLOWED_HOSTS to HTTPS origins only
         CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host != '*']
     # Production cookie security
-    # With SECURE_PROXY_SSL_HEADER, Django correctly recognizes HTTPS requests
-    CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'true').lower() == 'true'
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'true').lower() == 'true'
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
 
@@ -260,12 +261,11 @@ APSCHEDULER_RUN_NOW_TIMEOUT = 300
 # HTTPS/SSL Configuration for Railway
 # Railway terminates SSL and forwards requests, so Django needs to trust the proxy
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# Disable SSL redirect since Railway handles SSL termination
-# Read from environment variable to allow Railway configuration control
-SECURE_SSL_REDIRECT = not DEBUG or os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true'
+# Default to HTTPS-only redirects in production, but keep local development flexible.
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'true' if not DEBUG else 'false').lower() == 'true'
 SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000' if not DEBUG else '0'))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'false').lower() == 'true'
-SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'false').lower() == 'true'
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'true' if not DEBUG else 'false').lower() == 'true'
+SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'true' if not DEBUG else 'false').lower() == 'true'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 X_FRAME_OPTIONS = 'DENY'
