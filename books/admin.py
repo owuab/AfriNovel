@@ -293,9 +293,10 @@ class AuthorAdmin(admin.ModelAdmin):
         books = obj.books.all()
         if not books:
             return "No books published"
+        book_items = format_html_join('', '<li>{}</li>', ((book.title,) for book in books))
         return format_html(
             '<ul style="margin: 0; padding-left: 20px;">{}</ul>',
-            mark_safe(''.join([f'<li>{book.title}</li>' for book in books]))
+            book_items
         )
     books_display.short_description = 'Published Books'
 

@@ -6,13 +6,22 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bookclub.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from books.admin_models import AdminRole
 
 User = get_user_model()
 
 admin_username = os.getenv('ADMIN_USERNAME', 'admin')
 admin_email = os.getenv('ADMIN_EMAIL', 'admin@bookclub.local')
-admin_password = os.getenv('ADMIN_PASSWORD', 'admin123')
+admin_password = os.getenv('ADMIN_PASSWORD')
+if not admin_password:
+    raise SystemExit('Set ADMIN_PASSWORD to a strong password before running this script.')
+
+try:
+    validate_password(admin_password)
+except ValidationError as error:
+    raise SystemExit(f'ADMIN_PASSWORD does not meet the password policy: {"; ".join(error.messages)}') from error
 
 user, created = User.objects.get_or_create(
     username=admin_username,
@@ -52,4 +61,4 @@ else:
     print(f"ℹ️ Admin role already exists")
 
 print(f"User: {user.username}, Email: {user.email}, Staff: {user.is_staff}, Superuser: {user.is_superuser}")
-print(f"✅ Admin setup complete! Username: {admin_username}, Password: {admin_password}")
+print(f"✅ Admin setup complete! Username: {admin_username}")

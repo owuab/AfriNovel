@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.contrib.messages.middleware import MessageMiddleware
@@ -468,6 +469,10 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('signup'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Create account')
+
+    def test_social_provider_settings_include_github(self):
+        self.assertIn('github', settings.SOCIALACCOUNT_PROVIDERS)
+        self.assertTrue(any('github' in app.lower() for app in settings.INSTALLED_APPS))
 
     def test_register_alias_returns_signup_page(self):
         response = self.client.get(reverse('register'))

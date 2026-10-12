@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import secrets
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -24,17 +25,22 @@ load_dotenv(BASE_DIR / '.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-k*pzw+z_3r(=8csf##*4qa-a4-=$vqq5$1e9a&)@eola6vc5po')
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+default_debug = 'False' if os.getenv('RAILWAY_ENVIRONMENT') else 'True'
+DEBUG = os.getenv('DEBUG', default_debug).lower() == 'true'
+
+# Production must use a secret supplied by the deployment environment.
+SECRET_KEY = os.getenv('SECRET_KEY') or (secrets.token_urlsafe(50) if DEBUG else '')
+if not SECRET_KEY:
+    raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is disabled.')
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv('ALLOWED_HOSTS', '*').split(',')
+    for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '').split(',')
     if host.strip()
 ]
+if not DEBUG and (not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS):
+    raise ImproperlyConfigured('Set ALLOWED_HOSTS to the production hostnames; wildcard hosts are not allowed.')
 
 # CSRF Trusted Origins configuration
 if DEBUG:
@@ -85,6 +91,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.apple',
     'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.github',
     'allauth.socialaccount.providers.microsoft',
     'django_apscheduler',
     'books',
@@ -154,6 +161,7 @@ SOCIALACCOUNT_PROVIDERS = {
     'google': provider_app('GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', SCOPE=['profile', 'email']),
     'apple': provider_app('APPLE_CLIENT_ID', 'APPLE_CLIENT_SECRET', SCOPE=['name', 'email']),
     'facebook': provider_app('FACEBOOK_CLIENT_ID', 'FACEBOOK_CLIENT_SECRET', SCOPE=['email']),
+    'github': provider_app('GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET', SCOPE=['read:user', 'user:email']),
     'microsoft': provider_app('MICROSOFT_CLIENT_ID', 'MICROSOFT_CLIENT_SECRET', SCOPE=['openid', 'profile', 'email'], SETTINGS={'tenant': os.getenv('MICROSOFT_TENANT', 'common')}),
 }
 
@@ -254,7 +262,13 @@ APSCHEDULER_RUN_NOW_TIMEOUT = 300
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Disable SSL redirect since Railway handles SSL termination
 # Read from environment variable to allow Railway configuration control
-SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true'
+SECURE_SSL_REDIRECT = not DEBUG or os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true'
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000' if not DEBUG else '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'false').lower() == 'true'
+SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'false').lower() == 'true'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+X_FRAME_OPTIONS = 'DENY'
 
 
 # Email

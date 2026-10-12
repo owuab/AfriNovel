@@ -24,6 +24,40 @@
     padding: var(--spacing-5);
   }
 
+  .profile-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-secondary);
+  }
+
+  .profile-card-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(122, 76, 61, 0.12);
+  }
+
+  .profile-card-meta {
+    display: grid;
+    gap: 2px;
+  }
+
+  .profile-card-meta strong {
+    color: var(--color-text-primary);
+    font-size: 0.96rem;
+  }
+
+  .profile-card-meta span {
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+  }
+
   .section-title {
     margin: 0 0 var(--spacing-3);
     font-size: var(--font-size-xl);
@@ -200,12 +234,28 @@
 {% block content %}
 <div class="container main-grid">
   <aside class="sidebar">
+    <div class="profile-card">
+      {% if user.social_profile.get_avatar_url %}
+        <img src="{{ user.social_profile.get_avatar_url }}" alt="{{ user.username }}" class="profile-card-avatar">
+      {% else %}
+        <div class="profile-card-avatar" style="display:grid;place-items:center;font-weight:700;color:var(--color-accent);">{{ user.username|slice:':1'|upper }}</div>
+      {% endif %}
+      <div class="profile-card-meta">
+        <strong>{{ user.get_full_name|default:user.username }}</strong>
+        <span>@{{ user.username }}</span>
+      </div>
+    </div>
+
     <h3 class="section-title">Reader</h3>
     <div class="menu-item active">My Library</div>
     <a class="menu-item" href="{% url 'reading_now' %}">Reading now</a>
     <a class="menu-item" href="{% url 'social_reviews' %}">Reviews</a>
     <a class="menu-item" href="{% url 'book_recommendations' %}">Recommendations</a>
     <a class="menu-item" href="{% url 'social_feed_tab' 'following' %}">Following feed</a>
+    <a class="menu-item" href="{% url 'writer_dashboard' %}">Write</a>
+    <a class="menu-item" href="{% url 'subscription_plans' %}">Subscribe</a>
+    <a class="menu-item" href="{% url 'profile' %}">Profile</a>
+    <a class="menu-item" href="{% url 'profile_edit' %}">Edit Profile</a>
   </aside>
 
   <section class="content">

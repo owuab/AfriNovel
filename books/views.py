@@ -1061,6 +1061,7 @@ def configured_social_providers():
         'google': bool(configured.get('google', {}).get('APP', {}).get('client_id')),
         'apple': bool(configured.get('apple', {}).get('APP', {}).get('client_id')),
         'facebook': bool(configured.get('facebook', {}).get('APP', {}).get('client_id')),
+        'github': bool(configured.get('github', {}).get('APP', {}).get('client_id')),
         'microsoft': bool(configured.get('microsoft', {}).get('APP', {}).get('client_id')),
     }
 
@@ -1082,7 +1083,7 @@ def connected_accounts(request):
 def disconnect_social_account(request, provider):
     from allauth.socialaccount.models import SocialAccount
 
-    if provider not in {'google', 'apple', 'facebook', 'microsoft'}:
+    if provider not in {'google', 'apple', 'facebook', 'github', 'microsoft'}:
         return HttpResponseBadRequest('Unknown provider.')
     account = get_object_or_404(SocialAccount, user=request.user, provider=provider)
     social_count = SocialAccount.objects.filter(user=request.user).count()

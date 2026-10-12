@@ -1,5 +1,7 @@
 # ✅ Admin Dashboard - Integration Complete
 
+> Historical integration notes only. The credentials and readiness claims in this document are not valid deployment guidance.
+
 ## Summary
 
 Your comprehensive admin dashboard for TheBookClub has been successfully integrated and tested. The system is now **fully operational** and ready for use!
@@ -10,13 +12,13 @@ Your comprehensive admin dashboard for TheBookClub has been successfully integra
 ✅ **URL Routing** - All admin panel URLs configured and working
 ✅ **Database Migrations** - All admin models created in database
 ✅ **Admin Authentication** - Staff and permission checks in place
-✅ **Admin User** - Created with credentials (username: admin, password: admin123)
+✅ **Admin User** - Created for the development database; configure a unique password before use
 
 ## 📋 System Status
 
 - **Status**: ✅ LIVE & TESTED
 - **Dashboard Access**: http://localhost:8000/admin-panel/dashboard/
-- **Admin User**: admin / admin123
+- **Admin User**: `admin` (development database only; credentials must be configured separately)
 - **Database**: SQLite3 with all admin models
 - **Server**: Running on http://127.0.0.1:8000/
 
@@ -92,11 +94,12 @@ http://localhost:8000/admin-panel/roles/              # Admin roles
 http://localhost:8000/admin-panel/audit-logs/         # Audit log
 ```
 
-## 🧪 Testing Credentials
+## 🧪 Admin Credentials
 
 **Admin User**
 - Username: `admin`
-- Password: `admin123`
+- Set `ADMIN_PASSWORD` to a unique password that passes Django's password validators before running `create_admin.py`.
+- If the legacy sample password was ever used on a reachable environment, rotate it immediately.
 - Permissions: Full staff + superuser + super admin role
 
 ## ⚙️ Configuration Files Updated
@@ -149,10 +152,9 @@ http://localhost:8000/admin-panel/audit-logs/         # Audit log
 ## 🚀 Next Steps
 
 ### For Production
-1. Update ALLOWED_HOSTS in settings.py with your domain
+1. Set a unique `SECRET_KEY`, `DEBUG=False`, explicit `ALLOWED_HOSTS`, and matching HTTPS `CSRF_TRUSTED_ORIGINS` in the deployment environment
 2. Configure email settings for notifications
-3. Set DEBUG = False
-4. Use HTTPS
+3. Use HTTPS and verify Django's `check --deploy`
 5. Add database backups
 6. Set up admin log monitoring
 
@@ -193,15 +195,14 @@ For integration questions, refer to ADMIN_SETUP_GUIDE.md.
 - [x] Dashboard tested and verified
 - [x] Documentation complete
 
-## 🎉 Status: PRODUCTION READY
+## 🎉 Status: Historical Integration Record
 
-Your admin dashboard is ready for immediate use!
+This document records the original integration and does not certify current production security.
 
 **Access the dashboard now:**
 ```
 http://localhost:8000/admin-panel/dashboard/
 Username: admin
-Password: admin123
 ```
 
 ---
