@@ -719,9 +719,17 @@ def saved_content(request):
 def _sanitize_chapter_html(value):
     if not value:
         return ''
-    cleaned = re.sub(r'<\s*script\b.*?>.*?<\s*/\s*script\s*>', '', value, flags=re.I | re.S)
-    cleaned = re.sub(r'(?i)<(?!/?(?:p|br|strong|b|em|i|u|ul|ol|li|div|span|blockquote|h1|h2|h3|h4|h5|h6))[^>]+>', '', cleaned)
-    return cleaned
+    cleaned = re.sub(r'(?is)<\s*script\b[^>]*>', ' ', value)
+    cleaned = re.sub(r'(?is)<\s*/\s*script\s*>', ' ', cleaned)
+    cleaned = re.sub(r'(?i)<(?!/?(?:p|br|strong|b|em|i|u|ul|ol|li|div|span|blockquote|h1|h2|h3|h4|h5|h6))[^>]+>', ' ', cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    return cleaned.strip()
+
+
+def _chapter_word_count(value):
+    if not value:
+        return 0
+    return len(re.findall(r'\b[^\W\d_]+\b', value, flags=re.UNICODE))
 
 
 @login_required
@@ -855,7 +863,7 @@ def writer_chapter_editor(request, book_id, chapter_id=None):
         chapter.title = request.POST.get('title', chapter.title).strip() or chapter.title
         cleaned = _sanitize_chapter_html(request.POST.get('content', chapter.content))
         chapter.content = cleaned
-        chapter.word_count = len(re.findall(r'\b\w+\b', re.sub(r'<[^>]+>', ' ', cleaned)))
+        chapter.word_count = _chapter_word_count(cleaned)
         if action == 'draft':
             chapter.status = Chapter.DRAFT
         elif action == 'publish':
