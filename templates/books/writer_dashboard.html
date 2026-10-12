@@ -3,7 +3,7 @@
 
 {% block title %}Writer Dashboard | AfriNovel{% endblock %}
 
-{% block writer_legacy_css %}
+{% block extra_css %}
 <style>
   /* Writer Dashboard specific styles using design system tokens */
 
@@ -22,6 +22,40 @@
 
   .sidebar {
     padding: var(--spacing-5);
+  }
+
+  .profile-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-secondary);
+  }
+
+  .profile-card-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(122, 76, 61, 0.12);
+  }
+
+  .profile-card-meta {
+    display: grid;
+    gap: 2px;
+  }
+
+  .profile-card-meta strong {
+    color: var(--color-text-primary);
+    font-size: 0.96rem;
+  }
+
+  .profile-card-meta span {
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
   }
 
   .section-title {
@@ -171,13 +205,129 @@
     <div><p class="eyebrow">YOUR STUDIO</p><h1>Writer Dashboard</h1><p>Keep your stories moving, from first draft to publication.</p></div>
     <a class="button" href="{% url 'writer_book_create' %}">Create New Book</a>
   </header>
-  <section class="writer-stats" aria-label="Book statistics">
-    <div><span>My books</span><strong>{{ book_count }}</strong></div>
-    <div><span>Drafts</span><strong>{{ draft_count }}</strong></div>
-    <div><span>Published</span><strong>{{ published_count }}</strong></div>
-    <div><span>Completed</span><strong>{{ completed_count }}</strong></div>
-    <div><span>Total views</span><strong>{{ total_views }}</strong></div>
-  </section>
+  <div class="main-grid">
+    <aside class="sidebar">
+      <div class="profile-card">
+        {% if user.social_profile.get_avatar_url %}
+          <img src="{{ user.social_profile.get_avatar_url }}" alt="{{ user.username }}" class="profile-card-avatar">
+        {% else %}
+          <div class="profile-card-avatar" style="display:grid;place-items:center;font-weight:700;color:var(--color-accent);">{{ user.username|slice:':1'|upper }}</div>
+        {% endif %}
+        <div class="profile-card-meta">
+          <strong>{{ user.get_full_name|default:user.username }}</strong>
+          <span>@{{ user.username }}</span>
+        </div>
+      </div>
+
+      <h3 class="section-title">Writer</h3>
+      <div class="menu-item active">Studio</div>
+      <a class="menu-item" href="{% url 'writer_book_create' %}">Create Book</a>
+      <a class="menu-item" href="{% url 'writer_dashboard' %}">Dashboard</a>
+      <a class="menu-item" href="{% url 'subscription_plans' %}">Subscribe</a>
+      <a class="menu-item" href="{% url 'profile' %}">Profile</a>
+      <a class="menu-item" href="{% url 'writer_program' %}">Writer Programme</a>
+      <a class="menu-item" href="{% url 'profile_edit' %}">Edit Profile</a>
+    </aside>
+
+    <section class="content">
+      <div class="hero-card">
+        <h2>Writer Dashboard</h2>
+        <p>Keep your stories moving, from first draft to publication.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-label">My books</div><div class="stat-value">{{ book_count }}</div></div>
+        <div class="stat"><div class="stat-label">Drafts</div><div class="stat-value">{{ draft_count }}</div></div>
+        <div class="stat"><div class="stat-label">Published</div><div class="stat-value">{{ published_count }}</div></div>
+      </div>
+
+      {% include "components/subscription_card.html" %}
+
+      <section class="writer-finance" aria-labelledby="writer-finance-title">
+        <h2 id="writer-finance-title">Writer earnings</h2>
+        {% if writer_profile and writer_profile.status == 'approved' %}
+          <p class="subscription-summary">Writer status: Approved{% if current_subscription %} · Earnings enabled{% else %} · Subscribe to resume earnings{% endif %}</p>
+          <div class="writer-balance-grid">
+            <div><span>Total earnings</span><strong>₦{{ writer_balances.total|floatformat:2 }}</strong></div>
+            <div><span>Pending</span><strong>₦{{ writer_balances.pending|floatformat:2 }}</strong></div>
+            <div><span>Available</span><strong>₦{{ writer_balances.available|floatformat:2 }}</strong></div>
+            <div><span>Withdrawn</span><strong>₦{{ writer_balances.withdrawn|floatformat:2 }}</strong></div>
+          </div>
+          <p class="subscription-summary">{{ total_chapters }} chapters · {{ total_reads }} reads · {{ total_readers }} qualifying readers · Reserved for pending withdrawals: ₦{{ writer_balances.reserved|floatformat:2 }}</p>
+          {% if writer_profile.payout_recipient_code %}
+            <p class="subscription-summary">Payout account: {{ writer_profile.payout_account_name }} · ending {{ writer_profile.payout_account_last4 }}</p>
+          {% else %}
+            <form class="writer-finance-form" method="post" action="{% url 'save_payout_details' %}">{% csrf_token %}
+              <label>Account name<input name="account_name" autocomplete="name" maxlength="120" required></label>
+              <label>Account number<input name="account_number" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" required></label>
+              <label>Bank code<input name="bank_code" maxlength="32" required></label>
+              <button class="button button-secondary" type="submit">Save payout details</button>
+            </form>
+            <p class="subscription-summary">Account numbers are sent to Paystack and are not stored by AfriNovels.</p>
+          {% endif %}
+          <form class="writer-finance-form" method="post" action="{% url 'create_withdrawal' %}">{% csrf_token %}
+            <label>Withdrawal amount<input type="number" name="amount" min="{{ payout_form.amount.field.min_value }}" step="0.01" required></label>
+            <button class="button" type="submit" {% if not current_subscription or not writer_profile.payout_recipient_code %}disabled{% endif %}>Request withdrawal</button>
+          </form>
+          <div class="writer-ledger-wrap"><table class="writer-ledger"><thead><tr><th>Date</th><th>Novel / chapter</th><th>Activity</th><th>Amount</th><th>Status</th><th>Reference</th></tr></thead><tbody>
+            {% for earning in writer_earnings %}<tr><td>{{ earning.created_at|date:"M j, Y" }}</td><td>{{ earning.book.title }}{% if earning.chapter %} · {{ earning.chapter.title }}{% endif %}</td><td>{{ earning.get_activity_type_display }}</td><td>{{ earning.currency }} {{ earning.amount|floatformat:2 }}</td><td>{{ earning.get_status_display }}</td><td>{{ earning.reference }}</td></tr>
+            {% empty %}<tr><td colspan="6">Qualifying reader activity will appear here.</td></tr>{% endfor %}
+          </tbody></table></div>
+          <h3>Withdrawal history</h3><div class="writer-ledger-wrap"><table class="writer-ledger"><thead><tr><th>Requested</th><th>Amount</th><th>Status</th><th>Reference</th></tr></thead><tbody>
+            {% for withdrawal in writer_withdrawals %}<tr><td>{{ withdrawal.requested_at|date:"M j, Y" }}</td><td>{{ withdrawal.currency }} {{ withdrawal.amount|floatformat:2 }}</td><td>{{ withdrawal.get_status_display }}</td><td>{{ withdrawal.reference }}</td></tr>
+            {% empty %}<tr><td colspan="4">No withdrawals requested.</td></tr>{% endfor %}
+          </tbody></table></div>
+        {% elif writer_profile %}
+          <p class="subscription-summary">Writer application status: {{ writer_profile.get_status_display }}. Earnings are enabled after admin approval and while your subscription is active.</p>
+        {% else %}
+          <p class="subscription-summary">Apply for writer approval to publish stories and earn from verified reader activity.</p>
+          <a class="button button-secondary" href="{% url 'writer_program' %}">Apply to writer programme</a>
+        {% endif %}
+      </section>
+
+      <section class="writer-section">
+        <div class="writer-section-heading"><div><p class="eyebrow">LIBRARY</p><h2>My Books</h2></div></div>
+        {% if books %}
+          <div class="writer-book-list">
+            {% for book in books %}
+              <article class="writer-book-row">
+                {% if book.cover_image_url %}<img src="{{ book.cover_image_url }}" alt="Cover of {{ book.title }}">{% else %}<div class="writer-cover-placeholder" aria-hidden="true">AN</div>{% endif %}
+                <div class="writer-book-info">
+                  <h3>{{ book.title }}</h3>
+                  <p>{{ book.author.name }}{% if book.subtitle %} · {{ book.subtitle }}{% endif %}</p>
+                  <div class="writer-book-metrics"><span>{{ book.get_status_display }} · {{ book.get_novel_status_display }}</span><span>{{ book.chapters_total }} chapters</span><span>{{ book.view_count }} views</span><span>{{ book.saves_total }} library saves</span><span>Edited {{ book.updated_at|date:"M j, Y" }}</span></div>
+                </div>
+                <div class="writer-book-actions">
+                  <a class="button button-secondary" href="{% url 'writer_book_edit' book.pk %}">Edit details</a>
+                  {% if book.chapters.exists %}<a class="button button-secondary" href="{% url 'writer_chapter_editor' book.pk book.chapters.first.pk %}">Continue writing</a>{% else %}<a class="button button-secondary" href="{% url 'writer_chapter_create' book.pk %}">Add chapter</a>{% endif %}
+                  {% if book.status == 'draft' %}
+                    <a class="text-action" href="{% url 'writer_publish_preview' book.pk %}">Review &amp; publish</a>
+                  {% elif book.status == 'published' %}
+                    <a class="text-action" href="{% url 'book_detail' book.slug %}">Public page</a>
+                    <form method="post" action="{% url 'writer_book_action' book.pk 'unpublish' %}">{% csrf_token %}<button class="text-action" type="submit">Unpublish</button></form>
+                  {% elif book.status == 'archived' %}
+                    <form method="post" action="{% url 'writer_book_action' book.pk 'restore' %}">{% csrf_token %}<button class="text-action" type="submit">Restore to drafts</button></form>
+                  {% endif %}
+                  <form method="post" action="{% url 'writer_book_action' book.pk 'archive' %}">{% csrf_token %}<button class="text-action" type="submit">Archive</button></form>
+                  <form method="post" action="{% url 'writer_book_action' book.pk 'delete' %}" onsubmit="return confirm('Permanently delete this book and all its chapters?');">{% csrf_token %}<button class="text-action danger" type="submit">Delete</button></form>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-state">Your writing studio is ready when you are. <a href="{% url 'writer_book_create' %}">Create your first book</a>.</p>
+        {% endif %}
+        {% if books_page.has_other_pages %}<nav class="writer-pagination" aria-label="Book pages">{% if books_page.has_previous %}<a href="?page={{ books_page.previous_page_number }}">Previous</a>{% endif %}<span>Page {{ books_page.number }} of {{ books_page.paginator.num_pages }}</span>{% if books_page.has_next %}<a href="?page={{ books_page.next_page_number }}">Next</a>{% endif %}</nav>{% endif %}
+      </section>
+
+      <section class="writer-section recent-writing">
+        <div class="writer-section-heading"><div><p class="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Recently edited chapters</h2></div></div>
+        {% for chapter in recent_chapters %}
+          <a class="recent-chapter" href="{% url 'writer_chapter_editor' chapter.book_id chapter.pk %}"><span>{{ chapter.book.title }}</span><strong>{{ chapter.title }}</strong><small>Edited {{ chapter.updated_at|date:"M j, Y · g:i A" }}</small></a>
+        {% empty %}<p class="empty-state">Your recently edited chapters will appear here.</p>{% endfor %}
+      </section>
+    </section>
+  </div>
 
   {% include "components/subscription_card.html" %}
 
