@@ -28,6 +28,9 @@ wheels/
 
 # Django
 *.log
+test_output.txt
+testlog*.txt
+writer_dashboard_check.txt
 local_settings.py
 db.sqlite3
 db.sqlite3-journal

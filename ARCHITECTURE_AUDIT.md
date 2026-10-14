@@ -11,7 +11,7 @@
 - **Project Name**: BookClub
 - **Django Version**: 6.0.4
 - **Python Version**: 3.13.12
-- **Database**: SQLite (development), PostgreSQL support configured
+- **Database**: PostgreSQL (required in development and production)
 - **Authentication**: Django-allauth with social login (Google, Apple, Microsoft)
 
 ### Directory Structure
@@ -50,7 +50,6 @@ TheBookClub/
 │   │   └── main.js           (5,781 lines) - Interactive features
 │   └── admin/                # Admin static files
 ├── .venv/                     # Virtual environment
-├── db.sqlite3                # SQLite database
 ├── manage.py                 # Django management script
 └── requirements.txt          # Python dependencies
 ```

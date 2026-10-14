@@ -115,18 +115,17 @@ export MEDIA_URL=/media/
 
 ### Database Configuration
 
-#### DATABASE_NAME
-**Type:** String or path  
-**Default:** `db.sqlite3`  
-**Description:** Database filename or connection string
+#### PostgreSQL connection settings
+**Required:** `POSTGRES_DB` and `POSTGRES_USER` (or `DB_NAME` and `DB_USER`)
+**Description:** PostgreSQL connection details. The application does not fall back to another database.
 
 ```bash
 # PostgreSQL
-export DATABASE_NAME="bookclub_prod"
-export DATABASE_USER="bookclub_user"
-export DATABASE_PASSWORD="secure_password"
-export DATABASE_HOST="db.example.com"
-export DATABASE_PORT="5432"
+export POSTGRES_DB="bookclub_prod"
+export POSTGRES_USER="bookclub_user"
+export POSTGRES_PASSWORD="secure_password"
+export POSTGRES_HOST="db.example.com"
+export POSTGRES_PORT="5432"
 ```
 
 ## Django Settings (bookclub/settings.py)

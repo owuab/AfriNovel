@@ -555,7 +555,7 @@ class TestOWASPTopTen:
         assert response.status_code == 200
         # Response should be safe, no SQL error
         assert "mysql_error" not in response.content.decode()
-        assert "sqlite3.OperationalError" not in response.content.decode()
+        assert "OperationalError" not in response.content.decode()
     
     def test_xss_in_role_description(self, admin_user, client):
         """XSS in role description sanitized"""

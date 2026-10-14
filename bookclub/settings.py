@@ -167,36 +167,25 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 
-# Database
-# Railway's shared PostgreSQL service exposes DB_* variables by default.
-# Keep POSTGRES_* aliases for existing environments, but prefer the shared DB
-# instead of silently falling back to a container-local SQLite file.
+# PostgreSQL is the only supported database backend.
 postgres_db_name = os.getenv('POSTGRES_DB') or os.getenv('DB_NAME')
 postgres_db_user = os.getenv('POSTGRES_USER') or os.getenv('DB_USER')
 
-if postgres_db_name and postgres_db_user:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': postgres_db_name,
-            'USER': postgres_db_user,
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD') or os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('POSTGRES_HOST') or os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('POSTGRES_PORT') or os.getenv('DB_PORT', '5432'),
-        }
-    }
-elif os.getenv('RAILWAY_ENVIRONMENT'):
+if not postgres_db_name or not postgres_db_user:
     raise ImproperlyConfigured(
-        'Railway deployments require PostgreSQL DB_NAME and DB_USER settings; '
-        'refusing to store account data in ephemeral SQLite.'
+        'PostgreSQL requires POSTGRES_DB and POSTGRES_USER (or DB_NAME and DB_USER).'
     )
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': postgres_db_name,
+        'USER': postgres_db_user,
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD') or os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('POSTGRES_HOST') or os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('POSTGRES_PORT') or os.getenv('DB_PORT', '5432'),
     }
+}
 
 
 # Password validation

@@ -19,7 +19,7 @@ Your comprehensive admin dashboard for TheBookClub has been successfully integra
 - **Status**: ✅ LIVE & TESTED
 - **Dashboard Access**: http://localhost:8000/admin-panel/dashboard/
 - **Admin User**: `admin` (development database only; credentials must be configured separately)
-- **Database**: SQLite3 with all admin models
+- **Database**: PostgreSQL with all admin models
 - **Server**: Running on http://127.0.0.1:8000/
 
 ## 🔧 Fixed Issues
