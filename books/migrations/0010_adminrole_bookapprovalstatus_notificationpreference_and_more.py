@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('auth', '0012_alter_user_first_name_max_length'),
-        ('books', '0009_alter_book_ status'),
+        ('books', '0009_alter_book_status'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
