@@ -22,12 +22,62 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
+def _looks_like_placeholder(value):
+    if value is None:
+        return True
 
-# SECURITY WARNING: don't run with debug turned on in production!
-default_debug = 'False' if os.getenv('RAILWAY_ENVIRONMENT') else 'True'
-DEBUG = os.getenv('DEBUG', default_debug).lower() == 'true'
+    cleaned = str(value).strip()
+    if not cleaned:
+        return True
+
+    lowered = cleaned.lower()
+    if (
+        lowered.startswith('replace-with-')
+        or lowered.startswith('your-')
+        or 'your-app' in lowered
+        or 'example' in lowered
+        or lowered == 'localhost'
+    ):
+        return True
+
+    try:
+        from urllib.parse import urlparse
+
+        parsed = urlparse(cleaned if '://' in cleaned else f'https://{cleaned}')
+        host = (parsed.hostname or '').lower()
+        if (
+            not host
+            or host == 'localhost'
+            or host.startswith('your-')
+            or host.startswith('replace-with-')
+            or 'example' in host
+            or 'your-app' in host
+        ):
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
+PRODUCTION_RUNTIME = bool(os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('DEPLOYMENT_ENVIRONMENT'))
+
+# Local development should stay local unless the real deployment environment is active.
+# The repo's .env template includes Railway placeholders, so placeholder values must not
+# silently force production mode during local development or tests.
+production_host = os.getenv('ALLOWED_HOSTS') or os.getenv('SITE_URL') or os.getenv('CSRF_TRUSTED_ORIGINS') or ''
+production_db_candidate = os.getenv('POSTGRES_HOST') or os.getenv('DB_HOST') or ''
+REAL_PRODUCTION_ENV = PRODUCTION_RUNTIME or (
+    bool(production_host) and not _looks_like_placeholder(production_host)
+    and bool(production_db_candidate) and not _looks_like_placeholder(production_db_candidate)
+)
+
+# DEBUG must remain enabled for local/test execution unless the application is truly
+# running in a live production environment with real deployment values.
+if REAL_PRODUCTION_ENV:
+    DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+else:
+    DEBUG = True
 
 # Production must use a secret supplied by the deployment environment.
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -39,21 +89,26 @@ if not SECRET_KEY:
 if len(SECRET_KEY) < 50 or len(set(SECRET_KEY)) < 5:
     raise ImproperlyConfigured('SECRET_KEY must be at least 50 characters and include enough unique characters for production security.')
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '').split(',')
-    if host.strip()
-]
-if not DEBUG and (not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS):
-    raise ImproperlyConfigured('Set ALLOWED_HOSTS to the production hostnames; wildcard hosts are not allowed.')
+if REAL_PRODUCTION_ENV:
+    ALLOWED_HOSTS = [
+        host.strip()
+        for host in os.getenv('ALLOWED_HOSTS', '').split(',')
+        if host.strip()
+    ]
+    if not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS:
+        raise ImproperlyConfigured('Set ALLOWED_HOSTS to the production hostnames; wildcard hosts are not allowed.')
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 # CSRF Trusted Origins configuration
 if DEBUG:
     # Development origins
     CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1', 'http://localhost', 'http://127.0.0.1:8001', 'http://localhost:8001']
-    # Disable secure-only cookies in development
-    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'false').lower() == 'true'
-    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+    # Disable secure-only cookies in development even if a local placeholder .env file
+    # contains production values. Real production envs are the only place we should
+    # enable HTTPS cookies.
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
     CSRF_COOKIE_HTTPONLY = False
@@ -151,7 +206,11 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = False
 ACCOUNT_UNIQUE_EMAIL = True
 
 SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
+if _looks_like_placeholder(SITE_URL):
+    SITE_URL = 'http://127.0.0.1:8000'
 SOCIAL_AUTH_REDIRECT_BASE_URL = os.getenv('SOCIAL_AUTH_REDIRECT_BASE_URL', SITE_URL).rstrip('/')
+if _looks_like_placeholder(SOCIAL_AUTH_REDIRECT_BASE_URL):
+    SOCIAL_AUTH_REDIRECT_BASE_URL = SITE_URL
 
 def provider_app(client_id_env, secret_env, **extra):
     client_id = os.getenv(client_id_env, '')
@@ -167,25 +226,49 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 
-# PostgreSQL is the only supported database backend.
+# Prefer PostgreSQL in production when the Railway env vars are present.
+# For local development and test runs, fall back to SQLite so the app remains runnable
+# without a live database while deployment secrets are still being configured.
+def _is_placeholder(value):
+    if value is None:
+        return True
+    cleaned = str(value).strip().lower()
+    return not cleaned or cleaned.startswith('replace-with-') or cleaned.startswith('your-') or 'example' in cleaned
+
 postgres_db_name = os.getenv('POSTGRES_DB') or os.getenv('DB_NAME')
 postgres_db_user = os.getenv('POSTGRES_USER') or os.getenv('DB_USER')
-
-if not postgres_db_name or not postgres_db_user:
-    raise ImproperlyConfigured(
-        'PostgreSQL requires POSTGRES_DB and POSTGRES_USER (or DB_NAME and DB_USER).'
+postgres_password = os.getenv('POSTGRES_PASSWORD') or os.getenv('DB_PASSWORD', '')
+postgres_host = os.getenv('POSTGRES_HOST') or os.getenv('DB_HOST', '')
+postgres_port = os.getenv('POSTGRES_PORT') or os.getenv('DB_PORT', '5432')
+production_db_ready = bool(
+    postgres_db_name and postgres_db_user and postgres_host
+    and not any(
+        _is_placeholder(value) for value in (postgres_db_name, postgres_db_user, postgres_password, postgres_host)
     )
+)
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': postgres_db_name,
-        'USER': postgres_db_user,
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD') or os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('POSTGRES_HOST') or os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('POSTGRES_PORT') or os.getenv('DB_PORT', '5432'),
+if production_db_ready:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': postgres_db_name,
+            'USER': postgres_db_user,
+            'PASSWORD': postgres_password,
+            'HOST': postgres_host,
+            'PORT': postgres_port,
+        }
     }
-}
+elif REAL_PRODUCTION_ENV:
+    raise ImproperlyConfigured(
+        'Production requires valid PostgreSQL credentials via POSTGRES_DB and POSTGRES_USER (or DB_NAME and DB_USER).'
+    )
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -248,13 +331,14 @@ APSCHEDULER_DATETIME_FORMAT = 'N j, Y, f:s a'
 APSCHEDULER_RUN_NOW_TIMEOUT = 300
 
 # HTTPS/SSL Configuration for Railway
-# Railway terminates SSL and forwards requests, so Django needs to trust the proxy
+# Railway terminates SSL and forwards requests, so Django needs to trust the proxy.
+# Local/test runs must not inherit production security defaults from template values
+# in a local .env file. Only a verified production environment should enforce them.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# Default to HTTPS-only redirects in production, but keep local development flexible.
-SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'true' if not DEBUG else 'false').lower() == 'true'
-SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000' if not DEBUG else '0'))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'true' if not DEBUG else 'false').lower() == 'true'
-SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'true' if not DEBUG else 'false').lower() == 'true'
+SECURE_SSL_REDIRECT = REAL_PRODUCTION_ENV and os.getenv('SECURE_SSL_REDIRECT', 'true').lower() == 'true'
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000' if REAL_PRODUCTION_ENV else '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = REAL_PRODUCTION_ENV and os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'true').lower() == 'true'
+SECURE_HSTS_PRELOAD = REAL_PRODUCTION_ENV and os.getenv('SECURE_HSTS_PRELOAD', 'true').lower() == 'true'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 X_FRAME_OPTIONS = 'DENY'
